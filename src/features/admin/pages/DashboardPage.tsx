@@ -166,12 +166,6 @@ export default function DashboardPage() {
             {copied ? <Check size={14} strokeWidth={2} /> : <Copy size={14} strokeWidth={1.5} />}
           </button>
         </div>
-        <div className="dashboard__topbar-actions">
-          <button className="topbar-icon-btn" aria-label="Notificaciones">
-            <span className="topbar-notif-dot" />
-            🔔
-          </button>
-        </div>
       </div>
 
       {/* Bento grid */}
@@ -186,7 +180,7 @@ export default function DashboardPage() {
             <p className="resumen__active">{clientCount}</p>
           </div>
           <div className="resumen__ring">
-            <ProgressRing percent={Math.min(100, Math.round((clientCount / 20) * 100)) || 75} />
+            <ProgressRing percent={Math.min(100, Math.round((clientCount / 20) * 100))} />
           </div>
         </div>
 

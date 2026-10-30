@@ -1,8 +1,8 @@
 import { useState, type FormEvent, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, FileText, Video, AlertCircle } from 'lucide-react'
 import { MUSCLE_GROUPS, type MuscleGroup, type Difficulty } from '../api/exercises.api'
-import { useCreateExercise } from '../hooks/useExercises'
+import { useCreateExercise, useExercise, useUpdateExercise } from '../hooks/useExercises'
 import { useAuth } from '../../auth'
 import ClientPreview from '../components/ClientPreview'
 import './NuevoEjercicioPage.css'
@@ -34,11 +34,29 @@ const DIFFICULTIES: Difficulty[] = ['Principiante', 'Intermedio', 'Avanzado']
 export default function NuevoEjercicioPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { id } = useParams()
   const createExercise = useCreateExercise()
+  const updateExercise = useUpdateExercise()
+  const { data: existingExercise } = useExercise(id ?? '')
+  const isSaving = createExercise.isPending || updateExercise.isPending
+  const pageTitle = id ? 'Editar Ejercicio' : 'Nuevo Ejercicio'
   const [form, setForm] = useState<FormState>(INITIAL)
   const [errors, setErrors] = useState<FormErrors>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // Pre-fill the form when editing an existing exercise
+  useEffect(() => {
+    if (!existingExercise) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm({
+      nombre: existingExercise.nombre,
+      grupoMuscular: existingExercise.grupo_muscular,
+      dificultad: existingExercise.dificultad,
+      instrucciones: existingExercise.instrucciones.join('\n'),
+      videoUrl: existingExercise.video_url ?? '',
+    })
+  }, [existingExercise])
 
   const validate = (state: FormState): FormErrors => {
     const errs: FormErrors = {}
@@ -99,17 +117,24 @@ export default function NuevoEjercicioPage() {
     }
 
     try {
-      await createExercise.mutateAsync({
+      const exerciseData = {
         nombre: form.nombre.trim(),
         grupo_muscular: form.grupoMuscular as MuscleGroup,
-        grupos_secundarios: [],
         dificultad: form.dificultad as Difficulty,
         instrucciones: previewInstructions,
         video_url: form.videoUrl.trim() || null,
-        series_default: null,
-        duracion_estimada: null,
-        trainer_id: user.id, // Strictly private to this trainer
-      })
+      }
+      if (id) {
+        await updateExercise.mutateAsync({ id, data: exerciseData })
+      } else {
+        await createExercise.mutateAsync({
+          ...exerciseData,
+          grupos_secundarios: [],
+          series_default: null,
+          duracion_estimada: null,
+          trainer_id: user.id, // Strictly private to this trainer
+        })
+      }
       navigate('/admin/entrenamientos/ejercicios')
     } catch (err: unknown) {
       console.error('Error creating exercise:', err)
@@ -133,7 +158,7 @@ export default function NuevoEjercicioPage() {
         >
           <ArrowLeft size={20} strokeWidth={1.5} />
         </button>
-        <h1 className="nuevo-ejercicio__mobile-title">Nuevo Ejercicio</h1>
+        <h1 className="nuevo-ejercicio__mobile-title">{pageTitle}</h1>
         <div style={{ width: 36 }} />
       </div>
 
@@ -147,7 +172,7 @@ export default function NuevoEjercicioPage() {
             <ArrowLeft size={14} strokeWidth={1.5} />
             Banco de Ejercicios
           </button>
-          <h1 className="nuevo-ejercicio__title">Nuevo Ejercicio</h1>
+          <h1 className="nuevo-ejercicio__title">{pageTitle}</h1>
           <p className="nuevo-ejercicio__subtitle">
             Añade un nuevo movimiento a tu base de datos de ejercicios.
           </p>
@@ -156,14 +181,14 @@ export default function NuevoEjercicioPage() {
           id="btn-guardar-ejercicio-desktop"
           className="btn-primary nuevo-ejercicio__save-btn"
           onClick={handleSubmit}
-          disabled={createExercise.isPending}
+          disabled={isSaving}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
             <polyline points="17 21 17 13 7 13 7 21"/>
             <polyline points="7 3 7 8 15 8"/>
           </svg>
-          {createExercise.isPending ? 'Guardando...' : 'Guardar Ejercicio'}
+          {isSaving ? 'Guardando...' : 'Guardar Ejercicio'}
         </button>
       </div>
 
@@ -375,9 +400,9 @@ export default function NuevoEjercicioPage() {
           className="btn-primary nuevo-ejercicio__mobile-save"
           form="form-nuevo-ejercicio"
           type="submit"
-          disabled={createExercise.isPending}
+          disabled={isSaving}
         >
-          {createExercise.isPending ? 'Guardando...' : 'Guardar Ejercicio'}
+          {isSaving ? 'Guardando...' : 'Guardar Ejercicio'}
         </button>
       </div>
 

@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react'
+import { requestPasswordReset } from '../api/auth.api'
 import { useAuth } from '../hooks/useAuth'
 import './LoginPage.css'
 
@@ -137,6 +138,22 @@ export default function LoginPage() {
     setTouched({})
     setServerError(null)
     setSuccessNotice(null)
+  }
+
+  const handleForgotPassword = async () => {
+    setTouched(prev => ({ ...prev, email: true }))
+    if (errors.email) {
+      setServerError('Ingresá tu correo para enviarte el link de recuperación.')
+      return
+    }
+    setServerError(null)
+    try {
+      await requestPasswordReset(fields.email)
+      setSuccessNotice('Si el correo está registrado, te enviamos un link para crear una nueva contraseña.')
+    } catch (err) {
+      console.error('Password reset error:', err)
+      setServerError('No pudimos enviar el correo. Intentá de nuevo en unos minutos.')
+    }
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -362,7 +379,9 @@ export default function LoginPage() {
                 <div className="auth-label-group">
                   <label className="auth-label" htmlFor="password">Contraseña</label>
                   {mode === 'login' && (
-                    <span className="auth-link-subtle">Mínimo 6 caracteres</span>
+                    <button type="button" className="auth-text-btn" onClick={handleForgotPassword}>
+                      ¿Olvidaste tu contraseña?
+                    </button>
                   )}
                 </div>
                 <div className={`auth-input-wrap ${touched.password && errors.password ? 'auth-input-wrap--error' : ''} ${touched.password && !errors.password ? 'auth-input-wrap--valid' : ''}`}>

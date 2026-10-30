@@ -67,6 +67,18 @@ export async function claimClientAccess(slug: string): Promise<string> {
   return data
 }
 
+export async function requestPasswordReset(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    redirectTo: `${window.location.origin}/restablecer-contrasena`,
+  })
+  if (error) throw error
+}
+
+export async function updatePassword(password: string) {
+  const { error } = await supabase.auth.updateUser({ password })
+  if (error) throw error
+}
+
 export async function signOutUser() {
   const { error } = await supabase.auth.signOut()
   if (error) throw error

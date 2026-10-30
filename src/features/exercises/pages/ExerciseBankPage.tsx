@@ -27,8 +27,7 @@ export default function ExerciseBankPage() {
   }, [exercises, search])
 
   const handleEdit = (ex: Tables<'exercises'>) => {
-    // TODO: navegar a edición
-    console.log('Edit:', ex)
+    navigate(`/admin/entrenamientos/ejercicios/${ex.id}/editar`)
   }
 
   if (isLoading) {
@@ -121,7 +120,7 @@ export default function ExerciseBankPage() {
       ) : (
         <div className="exercise-bank__grid">
           {filtered.map(ex => (
-            <ExerciseCard key={ex.id} exercise={ex} onEdit={handleEdit} />
+            <ExerciseCard key={ex.id} exercise={ex} onEdit={ex.trainer_id ? handleEdit : undefined} />
           ))}
         </div>
       )}

@@ -605,6 +605,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      save_routine: {
+        Args: {
+          p_blocks: Json
+          p_descripcion: string
+          p_nombre: string
+          p_routine_id: string
+        }
+        Returns: string
+      }
       start_workout_session: {
         Args: { p_fecha?: string; p_routine_id: string }
         Returns: string

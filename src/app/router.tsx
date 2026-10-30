@@ -8,7 +8,7 @@ import ArmarRutinaPage from '../features/admin/pages/ArmarRutinaPage'
 import FinanzasPage from '../features/admin/pages/FinanzasPage'
 import ExerciseBankPage from '../features/exercises/pages/ExerciseBankPage'
 import NuevoEjercicioPage from '../features/exercises/pages/NuevoEjercicioPage'
-import { LoginPage, ProtectedRoute, RootRedirect, TrainerAccessPage } from '../features/auth'
+import { LoginPage, ProtectedRoute, ResetPasswordPage, RootRedirect, TrainerAccessPage } from '../features/auth'
 // Client (alumno) feature
 import ClientLayout from '../features/client/components/ClientLayout'
 import ClientDashboard from '../features/client/pages/ClientDashboard'
@@ -24,6 +24,10 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/restablecer-contrasena',
+    element: <ResetPasswordPage />,
   },
   {
     path: '/t/:slug',
@@ -44,8 +48,10 @@ const router = createBrowserRouter([
       { path: 'clientes/:id/editar',                  element: <NuevoClientePage /> },
       { path: 'entrenamientos',                       element: <EntrenamientosPage /> },
       { path: 'entrenamientos/rutinas/nueva',         element: <ArmarRutinaPage /> },
+      { path: 'entrenamientos/rutinas/:id/editar',    element: <ArmarRutinaPage /> },
       { path: 'entrenamientos/ejercicios',            element: <ExerciseBankPage /> },
       { path: 'entrenamientos/ejercicios/nuevo',      element: <NuevoEjercicioPage /> },
+      { path: 'entrenamientos/ejercicios/:id/editar', element: <NuevoEjercicioPage /> },
       { path: 'finanzas',                             element: <FinanzasPage /> },
     ],
   },

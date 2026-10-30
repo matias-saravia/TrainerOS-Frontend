@@ -9,6 +9,7 @@ export interface BlockExercise {
   sets: number
   reps: string        // e.g. "8-10" or "12"
   tempo?: string      // e.g. "2-0-1-0"
+  restSeconds?: number
   notes?: string
 }
 
