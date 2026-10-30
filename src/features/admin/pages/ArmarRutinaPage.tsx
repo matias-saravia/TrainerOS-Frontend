@@ -1,34 +1,65 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Plus, X, AlertCircle } from 'lucide-react'
 import { useRoutineBuilder } from '../../../features/workouts/hooks/useRoutineBuilder'
-import { useCreateFullRoutine } from '../../../features/workouts/hooks/useRoutines'
+import { useRoutine, useSaveRoutine } from '../../../features/workouts/hooks/useRoutines'
 import ExercisePicker from '../../../features/workouts/components/ExercisePicker'
 import RoutineBuilder from '../../../features/workouts/components/RoutineBuilder'
-import { useAuth } from '../../auth'
+import ErrorState from '../../../components/ErrorState'
+import LoadingSkeleton from '../../../components/LoadingSkeleton'
+import { makeId } from '../../../features/workouts/api/workouts.api'
 import type { Tables } from '../../../lib/supabase'
 import './ArmarRutinaPage.css'
 
 export default function ArmarRutinaPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { id } = useParams()
   const [routineTitle, setRoutineTitle] = useState('Nueva Rutina')
   const [isPickerOpen, setIsPickerOpen] = useState(false) // mobile drawer state
   const [pickerTargetBlockId, setPickerTargetBlockId] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
 
-  const createRoutine = useCreateFullRoutine()
+  const saveRoutine = useSaveRoutine()
+  const { data: existingRoutine, isLoading: loadingRoutine, error: routineError, refetch } = useRoutine(id ?? '')
 
   const {
     blocks,
     addBlock,
     addExerciseToBlock,
+    loadBlocks,
     removeBlock,
     removeExerciseFromBlock,
     updateSetsReps,
     totalExercises,
     estimatedMinutes,
   } = useRoutineBuilder(routineTitle)
+
+  // Pre-fill the canvas when editing an existing routine
+  useEffect(() => {
+    if (!existingRoutine) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRoutineTitle(existingRoutine.nombre)
+    loadBlocks(
+      existingRoutine.blocks.map(block => ({
+        id: makeId(),
+        label: block.label,
+        type: block.type,
+        exercises: block.routine_block_exercises.flatMap(rbe =>
+          rbe.exercises
+            ? [{
+                id: makeId(),
+                exercise: rbe.exercises,
+                sets: rbe.sets,
+                reps: rbe.reps,
+                tempo: rbe.tempo ?? '',
+                restSeconds: rbe.rest_seconds ?? undefined,
+                notes: rbe.notes ?? '',
+              }]
+            : []
+        ),
+      }))
+    )
+  }, [existingRoutine, loadBlocks])
 
   const handleAddFromPicker = (exercise: Tables<'exercises'>) => {
     setValidationError(null)
@@ -64,37 +95,46 @@ export default function ArmarRutinaPage() {
       return
     }
 
-    if (!user) {
-      setValidationError('Debes haber iniciado sesión como entrenador para guardar rutinas.')
-      return
-    }
-
     try {
-      const formattedBlocks = blocks.map((b, blockIndex) => ({
-        label: b.label,
-        type: b.type,
-        order_index: blockIndex,
-        exercises: b.exercises.map((e, exIndex) => ({
-          exercise_id: e.exercise.id,
-          sets: e.sets,
-          reps: e.reps,
-          order_index: exIndex,
-        })),
-      }))
-
-      await createRoutine.mutateAsync({
+      await saveRoutine.mutateAsync({
+        id,
         nombre: routineTitle.trim(),
-        dia: null,
         descripcion: `${totalExercises} ejercicios · ${estimatedMinutes} min est.`,
-        trainer_id: user.id, // Authenticated trainer ID
-        blocks: formattedBlocks,
+        blocks: blocks.map(b => ({
+          label: b.label,
+          type: b.type,
+          exercises: b.exercises.map(e => ({
+            exercise_id: e.exercise.id,
+            sets: e.sets,
+            reps: e.reps,
+            tempo: e.tempo,
+            rest_seconds: e.restSeconds,
+            notes: e.notes,
+          })),
+        })),
       })
       navigate('/admin/entrenamientos')
     } catch (err: unknown) {
       console.error('Error saving routine:', err)
-      const message = err instanceof Error ? err.message : String(err)
+      const message = (err as { message?: string })?.message
       setValidationError(message || 'Error al guardar la rutina en la base de datos.')
     }
+  }
+
+  if (id && loadingRoutine) {
+    return (
+      <div className="armar-rutina-page" style={{ padding: '24px' }}>
+        <LoadingSkeleton count={3} variant="card" />
+      </div>
+    )
+  }
+
+  if (id && routineError) {
+    return (
+      <div className="armar-rutina-page" style={{ padding: '24px' }}>
+        <ErrorState message="No pudimos cargar esta rutina." onRetry={() => refetch()} />
+      </div>
+    )
   }
 
   return (
@@ -111,7 +151,7 @@ export default function ArmarRutinaPage() {
             <ArrowLeft size={18} strokeWidth={1.5} />
           </button>
           <div className="armar-rutina__title-wrap">
-            <span className="armar-rutina__title-prefix">Armar Rutina:</span>
+            <span className="armar-rutina__title-prefix">{id ? 'Editar Rutina:' : 'Armar Rutina:'}</span>
             <input
               className="armar-rutina__title-input"
               value={routineTitle}
@@ -129,9 +169,9 @@ export default function ArmarRutinaPage() {
         <button
           className="armar-rutina__finalize-mobile btn-primary"
           onClick={handleFinalize}
-          disabled={createRoutine.isPending}
+          disabled={saveRoutine.isPending}
         >
-          {createRoutine.isPending ? 'Guardando...' : 'Finalizar'}
+          {saveRoutine.isPending ? 'Guardando...' : 'Finalizar'}
         </button>
       </header>
 

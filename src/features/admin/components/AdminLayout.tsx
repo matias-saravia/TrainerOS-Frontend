@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom'
-import { Bell, UserCircle } from 'lucide-react'
+import { UserCircle } from 'lucide-react'
 import Sidebar from './Sidebar'
 import './AdminLayout.css'
 import './MobileTopbar.css'
@@ -12,10 +12,6 @@ function MobileTopbar() {
         <span className="mobile-topbar__logo-name">TrainerOS</span>
       </div>
       <div className="mobile-topbar__actions">
-        <button className="mobile-topbar__icon-btn" aria-label="Notificaciones">
-          <Bell size={20} strokeWidth={1.5} />
-          <span className="mobile-topbar__badge" />
-        </button>
         <div className="mobile-topbar__avatar">
           <UserCircle size={30} strokeWidth={1.5} />
         </div>

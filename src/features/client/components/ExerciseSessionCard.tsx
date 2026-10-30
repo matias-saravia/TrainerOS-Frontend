@@ -10,16 +10,16 @@ interface ExerciseSessionCardProps {
   exercise: SessionExercise
   index: number
   onSetComplete: (exerciseId: string, kg: number) => void
-  clienteId: string
   sesionId: string
+  readOnly?: boolean
 }
 
 export default function ExerciseSessionCard({
   exercise,
   index,
   onSetComplete,
-  clienteId,
   sesionId,
+  readOnly = false,
 }: ExerciseSessionCardProps) {
   const navigate = useNavigate()
   const [isPlayingInline, setIsPlayingInline] = useState(false)
@@ -29,9 +29,7 @@ export default function ExerciseSessionCard({
   const hasPlayableVideo = video.type === 'youtube' || video.type === 'vimeo' || video.type === 'direct'
 
   const handleOpenDetail = () => {
-    const isRutina = window.location.pathname.includes('/rutina/')
-    const base = isRutina ? 'rutina' : 'sesion'
-    navigate(`/alumno/${clienteId}/${base}/${sesionId}/ejercicio/${exercise.id}`)
+    navigate(`/alumno/sesion/${sesionId}/ejercicio/${exercise.id}`)
   }
 
   const handleTogglePlay = (e: React.MouseEvent) => {
@@ -59,9 +57,11 @@ export default function ExerciseSessionCard({
             <span className="ex-session-card__muscle">{exercise.grupoMuscular}</span>
           )}
         </div>
-        <span className={`ex-session-card__chip ex-session-card__chip--${exercise.categoria.toLowerCase()}`}>
-          {exercise.categoria}
-        </span>
+        {exercise.categoria && (
+          <span className={`ex-session-card__chip ex-session-card__chip--${exercise.categoria.toLowerCase()}`}>
+            {exercise.categoria}
+          </span>
+        )}
       </div>
 
       {/* ── Media Area (Inline Video Player / Thumbnail / Placeholder) ── */}
@@ -204,22 +204,25 @@ export default function ExerciseSessionCard({
       </div>
 
       {/* ── Weight Logger ── */}
-      <div className="ex-session-card__logger">
-        <div className="ex-session-card__logger-meta">
-          <p className="ex-session-card__logger-label">Registro de Carga (kg)</p>
-          {exercise.pesoObjetivo && (
-            <span className="ex-session-card__logger-objective">
-              Objetivo: {exercise.pesoObjetivo}kg
-            </span>
-          )}
+      {!readOnly && (
+        <div className="ex-session-card__logger">
+          <div className="ex-session-card__logger-meta">
+            <p className="ex-session-card__logger-label">Registro de Carga (kg)</p>
+            {exercise.pesoObjetivo && (
+              <span className="ex-session-card__logger-objective">
+                Objetivo: {exercise.pesoObjetivo}kg
+              </span>
+            )}
+          </div>
+          <WeightLogger
+            targetKg={exercise.pesoObjetivo}
+            lastKg={exercise.pesoRegistrado}
+            setsTotal={exercise.series}
+            setsCompleted={exercise.setsCompletados}
+            onSetComplete={kg => onSetComplete(exercise.id, kg)}
+          />
         </div>
-        <WeightLogger
-          targetKg={exercise.pesoObjetivo}
-          setsTotal={exercise.series}
-          setsCompleted={exercise.setsCompletados}
-          onSetComplete={kg => onSetComplete(exercise.id, kg)}
-        />
-      </div>
+      )}
     </div>
   )
 }

@@ -210,7 +210,7 @@ function RoutineCard({
           </button>
           <button
             className="rutina-card__edit-btn"
-            onClick={() => navigate('/admin/entrenamientos/rutinas/nueva')}
+            onClick={() => navigate(`/admin/entrenamientos/rutinas/${routine.id}/editar`)}
             aria-label={`Editar ${routine.nombre}`}
           >
             Editar

@@ -8,6 +8,7 @@ import ConfirmModal from '../../../components/ConfirmModal'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
 import AssignRoutineModal from '../components/AssignRoutineModal'
+import { getTrainerLink } from '../../../utils/trainerLink'
 import './NuevoClientePage.css'
 
 interface FormState {
@@ -57,7 +58,7 @@ export default function NuevoClientePage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id?: string }>()
   const isEdit = Boolean(id)
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
 
   const createClient = useCreateClient()
   const updateClient = useUpdateClient()
@@ -75,7 +76,7 @@ export default function NuevoClientePage() {
   const { data: assignedRoutines = [], isLoading: loadingAssigned } = useClientRoutines(id ?? '')
   const unassignRoutine = useUnassignRoutine()
 
-  const clientLink = id ? `${window.location.origin}/alumno/${id}` : ''
+  const clientLink = getTrainerLink(profile?.slug)
 
   const handleCopyLink = () => {
     if (!clientLink) return
@@ -242,7 +243,11 @@ export default function NuevoClientePage() {
       navigate('/admin/clientes')
     } catch (err: unknown) {
       console.error(isEdit ? 'Error updating client:' : 'Error creating client:', err)
-      const message = err instanceof Error ? err.message : String(err)
+      const message = (err as { message?: string })?.message ?? String(err)
+      if (message.includes('idx_clients_trainer_email')) {
+        setSubmitError('Ya tenés un cliente con ese correo electrónico.')
+        return
+      }
       setSubmitError(message || `Error al ${isEdit ? 'actualizar' : 'guardar'} el cliente en Supabase.`)
     }
   }
@@ -645,10 +650,10 @@ export default function NuevoClientePage() {
           <div className="assigned-routines__link-panel">
             <div className="assigned-routines__link-info">
               <Link2 size={15} strokeWidth={2} />
-              <span className="assigned-routines__link-label">Link personal del alumno</span>
+              <span className="assigned-routines__link-label">Link de acceso: el alumno entra con {existingClient.email}</span>
             </div>
             <div className="assigned-routines__link-row">
-              <code className="assigned-routines__link-url">/alumno/{id}</code>
+              <code className="assigned-routines__link-url">/t/{profile?.slug}</code>
               <button
                 type="button"
                 className={`assigned-routines__link-copy${linkCopied ? ' assigned-routines__link-copy--copied' : ''}`}

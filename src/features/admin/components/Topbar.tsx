@@ -1,4 +1,4 @@
-import { Bell, UserCircle } from 'lucide-react'
+import { UserCircle } from 'lucide-react'
 import { useAuth } from '../../auth'
 import './Topbar.css'
 
@@ -17,10 +17,6 @@ export default function Topbar({ title }: TopbarProps) {
     <header className="topbar">
       {title && <h1 className="topbar__title">{title}</h1>}
       <div className="topbar__actions">
-        <button className="topbar__icon-btn" aria-label="Notificaciones">
-          <Bell size={18} strokeWidth={1.5} />
-          <span className="topbar__badge" />
-        </button>
         <div className="topbar__avatar" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <UserCircle size={28} strokeWidth={1.5} />
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-midnight-blue)' }}>

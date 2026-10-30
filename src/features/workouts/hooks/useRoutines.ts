@@ -68,6 +68,7 @@ export function useRoutine(id: string) {
         .select('*, routine_block_exercises(*, exercises(*))')
         .eq('routine_id', id)
         .order('order_index')
+        .order('order_index', { referencedTable: 'routine_block_exercises' })
 
       if (blocksError) {
         throw blocksError
@@ -109,81 +110,45 @@ export function useCreateRoutine() {
   })
 }
 
-export type FullRoutineInsert = RoutineInsert & {
+export interface SaveRoutineInput {
+  id?: string
+  nombre: string
+  descripcion: string | null
   blocks: {
     label: string
     type: 'single' | 'superset'
-    order_index: number
     exercises: {
       exercise_id: string
       sets: number
       reps: string
-      order_index: number
+      tempo?: string | null
+      rest_seconds?: number | null
+      notes?: string | null
     }[]
   }[]
 }
 
 /**
- * Mutation hook to create a new routine along with its blocks and exercises.
+ * Mutation hook to create or replace a routine with its blocks and exercises.
+ * Runs in one database transaction: a failure leaves the routine untouched.
  */
-export function useCreateFullRoutine() {
+export function useSaveRoutine() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: FullRoutineInsert): Promise<RoutineRow> => {
-      const { blocks, ...newRoutine } = payload
-      
-      // 1. Create Routine
-      const { data: routine, error: routineError } = await supabase
-        .from('routines')
-        .insert(newRoutine)
-        .select()
-        .single()
+    mutationFn: async ({ id, nombre, descripcion, blocks }: SaveRoutineInput): Promise<string> => {
+      const { data, error } = await supabase.rpc('save_routine', {
+        p_routine_id: (id ?? null) as string,
+        p_nombre: nombre,
+        p_descripcion: descripcion as string,
+        p_blocks: blocks,
+      })
 
-      if (routineError) throw routineError
-
-      // 2. Create Blocks
-      if (blocks && blocks.length > 0) {
-        const blocksToInsert = blocks.map(b => ({
-          routine_id: routine.id,
-          label: b.label,
-          type: b.type,
-          order_index: b.order_index,
-        }))
-
-        const { data: insertedBlocks, error: blocksError } = await supabase
-          .from('routine_blocks')
-          .insert(blocksToInsert)
-          .select()
-
-        if (blocksError) throw blocksError
-
-        // 3. Create Exercises
-        const exercisesToInsert: InsertTables<'routine_block_exercises'>[] = []
-        
-        insertedBlocks.forEach((insertedBlock, i) => {
-          const originalBlock = blocks[i]
-          originalBlock.exercises.forEach(ex => {
-            exercisesToInsert.push({
-              block_id: insertedBlock.id,
-              exercise_id: ex.exercise_id,
-              sets: ex.sets,
-              reps: ex.reps,
-              order_index: ex.order_index,
-            })
-          })
-        })
-
-        if (exercisesToInsert.length > 0) {
-          const { error: exercisesError } = await supabase
-            .from('routine_block_exercises')
-            .insert(exercisesToInsert)
-          
-          if (exercisesError) throw exercisesError
-        }
+      if (error) {
+        throw error
       }
 
-      return routine
+      return data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: routineKeys.all })

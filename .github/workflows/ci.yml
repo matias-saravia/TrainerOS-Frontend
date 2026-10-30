@@ -17,7 +17,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Instalar dependencias
@@ -26,9 +26,30 @@ jobs:
       - name: Ejecutar Linter
         run: npm run lint
 
-      # Cuando haya tests, descomentar las siguientes dos líneas:
-      # - name: Ejecutar Tests
-      #   run: npm run test
+      - name: Ejecutar Tests
+        run: npm run test
 
       - name: Construir el proyecto (Build)
         run: npm run build
+
+  database:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Traer el código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Aplicar migraciones desde cero
+        run: npx supabase db start
+
+      - name: Ejecutar tests de permisos (RLS)
+        run: npm run test:db

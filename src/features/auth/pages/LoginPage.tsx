@@ -9,10 +9,8 @@ import {
   ArrowRight,
   CheckCircle2,
   AlertCircle,
-  Activity,
-  Dumbbell,
-  ShieldCheck,
 } from 'lucide-react'
+import { requestPasswordReset } from '../api/auth.api'
 import { useAuth } from '../hooks/useAuth'
 import './LoginPage.css'
 
@@ -56,7 +54,7 @@ export default function LoginPage() {
   const [successNotice, setSuccessNotice] = useState<string | null>(null)
 
   const locState = location.state as { from?: { pathname?: string } } | null
-  const redirectPath = locState?.from?.pathname ?? '/admin/dashboard'
+  const redirectPath = locState?.from?.pathname ?? '/'
 
   // ── Validation logic ────────────────────────────────────────────────
   const validate = (data: FormFields, currentMode: AuthMode): FormErrors => {
@@ -142,6 +140,22 @@ export default function LoginPage() {
     setSuccessNotice(null)
   }
 
+  const handleForgotPassword = async () => {
+    setTouched(prev => ({ ...prev, email: true }))
+    if (errors.email) {
+      setServerError('Ingresá tu correo para enviarte el link de recuperación.')
+      return
+    }
+    setServerError(null)
+    try {
+      await requestPasswordReset(fields.email)
+      setSuccessNotice('Si el correo está registrado, te enviamos un link para crear una nueva contraseña.')
+    } catch (err) {
+      console.error('Password reset error:', err)
+      setServerError('No pudimos enviar el correo. Intentá de nuevo en unos minutos.')
+    }
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
@@ -222,10 +236,6 @@ export default function LoginPage() {
           </div>
 
           <div className="auth-showcase__hero">
-            <div className="auth-status-pill">
-              <span className="auth-status-pill__dot" />
-              <span>Supabase Engine • En Línea</span>
-            </div>
             <h1 className="auth-showcase__title">
               Arquitectura para entrenadores de alto rendimiento.
             </h1>
@@ -235,32 +245,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Telemetry Card */}
-          <div className="auth-telemetry-card">
-            <div className="auth-telemetry-card__header">
-              <div className="auth-telemetry-card__icon-box">
-                <Activity size={18} strokeWidth={2} />
-              </div>
-              <div>
-                <div className="auth-telemetry-card__label">Monitoreo de Carga</div>
-                <div className="auth-telemetry-card__val">Base de Datos Conectada</div>
-              </div>
-            </div>
-            <div className="auth-telemetry-card__metrics">
-              <div className="auth-telemetry-metric">
-                <Dumbbell size={14} />
-                <span>10 Ejercicios Base</span>
-              </div>
-              <div className="auth-telemetry-metric">
-                <ShieldCheck size={14} />
-                <span>RLS Activo</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="auth-showcase__footer">
-            <span>TrainerOS v2.4 • Seguridad Cifrada</span>
-          </div>
         </div>
 
         {/* ── RIGHT PANEL: Terminal / Access Card ──────────────────────── */}
@@ -395,7 +379,9 @@ export default function LoginPage() {
                 <div className="auth-label-group">
                   <label className="auth-label" htmlFor="password">Contraseña</label>
                   {mode === 'login' && (
-                    <span className="auth-link-subtle">Mínimo 6 caracteres</span>
+                    <button type="button" className="auth-text-btn" onClick={handleForgotPassword}>
+                      ¿Olvidaste tu contraseña?
+                    </button>
                   )}
                 </div>
                 <div className={`auth-input-wrap ${touched.password && errors.password ? 'auth-input-wrap--error' : ''} ${touched.password && !errors.password ? 'auth-input-wrap--valid' : ''}`}>
@@ -521,6 +507,9 @@ export default function LoginPage() {
                   </button>
                 </>
               )}
+            </div>
+            <div className="auth-footer-prompt">
+              ¿Sos alumno? Entrá desde el link que te pasó tu entrenador.
             </div>
           </div>
         </div>

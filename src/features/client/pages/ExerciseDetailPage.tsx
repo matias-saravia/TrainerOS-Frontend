@@ -1,92 +1,48 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ExternalLink, ArrowLeft, Check, ChevronRight, VideoOff } from 'lucide-react'
-import { MOCK_SESSIONS, type SessionExercise } from '../api/client.api'
-import { useWeightHistory } from '../hooks/useClientDashboard'
-import { useRoutine } from '../../workouts/hooks/useRoutines'
-import { useExercise } from '../../exercises/hooks/useExercises'
+import {
+  toSessionExercise,
+  useLogWorkoutSet,
+  useWeightHistory,
+  useWorkoutSession,
+} from '../hooks/useClientDashboard'
 import ExerciseHistoryChart from '../components/ExerciseHistoryChart'
 import { parseVideoUrl } from '../../../utils/video'
 import './ExerciseDetailPage.css'
 
 export default function ExerciseDetailPage() {
-  const {
-    clienteId = 'cliente-001',
-    sesionId = '',
-    rutinaId = '',
-    ejercicioId = 'se-001',
-  } = useParams()
-
-  const activeSessionId = rutinaId || sesionId || 'sesion-001'
-  const isRutinaRoute = Boolean(rutinaId)
-  const basePath = isRutinaRoute
-    ? `/alumno/${clienteId}/rutina/${rutinaId}`
-    : `/alumno/${clienteId}/sesion/${sesionId || 'sesion-001'}`
+  const { sesionId = '', ejercicioId = '' } = useParams()
+  const basePath = `/alumno/sesion/${sesionId}`
 
   const navigate = useNavigate()
 
-  // ── Load the DB routine (contains exercises with video_url via join) ──
-  const { data: dbRoutine, isLoading: loadingRoutine } = useRoutine(activeSessionId)
+  const { data: session, isLoading: loadingSession } = useWorkoutSession(sesionId)
+  const logSet = useLogWorkoutSet(sesionId)
 
-  // Transform DB routine exercises
-  const routineExercises: SessionExercise[] = useMemo(() => {
-    if (!dbRoutine?.blocks) return []
-    const list: SessionExercise[] = []
-    dbRoutine.blocks.forEach(block => {
-      block.routine_block_exercises.forEach(rbe => {
-        const ex = rbe.exercises
-        list.push({
-          id: rbe.id,
-          ejercicioId: rbe.exercise_id,
-          nombre: ex?.nombre ?? 'Ejercicio',
-          grupoMuscular: ex?.grupo_muscular ?? 'General',
-          categoria: 'Fuerza',
-          series: rbe.sets ?? 3,
-          reps: rbe.reps ?? '10-12',
-          descanso: rbe.rest_seconds ?? 60,
-          instrucciones: ex?.instrucciones ?? (rbe.notes ? [rbe.notes] : []),
-          videoUrl: ex?.video_url || undefined,
-          historialPesos: [],
-          setsCompletados: 0,
-        })
-      })
-    })
-    return list
-  }, [dbRoutine])
-
-  const isDbRoutine = Boolean(dbRoutine)
-  const mockSession = MOCK_SESSIONS.find(s => s.id === activeSessionId) ?? MOCK_SESSIONS[0]
-
-  const exerciseList: SessionExercise[] = useMemo(() => {
-    if (routineExercises.length > 0) return routineExercises
-    if (!loadingRoutine && !isDbRoutine) return mockSession.ejercicios
-    return []
-  }, [routineExercises, loadingRoutine, isDbRoutine, mockSession])
-
-  const exercise = useMemo(() =>
-    exerciseList.find(e => e.id === ejercicioId || e.ejercicioId === ejercicioId) ??
-    exerciseList[0]
-  , [exerciseList, ejercicioId])
-
-  // Secondary query: single exercise record (for fresh instructions/video if needed)
-  const { data: directExercise } = useExercise(exercise?.ejercicioId ?? '')
-
-  const exerciseIndex = exerciseList.findIndex(
-    e => e.id === ejercicioId || e.ejercicioId === ejercicioId
+  const exerciseList = useMemo(
+    () => (session?.session_exercises ?? []).map(toSessionExercise),
+    [session]
   )
+
+  const exerciseIndex = exerciseList.findIndex(e => e.id === ejercicioId)
+  const exercise = exerciseList[exerciseIndex]
   const nextExercise = exerciseList[exerciseIndex + 1]
 
-  const rawExerciseId = exercise?.ejercicioId || exercise?.id || ''
-  const { data: dbWeightHistory } = useWeightHistory(clienteId, rawExerciseId)
-  const historyData =
-    dbWeightHistory && dbWeightHistory.length > 0
-      ? dbWeightHistory.map(w => ({ fecha: w.fecha, kg: Number(w.kg) }))
-      : exercise?.historialPesos ?? []
+  const { data: weightHistory = [] } = useWeightHistory(session?.client_id ?? '', exercise?.ejercicioId ?? '')
+  // One point per day, with the heaviest set of that day
+  const historyData = Object.entries(
+    weightHistory.reduce<Record<string, number>>((days, w) => {
+      days[w.fecha] = Math.max(days[w.fecha] ?? 0, Number(w.kg))
+      return days
+    }, {})
+  ).map(([fecha, kg]) => ({ fecha, kg }))
 
   // ── Rest Timer ──
   const [timerSecs, setTimerSecs] = useState(0)
   const [timerRunning, setTimerRunning] = useState(false)
-  const [setsCompleted, setSetsCompleted] = useState(0)
+  const setsCompleted = exercise?.setsCompletados ?? 0
+  const isFinished = session?.status === 'completed'
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -105,13 +61,20 @@ export default function ExerciseDetailPage() {
   }
 
   const handleSerieComplete = () => {
-    if (exercise && setsCompleted < exercise.series) setSetsCompleted(s => s + 1)
-    setTimerSecs(0)
-    setTimerRunning(true)
-    setTimeout(() => setTimerRunning(false), (exercise?.descanso ?? 60) * 1000)
+    if (!exercise || setsCompleted >= exercise.series) return
+    logSet.mutate(
+      { id: exercise.id },
+      {
+        onSuccess: () => {
+          setTimerSecs(0)
+          setTimerRunning(true)
+          setTimeout(() => setTimerRunning(false), exercise.descanso * 1000)
+        },
+      }
+    )
   }
 
-  const allDone = exercise ? setsCompleted >= exercise.series : false
+  const allDone = exercise ? isFinished || setsCompleted >= exercise.series : false
 
   const handleBack = () => navigate(basePath)
   const handleNext = () => {
@@ -125,7 +88,7 @@ export default function ExerciseDetailPage() {
     return m > 0 ? (s > 0 ? `${m} min ${s}s descanso` : `${m} min descanso`) : `${secs}s descanso`
   }
 
-  if (loadingRoutine && isRutinaRoute) {
+  if (loadingSession) {
     return (
       <div className="exercise-detail-page">
         <div className="ed-loading">
@@ -147,14 +110,10 @@ export default function ExerciseDetailPage() {
     )
   }
 
-  // Instructions fallback
-  const instrucciones = directExercise?.instrucciones?.length
-    ? directExercise.instrucciones
-    : exercise.instrucciones
+  const instrucciones = exercise.instrucciones
 
   // Resolve video with robust parser
-  const rawVideoUrl = exercise.videoUrl || directExercise?.video_url || ''
-  const video = parseVideoUrl(rawVideoUrl)
+  const video = parseVideoUrl(exercise.videoUrl ?? '')
 
   // Sets progress dots
   const dots = Array.from({ length: exercise.series }, (_, i) => i < setsCompleted)
@@ -246,9 +205,11 @@ export default function ExerciseDetailPage() {
           {/* Chips */}
           <div className="ed-chips">
             <span className="ed-chip">{exercise.grupoMuscular.toUpperCase()}</span>
-            <span className={`ed-chip ed-chip--categoria ed-chip--${exercise.categoria.toLowerCase()}`}>
-              {exercise.categoria.toUpperCase()}
-            </span>
+            {exercise.categoria && (
+              <span className={`ed-chip ed-chip--categoria ed-chip--${exercise.categoria.toLowerCase()}`}>
+                {exercise.categoria.toUpperCase()}
+              </span>
+            )}
             {video.rawUrl && (
               <a
                 href={video.rawUrl}
@@ -308,11 +269,17 @@ export default function ExerciseDetailPage() {
 
           {/* Completed / Next Action Button */}
           <div className="ed-action-container">
+            {logSet.isError && (
+              <p role="alert" style={{ margin: '0 0 12px', padding: '12px', borderRadius: '6px', background: '#ffdad6', color: '#93000a', fontSize: '14px' }}>
+                No pudimos guardar la serie. Revisá tu conexión e intentá de nuevo.
+              </p>
+            )}
             {!allDone ? (
               <button
                 id="btn-serie-completada"
                 className="ed-footer__btn ed-footer__btn--complete"
                 onClick={handleSerieComplete}
+                disabled={logSet.isPending}
               >
                 <Check size={18} strokeWidth={2.5} />
                 <span>Serie Completada</span>
