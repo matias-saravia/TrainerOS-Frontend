@@ -14,8 +14,7 @@ export const clientKeys = {
   lists: () => [...clientKeys.all, 'list'] as const,
   list: (status?: string) => [...clientKeys.lists(), { status }] as const,
   detail: (id: string) => [...clientKeys.all, 'detail', id] as const,
-  sessions: (clientId: string) =>
-    [...clientKeys.detail(clientId), 'sessions'] as const,
+  me: (userId: string) => [...clientKeys.all, 'me', userId] as const,
   weightHistory: (clientId: string, exerciseId: string) =>
     [...clientKeys.detail(clientId), 'weight', exerciseId] as const,
 }

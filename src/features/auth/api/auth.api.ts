@@ -44,20 +44,26 @@ export async function signUpWithEmail({ email, password, nombre, apellido }: Sig
 
   if (error) throw error
 
-  // If user is returned, ensure profile exists
-  if (data.user) {
-    try {
-      await supabase.from('profiles').upsert({
-        id: data.user.id,
-        role: 'trainer',
-        nombre: cleanNombre,
-        apellido: cleanApellido,
-      })
-    } catch {
-      // Handled by DB trigger if already exists
-    }
-  }
+  // The profile is created by the on_auth_user_created database trigger
+  return data
+}
 
+export async function getTrainerPublic(slug: string) {
+  const { data, error } = await supabase.rpc('get_trainer_public', { p_slug: slug })
+  if (error) throw error
+  return data?.[0] ?? null
+}
+
+export async function requestClientAccess(slug: string, email: string) {
+  const { error } = await supabase.functions.invoke('request-client-access', {
+    body: { slug, email: email.trim().toLowerCase() },
+  })
+  if (error) throw error
+}
+
+export async function claimClientAccess(slug: string): Promise<string> {
+  const { data, error } = await supabase.rpc('claim_client_access', { p_slug: slug })
+  if (error) throw error
   return data
 }
 

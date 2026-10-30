@@ -3,6 +3,7 @@ import './WeightLogger.css'
 
 interface WeightLoggerProps {
   targetKg?: number
+  lastKg?: number
   setsTotal: number
   setsCompleted: number
   onSetComplete: (kg: number) => void
@@ -10,11 +11,12 @@ interface WeightLoggerProps {
 
 export default function WeightLogger({
   targetKg,
+  lastKg,
   setsTotal,
   setsCompleted,
   onSetComplete,
 }: WeightLoggerProps) {
-  const [pesoInput, setPesoInput] = useState(targetKg?.toString() ?? '')
+  const [pesoInput, setPesoInput] = useState((lastKg ?? targetKg)?.toString() ?? '')
   const [justCompleted, setJustCompleted] = useState(false)
 
   const isDone = setsCompleted >= setsTotal
@@ -34,7 +36,7 @@ export default function WeightLogger({
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
-          <span>Todas las series completadas con {pesoInput}kg</span>
+          <span>Todas las series completadas{lastKg != null ? ` con ${lastKg}kg` : ''}</span>
         </div>
       </div>
     )

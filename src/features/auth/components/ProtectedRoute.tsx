@@ -1,12 +1,14 @@
 import { Navigate, useLocation, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import type { ProfileRow } from '../api/auth.api'
 
 interface ProtectedRouteProps {
   children?: React.ReactNode
+  requiredRole?: ProfileRow['role']
 }
 
-export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, loading } = useAuth()
+export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+  const { user, profile, loading } = useAuth()
   const location = useLocation()
 
   if (loading) {
@@ -44,6 +46,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  if (requiredRole && profile?.role !== requiredRole) {
+    return <Navigate to="/" replace />
   }
 
   return children ? <>{children}</> : <Outlet />

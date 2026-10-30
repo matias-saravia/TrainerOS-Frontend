@@ -7,6 +7,8 @@ import ErrorState from '../../../components/ErrorState'
 import EmptyState from '../../../components/EmptyState'
 import ConfirmModal from '../../../components/ConfirmModal'
 import AssignRoutineModal from '../components/AssignRoutineModal'
+import { useAuth } from '../../auth'
+import { getTrainerLink } from '../../../utils/trainerLink'
 import './ClientesPage.css'
 
 type Tab = 'todos' | 'activos' | 'pendientes' | 'vencer'
@@ -36,6 +38,7 @@ function getInitials(nombre: string, apellido: string): string {
 
 export default function ClientesPage() {
   const navigate = useNavigate()
+  const { profile } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('todos')
   const [clientToDelete, setClientToDelete] = useState<ClientRow | null>(null)
   const [clientForRoutines, setClientForRoutines] = useState<ClientRow | null>(null)
@@ -47,8 +50,7 @@ export default function ClientesPage() {
 
   const handleCopyClientLink = (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    const link = `${window.location.origin}/alumno/${clientId}`
-    navigator.clipboard.writeText(link).then(() => {
+    navigator.clipboard.writeText(getTrainerLink(profile?.slug)).then(() => {
       setCopiedClientId(clientId)
       setTimeout(() => setCopiedClientId(null), 2000)
     })

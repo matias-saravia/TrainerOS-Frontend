@@ -8,7 +8,7 @@ import ArmarRutinaPage from '../features/admin/pages/ArmarRutinaPage'
 import FinanzasPage from '../features/admin/pages/FinanzasPage'
 import ExerciseBankPage from '../features/exercises/pages/ExerciseBankPage'
 import NuevoEjercicioPage from '../features/exercises/pages/NuevoEjercicioPage'
-import { LoginPage, ProtectedRoute } from '../features/auth'
+import { LoginPage, ProtectedRoute, RootRedirect, TrainerAccessPage } from '../features/auth'
 // Client (alumno) feature
 import ClientLayout from '../features/client/components/ClientLayout'
 import ClientDashboard from '../features/client/pages/ClientDashboard'
@@ -19,16 +19,20 @@ import NotFoundPage from './NotFoundPage'
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/admin/dashboard" replace />,
+    element: <RootRedirect />,
   },
   {
     path: '/login',
     element: <LoginPage />,
   },
   {
+    path: '/t/:slug',
+    element: <TrainerAccessPage />,
+  },
+  {
     path: '/admin',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute requiredRole="trainer">
         <AdminLayout />
       </ProtectedRoute>
     ),
@@ -48,29 +52,17 @@ const router = createBrowserRouter([
   // ── Client (Alumno) routes — completely separate from admin ──
   {
     path: '/alumno',
-    element: <ClientLayout />,
+    element: (
+      <ProtectedRoute requiredRole="client">
+        <ClientLayout />
+      </ProtectedRoute>
+    ),
     children: [
-      { index: true, element: <Navigate to="/login" replace /> },
-      {
-        path: ':clienteId',
-        element: <ClientDashboard />,
-      },
-      {
-        path: ':clienteId/rutina/:rutinaId',
-        element: <WorkoutSessionPage />,
-      },
-      {
-        path: ':clienteId/rutina/:rutinaId/ejercicio/:ejercicioId',
-        element: <ExerciseDetailPage />,
-      },
-      {
-        path: ':clienteId/sesion/:sesionId',
-        element: <WorkoutSessionPage />,
-      },
-      {
-        path: ':clienteId/sesion/:sesionId/ejercicio/:ejercicioId',
-        element: <ExerciseDetailPage />,
-      },
+      { index: true, element: <ClientDashboard /> },
+      { path: 'sesion/:sesionId', element: <WorkoutSessionPage /> },
+      { path: 'sesion/:sesionId/ejercicio/:ejercicioId', element: <ExerciseDetailPage /> },
+      // Old /alumno/:clienteId links show no data: they fall back to the login
+      { path: '*', element: <Navigate to="/alumno" replace /> },
     ],
   },
   // ── 404 — catch all unmatched routes ──

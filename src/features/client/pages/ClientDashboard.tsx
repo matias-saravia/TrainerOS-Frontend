@@ -1,16 +1,32 @@
-import { useNavigate, useParams } from 'react-router-dom'
-import { Dumbbell, ChevronRight, Calendar } from 'lucide-react'
-import { useClientProfile, useClientAssignedRoutines } from '../hooks/useClientDashboard'
+import { useNavigate } from 'react-router-dom'
+import { Dumbbell, ChevronRight, Calendar, LogOut } from 'lucide-react'
+import {
+  useClientAssignedRoutines,
+  useMyClient,
+  useStartWorkoutSession,
+} from '../hooks/useClientDashboard'
+import { useAuth } from '../../auth'
+import ErrorState from '../../../components/ErrorState'
 import './ClientDashboard.css'
 
 export default function ClientDashboard() {
-  const { clienteId = '' } = useParams()
   const navigate = useNavigate()
+  const { signOut } = useAuth()
 
-  const { data: dbClient, isLoading: loadingClient } = useClientProfile(clienteId)
-  const { data: assignedRoutines = [], isLoading: loadingRoutines } = useClientAssignedRoutines(clienteId)
+  const { data: dbClient, isLoading: loadingClient, error: clientError, refetch } = useMyClient()
+  const { data: assignedRoutines = [], isLoading: loadingRoutines } = useClientAssignedRoutines(dbClient?.id ?? '')
+  const startSession = useStartWorkoutSession()
 
   const isLoading = loadingClient || loadingRoutines
+
+  const handleStart = async (routineId: string) => {
+    try {
+      const sessionId = await startSession.mutateAsync(routineId)
+      navigate(`/alumno/sesion/${sessionId}`)
+    } catch (err) {
+      console.error('Error starting session:', err)
+    }
+  }
 
   const greeting = () => {
     const h = new Date().getHours()
@@ -37,13 +53,24 @@ export default function ClientDashboard() {
     )
   }
 
+  if (clientError) {
+    return (
+      <div className="client-dashboard">
+        <ErrorState message="No pudimos cargar tu programa." onRetry={() => refetch()} />
+      </div>
+    )
+  }
+
   if (!dbClient) {
     return (
       <div className="client-dashboard">
         <div className="cd-not-found">
           <Dumbbell size={40} opacity={0.25} strokeWidth={1} />
-          <h2>Cliente no encontrado</h2>
-          <p>El link que usaste no corresponde a ningún alumno registrado.</p>
+          <h2>Tu cuenta no está vinculada</h2>
+          <p>Entrá desde el link que te pasó tu entrenador.</p>
+          <button type="button" className="cd-routine-card__btn" onClick={() => signOut()}>
+            Cerrar sesión
+          </button>
         </div>
       </div>
     )
@@ -58,11 +85,22 @@ export default function ClientDashboard() {
           <p className="cd-header__saludo">{greeting()},</p>
           <h1 className="cd-header__name">{dbClient.nombre}</h1>
         </div>
-        <div
-          className="cd-header__avatar"
-          aria-label={`${dbClient.nombre} ${dbClient.apellido}`}
-        >
-          {dbClient.nombre[0]}{dbClient.apellido[0]}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            type="button"
+            className="cd-routine-card__btn"
+            onClick={() => signOut()}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+          >
+            <LogOut size={14} strokeWidth={2} />
+          </button>
+          <div
+            className="cd-header__avatar"
+            aria-label={`${dbClient.nombre} ${dbClient.apellido}`}
+          >
+            {dbClient.nombre[0]}{dbClient.apellido[0]}
+          </div>
         </div>
       </header>
 
@@ -155,6 +193,12 @@ export default function ClientDashboard() {
           Mis Rutinas
         </h2>
 
+        {startSession.isError && (
+          <p role="alert" style={{ margin: '0 0 12px', padding: '12px', borderRadius: '6px', background: '#ffdad6', color: '#93000a', fontSize: '14px' }}>
+            No pudimos abrir la rutina. Revisá tu conexión e intentá de nuevo.
+          </p>
+        )}
+
         {assignedRoutines.length === 0 ? (
           <div className="cd-routines-empty">
             <Dumbbell size={32} opacity={0.2} strokeWidth={1} />
@@ -184,10 +228,11 @@ export default function ClientDashboard() {
                     </div>
                     <button
                       className="cd-routine-card__btn"
-                      onClick={() => navigate(`/alumno/${clienteId}/rutina/${routine.id}`)}
-                      aria-label={`Ver rutina ${routine.nombre}`}
+                      onClick={() => handleStart(routine.id)}
+                      disabled={startSession.isPending}
+                      aria-label={`Entrenar rutina ${routine.nombre}`}
                     >
-                      Ver Rutina
+                      Entrenar
                       <ChevronRight size={13} strokeWidth={2} />
                     </button>
                   </div>

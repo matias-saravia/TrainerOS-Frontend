@@ -26,22 +26,6 @@ export interface Routine {
   blocks: Block[]
 }
 
-// ─── Mock Routines ─────────────────────────────────────────────────
-export const MOCK_ROUTINES: Routine[] = [
-  {
-    id: 'r-001',
-    nombre: 'Fuerza Hipertrofia A',
-    dia: 'Día 1: Empuje – Hipertrofia',
-    blocks: [],
-  },
-  {
-    id: 'r-002',
-    nombre: 'Full Body Principiante',
-    dia: 'Día 1: Full Body',
-    blocks: [],
-  },
-]
-
 // ─── Helpers ───────────────────────────────────────────────────────
 export function makeBlockLabel(index: number): string {
   return String.fromCharCode(65 + index) // A, B, C...

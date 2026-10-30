@@ -7,6 +7,8 @@ import {
   useUpcomingSessions,
   useActivityHeatmap,
 } from '../hooks/useDashboardStats'
+import { useAuth } from '../../auth'
+import { getTrainerLink } from '../../../utils/trainerLink'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
 import './DashboardPage.css'
@@ -114,6 +116,8 @@ function getInitials(nombre: string, apellido?: string | null): string {
 export default function DashboardPage() {
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
+  const { profile } = useAuth()
+  const trainerLink = getTrainerLink(profile?.slug)
 
   const { data: stats, isLoading: loadingStats, error: errorStats, refetch: refetchStats } = useDashboardStats()
   const { data: recentClients = [], isLoading: loadingClients } = useRecentClients()
@@ -121,7 +125,7 @@ export default function DashboardPage() {
   const { data: heatmapData = [] } = useActivityHeatmap()
 
   const handleCopyLink = () => {
-    navigator.clipboard?.writeText(window.location.origin + '/alumno')
+    navigator.clipboard?.writeText(trainerLink)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -157,7 +161,7 @@ export default function DashboardPage() {
           <p className="dashboard__sub">Tu link de acceso para alumnos es:</p>
         </div>
         <div className="dashboard__link-chip">
-          <span>{window.location.host}/alumno</span>
+          <span>{trainerLink.replace(/^https?:\/\//, '')}</span>
           <button className="dashboard__copy-btn" onClick={handleCopyLink} aria-label="Copiar link">
             {copied ? <Check size={14} strokeWidth={2} /> : <Copy size={14} strokeWidth={1.5} />}
           </button>
