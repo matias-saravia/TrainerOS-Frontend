@@ -1,20 +1,22 @@
+/* eslint-disable react-refresh/only-export-components -- route table, not a component module */
+import { lazy } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import AdminLayout from '../features/admin/components/AdminLayout'
-import DashboardPage from '../features/admin/pages/DashboardPage'
-import ClientesPage from '../features/admin/pages/ClientesPage'
-import NuevoClientePage from '../features/admin/pages/NuevoClientePage'
-import EntrenamientosPage from '../features/admin/pages/EntrenamientosPage'
-import ArmarRutinaPage from '../features/admin/pages/ArmarRutinaPage'
-import FinanzasPage from '../features/admin/pages/FinanzasPage'
-import ExerciseBankPage from '../features/exercises/pages/ExerciseBankPage'
-import NuevoEjercicioPage from '../features/exercises/pages/NuevoEjercicioPage'
 import { LoginPage, ProtectedRoute, ResetPasswordPage, RootRedirect, TrainerAccessPage } from '../features/auth'
-// Client (alumno) feature
-import ClientLayout from '../features/client/components/ClientLayout'
-import ClientDashboard from '../features/client/pages/ClientDashboard'
-import WorkoutSessionPage from '../features/client/pages/WorkoutSessionPage'
-import ExerciseDetailPage from '../features/client/pages/ExerciseDetailPage'
 import NotFoundPage from './NotFoundPage'
+
+const AdminLayout = lazy(() => import('../features/admin/components/AdminLayout'))
+const DashboardPage = lazy(() => import('../features/admin/pages/DashboardPage'))
+const ClientesPage = lazy(() => import('../features/admin/pages/ClientesPage'))
+const NuevoClientePage = lazy(() => import('../features/admin/pages/NuevoClientePage'))
+const EntrenamientosPage = lazy(() => import('../features/admin/pages/EntrenamientosPage'))
+const ArmarRutinaPage = lazy(() => import('../features/admin/pages/ArmarRutinaPage'))
+const FinanzasPage = lazy(() => import('../features/admin/pages/FinanzasPage'))
+const ExerciseBankPage = lazy(() => import('../features/exercises/pages/ExerciseBankPage'))
+const NuevoEjercicioPage = lazy(() => import('../features/exercises/pages/NuevoEjercicioPage'))
+const ClientLayout = lazy(() => import('../features/client/components/ClientLayout'))
+const ClientDashboard = lazy(() => import('../features/client/pages/ClientDashboard'))
+const WorkoutSessionPage = lazy(() => import('../features/client/pages/WorkoutSessionPage'))
+const ExerciseDetailPage = lazy(() => import('../features/client/pages/ExerciseDetailPage'))
 
 const router = createBrowserRouter([
   {
