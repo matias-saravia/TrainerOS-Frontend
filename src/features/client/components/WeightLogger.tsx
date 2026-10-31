@@ -7,6 +7,7 @@ interface WeightLoggerProps {
   setsTotal: number
   setsCompleted: number
   onSetComplete: (kg: number) => void
+  disabled?: boolean
 }
 
 export default function WeightLogger({
@@ -15,6 +16,7 @@ export default function WeightLogger({
   setsTotal,
   setsCompleted,
   onSetComplete,
+  disabled = false,
 }: WeightLoggerProps) {
   const [pesoInput, setPesoInput] = useState((lastKg ?? targetKg)?.toString() ?? '')
   const [justCompleted, setJustCompleted] = useState(false)
@@ -78,6 +80,7 @@ export default function WeightLogger({
             onChange={e => setPesoInput(e.target.value)}
             onFocus={e => e.target.select()}
             aria-label="Peso en kilogramos"
+            disabled={disabled}
           />
           <span className="weight-logger__unit">kg</span>
         </div>
@@ -86,7 +89,7 @@ export default function WeightLogger({
           className={`weight-logger__check-btn${justCompleted ? ' weight-logger__check-btn--flash' : ''}`}
           onClick={handleComplete}
           aria-label="Marcar serie como completada"
-          disabled={!pesoInput || parseFloat(pesoInput) <= 0}
+          disabled={disabled || !pesoInput || parseFloat(pesoInput) <= 0}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12"/>

@@ -5,6 +5,7 @@ import {
   useMyClient,
   useStartWorkoutSession,
 } from '../hooks/useClientDashboard'
+import { useStudentArea } from '../hooks/useStudentArea'
 import { useAuth } from '../../auth'
 import ErrorState from '../../../components/ErrorState'
 import './ClientDashboard.css'
@@ -12,6 +13,7 @@ import './ClientDashboard.css'
 export default function ClientDashboard() {
   const navigate = useNavigate()
   const { signOut } = useAuth()
+  const { isPreview, basePath } = useStudentArea()
 
   const { data: dbClient, isLoading: loadingClient, error: clientError, refetch } = useMyClient()
   const { data: assignedRoutines = [], isLoading: loadingRoutines } = useClientAssignedRoutines(dbClient?.id ?? '')
@@ -20,9 +22,13 @@ export default function ClientDashboard() {
   const isLoading = loadingClient || loadingRoutines
 
   const handleStart = async (routineId: string) => {
+    if (isPreview) {
+      navigate(`${basePath}/sesion/${routineId}`)
+      return
+    }
     try {
       const sessionId = await startSession.mutateAsync(routineId)
-      navigate(`/alumno/sesion/${sessionId}`)
+      navigate(`${basePath}/sesion/${sessionId}`)
     } catch (err) {
       console.error('Error starting session:', err)
     }
@@ -61,6 +67,17 @@ export default function ClientDashboard() {
     )
   }
 
+  if (!dbClient && isPreview) {
+    return (
+      <div className="client-dashboard">
+        <div className="cd-not-found">
+          <Dumbbell size={40} opacity={0.25} strokeWidth={1} />
+          <h2>No encontramos a este alumno</h2>
+        </div>
+      </div>
+    )
+  }
+
   if (!dbClient) {
     return (
       <div className="client-dashboard">
@@ -86,15 +103,17 @@ export default function ClientDashboard() {
           <h1 className="cd-header__name">{dbClient.nombre}</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            type="button"
-            className="cd-routine-card__btn"
-            onClick={() => signOut()}
-            aria-label="Cerrar sesión"
-            title="Cerrar sesión"
-          >
-            <LogOut size={14} strokeWidth={2} />
-          </button>
+          {!isPreview && (
+            <button
+              type="button"
+              className="cd-routine-card__btn"
+              onClick={() => signOut()}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+            >
+              <LogOut size={14} strokeWidth={2} />
+            </button>
+          )}
           <div
             className="cd-header__avatar"
             aria-label={`${dbClient.nombre} ${dbClient.apellido}`}

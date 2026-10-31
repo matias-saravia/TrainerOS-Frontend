@@ -73,6 +73,18 @@ test('a trainer invites a student, and their progress is saved', async ({ page }
   })
   await trainer.insert('client_routines', { client_id: client.id, routine_id: routineId })
 
+  // ── The trainer previews the student area without saving anything ──
+  await page.goto(`/t/ana-${run}`)
+  await page.getByRole('link', { name: 'Ver como alumno' }).click()
+  await page.getByRole('link', { name: 'Beto Paz' }).click()
+  await expect(page.getByRole('heading', { name: 'Beto' })).toBeVisible()
+  await page.getByRole('button', { name: 'Entrenar rutina Empuje' }).click()
+  await expect(page.getByRole('heading', { name: 'Empuje' })).toBeVisible()
+  await expect(page.getByLabel('Peso en kilogramos')).toBeDisabled()
+  await page.getByRole('button', { name: 'Volver al inicio' }).click()
+  await expect(page).toHaveURL(new RegExp(`/vista-alumno/${client.id}$`))
+  expect(await trainer.select('workout_sessions?select=id')).toEqual([])
+
   // ── The old link style shows nothing without a session ──
   await page.context().clearCookies()
   await page.evaluate(() => localStorage.clear())
@@ -92,6 +104,8 @@ test('a trainer invites a student, and their progress is saved', async ({ page }
 
   // ── A student cannot enter the trainer panel ──
   await page.goto('/admin/clientes')
+  await expect(page).toHaveURL(/\/alumno$/)
+  await page.goto(`/vista-alumno/${client.id}`)
   await expect(page).toHaveURL(/\/alumno$/)
 
   // ── The progress survives a reload ──

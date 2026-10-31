@@ -6,6 +6,7 @@ App gratuita para entrenadores personales: gestionan clientes y rutinas, y cada 
 
 - **Entrenador:** se registra con correo y contraseña en `/login`. Recibe un link propio (`/t/su-nombre`).
 - **Alumno:** el entrenador lo carga con su correo y le pasa el link. El alumno ingresa ese correo y recibe un link de acceso, sin contraseña. Si el correo no fue cargado por ese entrenador, no entra.
+- **Vista previa:** el entrenador puede ver la pantalla de cualquiera de sus alumnos en `/vista-alumno`. Es de solo lectura: no crea sesiones ni registra series.
 
 Los permisos se aplican en la base de datos con Row Level Security. El frontend no es una barrera de seguridad.
 

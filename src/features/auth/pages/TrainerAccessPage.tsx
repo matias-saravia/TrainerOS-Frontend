@@ -83,7 +83,8 @@ export default function TrainerAccessPage() {
       <>
         <h2 className="auth-card__title">Este es el acceso de tus alumnos</h2>
         <p className="auth-card__desc">Tenés la sesión iniciada como entrenador.</p>
-        <Link className="auth-submit-btn" to="/admin/dashboard">Ir a mi panel</Link>
+        <Link className="auth-submit-btn" to="/vista-alumno">Ver como alumno</Link>
+        <Link className="auth-card__desc" to="/admin/dashboard" style={{ textAlign: 'center' }}>Ir a mi panel</Link>
       </>
     )
   } else if (claim.error) {

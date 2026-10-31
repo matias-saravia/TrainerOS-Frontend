@@ -7,13 +7,15 @@ import {
   useWeightHistory,
   useWorkoutSession,
 } from '../hooks/useClientDashboard'
+import { useStudentArea } from '../hooks/useStudentArea'
 import ExerciseHistoryChart from '../components/ExerciseHistoryChart'
 import { parseVideoUrl } from '../../../utils/video'
 import './ExerciseDetailPage.css'
 
 export default function ExerciseDetailPage() {
   const { sesionId = '', ejercicioId = '' } = useParams()
-  const basePath = `/alumno/sesion/${sesionId}`
+  const { isPreview, basePath: areaPath } = useStudentArea()
+  const basePath = `${areaPath}/sesion/${sesionId}`
 
   const navigate = useNavigate()
 
@@ -61,7 +63,7 @@ export default function ExerciseDetailPage() {
   }
 
   const handleSerieComplete = () => {
-    if (!exercise || setsCompleted >= exercise.series) return
+    if (isPreview || !exercise || setsCompleted >= exercise.series) return
     logSet.mutate(
       { id: exercise.id },
       {
@@ -279,7 +281,7 @@ export default function ExerciseDetailPage() {
                 id="btn-serie-completada"
                 className="ed-footer__btn ed-footer__btn--complete"
                 onClick={handleSerieComplete}
-                disabled={logSet.isPending}
+                disabled={isPreview || logSet.isPending}
               >
                 <Check size={18} strokeWidth={2.5} />
                 <span>Serie Completada</span>

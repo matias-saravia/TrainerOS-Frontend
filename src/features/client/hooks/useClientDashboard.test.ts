@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { toSessionExercise, type SessionExerciseWithExercise } from './useClientDashboard'
+import { toPreviewSession, toSessionExercise, type SessionExerciseWithExercise } from './useClientDashboard'
+import type { RoutineBlockWithExercises, RoutineRow } from '../../workouts/hooks/useRoutines'
 
 vi.mock('../../../lib/supabase', () => ({ supabase: {} }))
 vi.mock('../../auth', () => ({ useAuth: () => ({ user: null }) }))
@@ -26,6 +27,33 @@ const row = (overrides: Partial<SessionExerciseWithExercise> = {}) =>
     },
     ...overrides,
   }) as SessionExerciseWithExercise
+
+describe('toPreviewSession', () => {
+  it('keeps the routine order and starts with no progress', () => {
+    const exercise = (id: string, rest_seconds: number | null) => ({
+      id,
+      exercise_id: `ex-${id}`,
+      sets: 3,
+      reps: '10',
+      rest_seconds,
+      notes: null,
+      exercises: null,
+    })
+    const blocks = [
+      { routine_block_exercises: [exercise('a', 60), exercise('b', null)] },
+      { routine_block_exercises: [exercise('c', 30)] },
+    ] as unknown as RoutineBlockWithExercises[]
+
+    const session = toPreviewSession({ id: 'r-1', nombre: 'Empuje' } as RoutineRow, blocks, 'c-1')
+
+    expect(session.client_id).toBe('c-1')
+    expect(session.session_exercises.map(e => [e.id, e.order_index, e.descanso, e.sets_completados])).toEqual([
+      ['a', 0, 60, 0],
+      ['b', 1, 90, 0],
+      ['c', 2, 30, 0],
+    ])
+  })
+})
 
 describe('toSessionExercise', () => {
   it('uses the saved progress of the session', () => {

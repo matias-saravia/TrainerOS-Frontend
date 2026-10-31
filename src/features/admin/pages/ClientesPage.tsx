@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserPlus, UserCircle, Pencil, Trash2, AlertCircle, Link2, Dumbbell } from 'lucide-react'
+import { UserPlus, UserCircle, Pencil, Trash2, AlertCircle, Link2, Dumbbell, Eye } from 'lucide-react'
 import { useClients, useDeleteClient, type ClientRow } from '../hooks/useClients'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
@@ -207,6 +207,14 @@ export default function ClientesPage() {
                     aria-label="Copiar link del alumno"
                   >
                     <Link2 size={15} strokeWidth={1.5} />
+                  </button>
+                  <button
+                    className="icon-action-btn"
+                    title="Ver como alumno"
+                    onClick={() => navigate(`/vista-alumno/${client.id}`)}
+                    aria-label={`Ver como alumno a ${client.nombre}`}
+                  >
+                    <Eye size={15} strokeWidth={1.5} />
                   </button>
                 </div>
 

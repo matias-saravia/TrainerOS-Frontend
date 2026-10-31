@@ -7,6 +7,7 @@ import {
   useMyClient,
   useWorkoutSession,
 } from '../hooks/useClientDashboard'
+import { useStudentArea } from '../hooks/useStudentArea'
 import ExerciseSessionCard from '../components/ExerciseSessionCard'
 import ErrorState from '../../../components/ErrorState'
 import './WorkoutSessionPage.css'
@@ -14,6 +15,7 @@ import './WorkoutSessionPage.css'
 export default function WorkoutSessionPage() {
   const { sesionId = '' } = useParams()
   const navigate = useNavigate()
+  const { isPreview, basePath } = useStudentArea()
 
   const { data: client } = useMyClient()
   const { data: session, isLoading, error, refetch } = useWorkoutSession(sesionId)
@@ -32,13 +34,13 @@ export default function WorkoutSessionPage() {
   const allDone = totalCount > 0 && completedCount === totalCount
 
   const handleFinalize = async () => {
-    if (isFinished) {
-      navigate('/alumno')
+    if (isFinished || isPreview) {
+      navigate(basePath)
       return
     }
     try {
       await completeSession.mutateAsync()
-      navigate('/alumno')
+      navigate(basePath)
     } catch (err) {
       console.error('Error finishing session:', err)
     }
@@ -82,7 +84,7 @@ export default function WorkoutSessionPage() {
         <div className="ws-header__inner">
           <button
             className="ws-header__back"
-            onClick={() => navigate('/alumno')}
+            onClick={() => navigate(basePath)}
             aria-label="Volver al dashboard"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -133,7 +135,9 @@ export default function WorkoutSessionPage() {
                 exercise={ex}
                 index={i}
                 readOnly={isFinished}
-                onSetComplete={(id, kg) => logSet.mutate({ id, kg })}
+                onSetComplete={(id, kg) => {
+                  if (!isPreview) logSet.mutate({ id, kg })
+                }}
                 sesionId={sesionId}
               />
             ))}
@@ -148,10 +152,10 @@ export default function WorkoutSessionPage() {
           className={`ws-footer__btn${allDone ? ' ws-footer__btn--ready' : ''}`}
           onClick={handleFinalize}
           disabled={completeSession.isPending}
-          aria-label={isFinished ? 'Volver al inicio' : 'Finalizar sesión de entrenamiento'}
+          aria-label={isFinished || isPreview ? 'Volver al inicio' : 'Finalizar sesión de entrenamiento'}
         >
           <CheckCheck size={20} strokeWidth={2} />
-          {isFinished ? 'Volver al inicio' : 'Finalizar Sesión'}
+          {isFinished || isPreview ? 'Volver al inicio' : 'Finalizar Sesión'}
         </button>
       </footer>
 

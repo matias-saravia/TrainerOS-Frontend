@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Play, X, ExternalLink, FileText, VideoOff } from 'lucide-react'
 import type { SessionExercise } from '../api/client.api'
 import WeightLogger from './WeightLogger'
+import { useStudentArea } from '../hooks/useStudentArea'
 import { parseVideoUrl } from '../../../utils/video'
 import './ExerciseSessionCard.css'
 
@@ -22,6 +23,7 @@ export default function ExerciseSessionCard({
   readOnly = false,
 }: ExerciseSessionCardProps) {
   const navigate = useNavigate()
+  const { isPreview, basePath } = useStudentArea()
   const [isPlayingInline, setIsPlayingInline] = useState(false)
   const isCompleted = exercise.setsCompletados >= exercise.series
 
@@ -29,7 +31,7 @@ export default function ExerciseSessionCard({
   const hasPlayableVideo = video.type === 'youtube' || video.type === 'vimeo' || video.type === 'direct'
 
   const handleOpenDetail = () => {
-    navigate(`/alumno/sesion/${sesionId}/ejercicio/${exercise.id}`)
+    navigate(`${basePath}/sesion/${sesionId}/ejercicio/${exercise.id}`)
   }
 
   const handleTogglePlay = (e: React.MouseEvent) => {
@@ -220,6 +222,7 @@ export default function ExerciseSessionCard({
             setsTotal={exercise.series}
             setsCompleted={exercise.setsCompletados}
             onSetComplete={kg => onSetComplete(exercise.id, kg)}
+            disabled={isPreview}
           />
         </div>
       )}
