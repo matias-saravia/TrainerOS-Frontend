@@ -1,25 +1,7 @@
-.admin-layout {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-  background: var(--color-buttercream);
-}
+.admin-layout { display: flex; height: 100vh; overflow: hidden; background: var(--color-buttercream); }
+.admin-layout__main { flex: 1; min-width: 0; overflow-y: auto; }
 
-.admin-layout__main {
-  flex: 1;
-  overflow-y: auto;
-  background: var(--color-buttercream);
-}
-
-/* On mobile: add bottom padding so content isn't hidden behind the bottom nav */
 @media (max-width: 767px) {
-  .admin-layout {
-    flex-direction: column;
-    height: 100dvh;
-  }
-
-  .admin-layout__main {
-    /* 64px ≈ bottom nav height */
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
-  }
+  .admin-layout { flex-direction: column; height: 100dvh; }
+  .admin-layout__main { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }

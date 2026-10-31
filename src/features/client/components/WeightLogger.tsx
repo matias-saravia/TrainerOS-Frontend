@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check } from 'lucide-react'
 import './WeightLogger.css'
 
 interface WeightLoggerProps {
@@ -33,49 +34,37 @@ export default function WeightLogger({
 
   if (isDone) {
     return (
-      <div className="weight-logger">
-        <div className="weight-logger__done-row">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          <span>Todas las series completadas{lastKg != null ? ` con ${lastKg}kg` : ''}</span>
-        </div>
-      </div>
+      <p className="weight-logger__done">
+        <Check size={18} strokeWidth={2.5} />
+        Todas las series hechas{lastKg != null ? ` con ${lastKg} kg` : ''}
+      </p>
     )
   }
 
   return (
     <div className="weight-logger">
-      {/* Sets progress dots */}
-      <div className="weight-logger__sets-row">
-        <span className="weight-logger__sets-label">Series</span>
-        <div className="weight-logger__dots" aria-label={`${setsCompleted} de ${setsTotal} series completadas`}>
+      <div className="weight-logger__sets">
+        <div className="weight-logger__ticks" aria-label={`${setsCompleted} de ${setsTotal} series completadas`}>
           {Array.from({ length: setsTotal }).map((_, i) => (
             <span
               key={i}
-              className={`weight-logger__dot${i < setsCompleted ? ' weight-logger__dot--done' : ''}`}
+              className={`weight-logger__tick${
+                i < setsCompleted ? ' weight-logger__tick--done' : i === setsCompleted ? ' weight-logger__tick--now' : ''
+              }`}
             />
           ))}
         </div>
-        <span className="weight-logger__sets-count">{setsCompleted}/{setsTotal}</span>
+        <span className="weight-logger__count">{setsCompleted}/{setsTotal}</span>
       </div>
 
-      {/* Objetivo label */}
-      {targetKg && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <span className="weight-logger__objective">Objetivo: {targetKg}kg</span>
-        </div>
-      )}
-
-      {/* Input + check row — matches mockup */}
-      <div className="weight-logger__input-row">
+      <div className="weight-logger__row">
         <div className="weight-logger__input-wrap">
           <input
             id={`peso-input-${setsCompleted}`}
             className="weight-logger__input"
             type="number"
             inputMode="decimal"
-            placeholder="Peso"
+            placeholder="0"
             value={pesoInput}
             onChange={e => setPesoInput(e.target.value)}
             onFocus={e => e.target.select()}
@@ -86,16 +75,16 @@ export default function WeightLogger({
         </div>
 
         <button
-          className={`weight-logger__check-btn${justCompleted ? ' weight-logger__check-btn--flash' : ''}`}
+          className={`weight-logger__check${justCompleted ? ' weight-logger__check--flash' : ''}`}
           onClick={handleComplete}
           aria-label="Marcar serie como completada"
           disabled={disabled || !pesoInput || parseFloat(pesoInput) <= 0}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
+          <Check size={26} strokeWidth={2.5} />
         </button>
       </div>
+
+      {targetKg != null && <p className="weight-logger__target">Objetivo: {targetKg} kg</p>}
     </div>
   )
 }

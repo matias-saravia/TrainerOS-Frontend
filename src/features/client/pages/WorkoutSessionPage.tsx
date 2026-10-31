@@ -1,10 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import { CheckCheck, Dumbbell } from 'lucide-react'
+import { CheckCheck, ChevronLeft } from 'lucide-react'
 import {
   toSessionExercise,
   useCompleteWorkoutSession,
   useLogWorkoutSet,
-  useMyClient,
   useWorkoutSession,
 } from '../hooks/useClientDashboard'
 import { useStudentArea } from '../hooks/useStudentArea'
@@ -17,21 +16,17 @@ export default function WorkoutSessionPage() {
   const navigate = useNavigate()
   const { isPreview, basePath } = useStudentArea()
 
-  const { data: client } = useMyClient()
   const { data: session, isLoading, error, refetch } = useWorkoutSession(sesionId)
   const logSet = useLogWorkoutSet(sesionId)
   const completeSession = useCompleteWorkoutSession(sesionId)
-
-  const clientName = client ? `${client.nombre} ${client.apellido}`.trim() : ''
-  const clientInitials = client ? `${client.nombre?.[0] || ''}${client.apellido?.[0] || ''}` : ''
 
   const exercises = (session?.session_exercises ?? []).map(toSessionExercise)
   const isFinished = session?.status === 'completed'
 
   const completedCount = exercises.filter(e => e.setsCompletados >= e.series).length
   const totalCount = exercises.length
-  const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
   const allDone = totalCount > 0 && completedCount === totalCount
+  const activeIndex = exercises.findIndex(e => e.setsCompletados < e.series)
 
   const handleFinalize = async () => {
     if (isFinished || isPreview) {
@@ -56,15 +51,15 @@ export default function WorkoutSessionPage() {
 
   if (isLoading) {
     return (
-      <div className="workout-session-page" style={{ justifyContent: 'center', alignItems: 'center' }}>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>Cargando sesión...</p>
+      <div className="workout-session-page">
+        <p className="ws-message" role="status">Cargando sesión…</p>
       </div>
     )
   }
 
   if (error || !session) {
     return (
-      <div className="workout-session-page" style={{ justifyContent: 'center', padding: '24px' }}>
+      <div className="workout-session-page">
         <ErrorState message="No pudimos cargar esta sesión." onRetry={() => refetch()} />
       </div>
     )
@@ -78,18 +73,14 @@ export default function WorkoutSessionPage() {
 
   return (
     <div className="workout-session-page">
-
-      {/* ── Sticky Top Header ── */}
       <header className="ws-header">
         <div className="ws-header__inner">
           <button
             className="ws-header__back"
             onClick={() => navigate(basePath)}
-            aria-label="Volver al dashboard"
+            aria-label="Volver a mis rutinas"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
+            <ChevronLeft size={24} strokeWidth={1.75} />
           </button>
 
           <div className="ws-header__info">
@@ -97,36 +88,37 @@ export default function WorkoutSessionPage() {
             <p className="ws-header__date">{formatDate()}</p>
           </div>
 
-          {/* Avatar */}
-          <div className="ws-header__avatar" aria-label={clientName}>
-            {clientInitials}
-          </div>
+          <p className="ws-header__count" aria-label={`${completedCount} de ${totalCount} ejercicios completados`}>
+            {completedCount}<small>/{totalCount}</small>
+          </p>
         </div>
 
-        {/* Progress bar */}
-        <div className="ws-header__progress-bar" role="progressbar" aria-valuenow={completedCount} aria-valuemin={0} aria-valuemax={totalCount}>
-          <div
-            className="ws-header__progress-fill"
-            style={{ width: `${progressPct}%` }}
-          />
+        <div
+          className="ws-header__progress-bar"
+          role="progressbar"
+          aria-valuenow={completedCount}
+          aria-valuemin={0}
+          aria-valuemax={totalCount}
+        >
+          {exercises.map((ex, i) => (
+            <span
+              key={ex.id}
+              className={`ws-header__tick${
+                ex.setsCompletados >= ex.series
+                  ? ' ws-header__tick--done'
+                  : i === activeIndex
+                    ? ' ws-header__tick--now'
+                    : ''
+              }`}
+            />
+          ))}
         </div>
-        <p className="ws-header__progress-label">
-          {completedCount}/{totalCount} ejercicios completados
-        </p>
       </header>
 
-      {/* ── Exercise List ── */}
       <main className="ws-content">
-        {saveError && (
-          <p role="alert" style={{ margin: '0 0 12px', padding: '12px', borderRadius: '6px', background: '#ffdad6', color: '#93000a', fontSize: '14px' }}>
-            {saveError}
-          </p>
-        )}
+        {saveError && <p role="alert" className="alert ws-alert">{saveError}</p>}
         {exercises.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 16px', color: 'rgba(255,255,255,0.5)' }}>
-            <Dumbbell size={36} opacity={0.3} strokeWidth={1} style={{ margin: '0 auto 12px' }} />
-            <p style={{ margin: 0, fontSize: '14px' }}>Esta rutina no contiene ejercicios cargados todavía.</p>
-          </div>
+          <p className="ws-empty">Esta rutina todavía no tiene ejercicios.</p>
         ) : (
           <div className="ws-exercises">
             {exercises.map((ex, i) => (
@@ -134,6 +126,7 @@ export default function WorkoutSessionPage() {
                 key={ex.id}
                 exercise={ex}
                 index={i}
+                isActive={i === activeIndex && !isFinished}
                 readOnly={isFinished}
                 onSetComplete={(id, kg) => {
                   if (!isPreview) logSet.mutate({ id, kg })
@@ -145,7 +138,6 @@ export default function WorkoutSessionPage() {
         )}
       </main>
 
-      {/* ── Sticky Footer: Finalizar ── */}
       <footer className="ws-footer">
         <button
           id="btn-finalizar-sesion"
@@ -155,10 +147,9 @@ export default function WorkoutSessionPage() {
           aria-label={isFinished || isPreview ? 'Volver al inicio' : 'Finalizar sesión de entrenamiento'}
         >
           <CheckCheck size={20} strokeWidth={2} />
-          {isFinished || isPreview ? 'Volver al inicio' : 'Finalizar Sesión'}
+          {isFinished || isPreview ? 'Volver al inicio' : 'Finalizar sesión'}
         </button>
       </footer>
-
     </div>
   )
 }

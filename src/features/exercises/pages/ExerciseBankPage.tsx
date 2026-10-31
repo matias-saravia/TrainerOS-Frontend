@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Plus, Dumbbell } from 'lucide-react'
+import { Search, Plus } from 'lucide-react'
 import { MUSCLE_GROUPS, type MuscleGroup } from '../api/exercises.api'
 import { useExercises } from '../hooks/useExercises'
 import type { Tables } from '../../../lib/supabase'
@@ -30,22 +30,6 @@ export default function ExerciseBankPage() {
     navigate(`/admin/entrenamientos/ejercicios/${ex.id}/editar`)
   }
 
-  if (isLoading) {
-    return (
-      <div className="exercise-bank">
-        <div className="exercise-bank__header">
-          <div className="exercise-bank__header-left">
-            <div className="exercise-bank__title-row">
-              <Dumbbell size={22} strokeWidth={1.5} className="exercise-bank__title-icon" />
-              <h1 className="exercise-bank__title">Banco de Ejercicios</h1>
-            </div>
-          </div>
-        </div>
-        <LoadingSkeleton count={6} variant="card" />
-      </div>
-    )
-  }
-
   if (error) {
     return (
       <div className="exercise-bank">
@@ -56,84 +40,79 @@ export default function ExerciseBankPage() {
 
   return (
     <div className="exercise-bank">
-      {/* ── Header ── */}
-      <div className="exercise-bank__header">
-        <div className="exercise-bank__header-left">
-          <div className="exercise-bank__title-row">
-            <Dumbbell size={22} strokeWidth={1.5} className="exercise-bank__title-icon" />
-            <h1 className="exercise-bank__title">Banco de Ejercicios</h1>
-          </div>
-          <p className="exercise-bank__subtitle">
-            {exercises.length} ejercicios en tu biblioteca
-          </p>
-        </div>
+      <header className="page-header">
+        <h1 className="page-header__title">Ejercicios</h1>
         <button
           id="btn-nuevo-ejercicio"
-          className="btn-primary exercise-bank__cta"
+          className="btn-primary"
           onClick={() => navigate('/admin/entrenamientos/ejercicios/nuevo')}
         >
-          <Plus size={16} strokeWidth={2} />
-          Nuevo Ejercicio
+          <Plus size={16} strokeWidth={1.75} />
+          Nuevo ejercicio
         </button>
-      </div>
+      </header>
 
-      {/* ── Search + Filters ── */}
-      <div className="exercise-bank__toolbar">
-        <div className="exercise-bank__search-wrap">
-          <Search size={15} strokeWidth={1.5} className="exercise-bank__search-icon" />
-          <input
-            id="exercise-search"
-            className="exercise-bank__search"
-            type="text"
-            placeholder="Buscar ejercicio…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+      <section className="sheet exercise-bank__sheet">
+        <div className="exercise-bank__toolbar">
+          <div className="exercise-bank__search-wrap">
+            <Search size={16} strokeWidth={1.5} className="exercise-bank__search-icon" />
+            <input
+              id="exercise-search"
+              className="exercise-bank__search"
+              type="search"
+              placeholder="Buscar ejercicio"
+              aria-label="Buscar ejercicio"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="tab-row" role="tablist" aria-label="Filtrar por grupo muscular">
+            {(['Todos', ...MUSCLE_GROUPS] as const).map(g => (
+              <button
+                key={g}
+                role="tab"
+                aria-selected={activeFilter === g}
+                className={`tab-btn${activeFilter === g ? ' tab-btn--active' : ''}`}
+                onClick={() => setActiveFilter(g as MuscleGroup | 'Todos')}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="exercise-bank__filters">
-          {(['Todos', ...MUSCLE_GROUPS] as const).map(g => (
+        {isLoading ? (
+          <LoadingSkeleton count={6} variant="list" />
+        ) : filtered.length === 0 ? (
+          <div className="exercise-bank__empty">
+            <p>No encontramos ejercicios con esa búsqueda.</p>
             <button
-              key={g}
-              className={`filter-chip${activeFilter === g ? ' filter-chip--active' : ''}`}
-              onClick={() => setActiveFilter(g as MuscleGroup | 'Todos')}
+              className="btn-primary"
+              onClick={() => navigate('/admin/entrenamientos/ejercicios/nuevo')}
             >
-              {g}
+              <Plus size={16} strokeWidth={1.75} />
+              Nuevo ejercicio
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Exercise Grid ── */}
-      {filtered.length === 0 ? (
-        <div className="exercise-bank__empty">
-          <Dumbbell size={40} strokeWidth={1} opacity={0.3} />
-          <p>No se encontraron ejercicios</p>
-          <button
-            className="btn-primary"
-            onClick={() => navigate('/admin/entrenamientos/ejercicios/nuevo')}
-          >
-            <Plus size={14} strokeWidth={2} />
-            Crear el primero
-          </button>
-        </div>
-      ) : (
-        <div className="exercise-bank__grid">
-          {filtered.map(ex => (
-            <ExerciseCard key={ex.id} exercise={ex} onEdit={ex.trainer_id ? handleEdit : undefined} />
-          ))}
-        </div>
-      )}
-
-      {/* ── Mobile FAB ── */}
-      <button
-        id="fab-nuevo-ejercicio"
-        className="exercise-bank__fab"
-        onClick={() => navigate('/admin/entrenamientos/ejercicios/nuevo')}
-        aria-label="Nuevo Ejercicio"
-      >
-        <Plus size={24} strokeWidth={2} />
-      </button>
+          </div>
+        ) : (
+          <table className="hoja">
+            <thead>
+              <tr>
+                <th>Ejercicio</th>
+                <th>Grupo muscular</th>
+                <th className="exercise-row__level">Dificultad</th>
+                <th className="exercise-row__howto">Instrucción</th>
+                <th className="hoja__end" aria-label="Acciones" />
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(ex => (
+                <ExerciseCard key={ex.id} exercise={ex} onEdit={ex.trainer_id ? handleEdit : undefined} />
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
     </div>
   )
 }

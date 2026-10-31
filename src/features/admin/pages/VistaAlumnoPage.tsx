@@ -43,7 +43,7 @@ export default function VistaAlumnoPage() {
         </>
       )}
       <p style={{ marginTop: 20 }}>
-        <Link to="/admin/dashboard" style={{ color: 'inherit' }}>Volver al panel</Link>
+        <Link to="/admin/dashboard" className="vista-alumno__back">Volver al panel</Link>
       </p>
     </div>
   )

@@ -127,30 +127,30 @@ export default function NuevoClientePage() {
     if (!state.nombre.trim()) {
       errs.nombre = 'El nombre completo es obligatorio.'
     } else if (state.nombre.trim().length < 3) {
-      errs.nombre = 'Ingresa al menos 3 caracteres.'
+      errs.nombre = 'Escribí al menos 3 caracteres.'
     }
 
     if (!state.email.trim()) {
       errs.email = 'El correo electrónico es obligatorio.'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) {
-      errs.email = 'Ingresa un formato de correo válido (ej. alumno@email.com).'
+      errs.email = 'Escribí un correo válido, por ejemplo alumno@email.com.'
     }
 
     if (state.telefono.trim() && !/^[+0-9\s-]{6,20}$/.test(state.telefono.trim())) {
-      errs.telefono = 'Ingresa un número de teléfono válido (mínimo 6 dígitos).'
+      errs.telefono = 'Escribí un teléfono válido, de al menos 6 dígitos.'
     }
 
     if (state.peso) {
       const p = parseFloat(state.peso)
       if (isNaN(p) || p <= 20 || p >= 350) {
-        errs.peso = 'Ingresa un peso válido entre 20 y 350 kg.'
+        errs.peso = 'Escribí un peso válido entre 20 y 350 kg.'
       }
     }
 
     if (state.altura) {
       const a = parseFloat(state.altura)
       if (isNaN(a) || a <= 80 || a >= 250) {
-        errs.altura = 'Ingresa una altura válida entre 80 y 250 cm.'
+        errs.altura = 'Escribí una altura válida entre 80 y 250 cm.'
       }
     }
 
@@ -200,7 +200,7 @@ export default function NuevoClientePage() {
     }
 
     if (!user) {
-      setSubmitError('Debes haber iniciado sesión como entrenador para registrar o editar un cliente.')
+      setSubmitError('Iniciá sesión como entrenador para guardar alumnos.')
       return
     }
 
@@ -245,7 +245,7 @@ export default function NuevoClientePage() {
       console.error(isEdit ? 'Error updating client:' : 'Error creating client:', err)
       const message = (err as { message?: string })?.message ?? String(err)
       if (message.includes('idx_clients_trainer_email')) {
-        setSubmitError('Ya tenés un cliente con ese correo electrónico.')
+        setSubmitError('Ya tenés un alumno con ese correo electrónico.')
         return
       }
       setSubmitError(message || `Error al ${isEdit ? 'actualizar' : 'guardar'} el cliente en Supabase.`)
@@ -260,7 +260,7 @@ export default function NuevoClientePage() {
     } catch (err: unknown) {
       console.error('Error deleting client:', err)
       const message = err instanceof Error ? err.message : String(err)
-      setSubmitError(message || 'Error al eliminar el cliente.')
+      setSubmitError(message || 'No pudimos eliminar al alumno.')
       setShowDeleteModal(false)
     }
   }
@@ -269,7 +269,7 @@ export default function NuevoClientePage() {
     return (
       <div className="nuevo-cliente-page">
         <div className="page-header page-header--border">
-          <h1 className="page-header__title">Cargando Cliente...</h1>
+          <h1 className="page-header__title">Cargando alumno…</h1>
         </div>
         <div style={{ padding: '24px' }}>
           <LoadingSkeleton count={4} variant="card" />
@@ -282,11 +282,11 @@ export default function NuevoClientePage() {
     return (
       <div className="nuevo-cliente-page">
         <div className="page-header page-header--border">
-          <h1 className="page-header__title">Editar Cliente</h1>
+          <h1 className="page-header__title">Editar alumno</h1>
         </div>
         <div style={{ padding: '24px' }}>
           <ErrorState
-            message={clientFetchError.message || 'No se pudo cargar la información del cliente.'}
+            message={clientFetchError.message || 'No pudimos cargar a este alumno.'}
             onRetry={() => navigate('/admin/clientes')}
           />
         </div>
@@ -301,15 +301,16 @@ export default function NuevoClientePage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             type="button"
-            className="icon-action-btn"
+            className="icon-action-btn page-header__back"
             title="Volver"
+            aria-label="Volver a alumnos"
             onClick={() => navigate('/admin/clientes')}
           >
-            <ArrowLeft size={16} strokeWidth={1.5} />
+            <ArrowLeft size={20} strokeWidth={1.75} />
           </button>
           <div>
             <h1 className="page-header__title">
-              {isEdit ? 'Editar Cliente' : 'Añadir Nuevo Cliente'}
+              {isEdit ? 'Editar alumno' : 'Nuevo alumno'}
             </h1>
             {isEdit && existingClient && (
               <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-dusty-blue)' }}>
@@ -327,7 +328,7 @@ export default function NuevoClientePage() {
             disabled={isSubmitting || deleteClient.isPending}
           >
             <Trash2 size={16} strokeWidth={1.5} />
-            Eliminar Cliente
+            Eliminar alumno
           </button>
         )}
       </div>
@@ -361,7 +362,7 @@ export default function NuevoClientePage() {
           </div>
           <div className="form-grid form-grid--2">
             <div className="form-field">
-              <label className="form-label" htmlFor="nombre">Nombre Completo *</label>
+              <label className="form-label" htmlFor="nombre">Nombre completo *</label>
               <input
                 id="nombre"
                 className={`form-input ${errors.nombre && touched.nombre ? 'form-input--error' : ''}`}
@@ -379,7 +380,7 @@ export default function NuevoClientePage() {
               )}
             </div>
             <div className="form-field">
-              <label className="form-label" htmlFor="email">Correo Electrónico *</label>
+              <label className="form-label" htmlFor="email">Correo *</label>
               <input
                 id="email"
                 className={`form-input ${errors.email && touched.email ? 'form-input--error' : ''}`}
@@ -414,7 +415,7 @@ export default function NuevoClientePage() {
               )}
             </div>
             <div className="form-field">
-              <label className="form-label" htmlFor="fechaNacimiento">Fecha de Nacimiento</label>
+              <label className="form-label" htmlFor="fechaNacimiento">Fecha de nacimiento</label>
               <input
                 id="fechaNacimiento"
                 className="form-input"
@@ -434,7 +435,7 @@ export default function NuevoClientePage() {
           </div>
           <div className="form-grid form-grid--1">
             <div className="form-field">
-              <label className="form-label" htmlFor="tipoPlan">Tipo de Plan</label>
+              <label className="form-label" htmlFor="tipoPlan">Plan</label>
               <select
                 id="tipoPlan"
                 className="form-input"
@@ -448,7 +449,7 @@ export default function NuevoClientePage() {
               </select>
             </div>
             <div className="form-field">
-              <label className="form-label" htmlFor="fechaInicio">Fecha de Inicio</label>
+              <label className="form-label" htmlFor="fechaInicio">Fecha de inicio</label>
               <input
                 id="fechaInicio"
                 className="form-input"
@@ -458,7 +459,7 @@ export default function NuevoClientePage() {
               />
             </div>
             <div className="form-field">
-              <label className="form-label">Estado de Pago</label>
+              <label className="form-label">Estado de pago</label>
               <div className="radio-group">
                 {(['pagado', 'pendiente'] as const).map(v => (
                   <label key={v} className="radio-label">
@@ -481,11 +482,11 @@ export default function NuevoClientePage() {
         {/* Bottom two-col sections */}
         <div className="form-two-col">
 
-          {/* ── Perfil Físico ── */}
+          {/* ── Perfil físico ── */}
           <div className="form-section">
             <div className="form-section__heading">
               <Activity size={18} strokeWidth={1.5} className="form-section__icon" />
-              <h2 className="form-section__title">Perfil Físico</h2>
+              <h2 className="form-section__title">Perfil físico</h2>
             </div>
             <div className="form-grid form-grid--2">
               <div className="form-field">
@@ -557,15 +558,15 @@ export default function NuevoClientePage() {
             </div>
           </div>
 
-          {/* ── Objetivos y Notas ── */}
+          {/* ── Objetivos y notas ── */}
           <div className="form-section">
             <div className="form-section__heading">
               <Flag size={18} strokeWidth={1.5} className="form-section__icon" />
-              <h2 className="form-section__title">Objetivos y Notas</h2>
+              <h2 className="form-section__title">Objetivos y notas</h2>
             </div>
             <div className="form-grid form-grid--1">
               <div className="form-field">
-                <label className="form-label" htmlFor="objetivo">Objetivo Principal</label>
+                <label className="form-label" htmlFor="objetivo">Objetivo</label>
                 <input
                   id="objetivo"
                   className="form-input"
@@ -612,7 +613,7 @@ export default function NuevoClientePage() {
               disabled={isSubmitting || deleteClient.isPending}
             >
               <Trash2 size={16} strokeWidth={1.5} />
-              Eliminar Cliente
+              Eliminar alumno
             </button>
           )}
           <div className="form-footer__right">
@@ -635,7 +636,7 @@ export default function NuevoClientePage() {
                   : 'Guardando...'
                 : isEdit
                   ? 'Guardar Cambios'
-                  : 'Guardar Cliente'}
+                  : 'Guardar alumno'}
             </button>
           </div>
         </div>
@@ -660,7 +661,7 @@ export default function NuevoClientePage() {
                 onClick={handleCopyLink}
                 title="Copiar link"
               >
-                {linkCopied ? '✓ Copiado' : 'Copiar Link'}
+                {linkCopied ? 'Copiado' : 'Copiar Link'}
               </button>
             </div>
           </div>
@@ -686,7 +687,7 @@ export default function NuevoClientePage() {
           ) : assignedRoutines.length === 0 ? (
             <div className="assigned-routines__empty">
               <Dumbbell size={28} opacity={0.3} strokeWidth={1} />
-              <p>Este cliente no tiene rutinas asignadas aún.</p>
+              <p>Este alumno todavía no tiene rutinas asignadas.</p>
             </div>
           ) : (
             <div className="assigned-routines__list">
@@ -719,9 +720,9 @@ export default function NuevoClientePage() {
       {/* Modal de confirmación para eliminar cliente */}
       <ConfirmModal
         isOpen={showDeleteModal}
-        title="Eliminar Cliente"
+        title="Eliminar alumno"
         variant="danger"
-        confirmText="Eliminar Cliente"
+        confirmText="Eliminar alumno"
         cancelText="Cancelar"
         isLoading={deleteClient.isPending}
         onConfirm={handleDelete}
@@ -734,7 +735,7 @@ export default function NuevoClientePage() {
               Esta acción no se puede deshacer y borrará su información asociada.
             </p>
           ) : (
-            '¿Estás seguro de que deseas eliminar a este cliente permanentemente?'
+            '¿Querés eliminar a este alumno? No se puede deshacer.'
           )
         }
       />

@@ -19,7 +19,6 @@
   background: var(--color-midnight-blue);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-overlay);
 }
 
 /* Card Header */
@@ -32,7 +31,7 @@
 }
 
 .client-preview__exercise-name {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 18px;
   font-weight: 700;
   color: #ffffff;
@@ -148,3 +147,10 @@
   font-style: italic;
   font-family: var(--font-body);
 }
+
+/* ─── Hoja de series ─────────────────────────────────────── */
+.client-preview__label { font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--color-midnight-blue); }
+.client-preview__card { background: var(--color-deep-navy); }
+.client-preview__exercise-name { font-size: 32px; font-weight: 800; line-height: 1; }
+.client-preview__instructions-empty { font-style: normal; color: var(--on-navy-2); }
+.client-preview__instructions-label { font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--on-navy-2); }

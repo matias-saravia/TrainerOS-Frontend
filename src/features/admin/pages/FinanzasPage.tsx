@@ -1,25 +1,17 @@
-import { CreditCard, Hammer } from 'lucide-react'
 import './PlaceholderPage.css'
 
 export default function FinanzasPage() {
   return (
     <div className="placeholder-page">
-      <div className="page-header">
+      <header className="page-header">
         <h1 className="page-header__title">Finanzas</h1>
-      </div>
-      <div className="placeholder-content">
-        <div className="placeholder-icon">
-          <CreditCard size={48} strokeWidth={1} />
-        </div>
-        <h2 className="placeholder-title">Módulo en construcción</h2>
+      </header>
+      <div className="sheet placeholder-content">
+        <h2 className="placeholder-title">Todavía no está listo</h2>
         <p className="placeholder-desc">
-          El panel de finanzas te permitirá controlar ingresos, pagos pendientes
-          y el estado de suscripción de cada cliente en un solo lugar.
+          Acá vas a poder controlar ingresos, pagos pendientes y el estado de cada alumno.
+          Por ahora no hay nada para cargar.
         </p>
-        <div className="placeholder-badge">
-          <Hammer size={14} strokeWidth={1.5} />
-          Próximamente
-        </div>
       </div>
     </div>
   )

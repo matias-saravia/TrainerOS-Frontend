@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Dumbbell, ChevronRight, Calendar, LogOut } from 'lucide-react'
+import { ChevronRight, LogOut } from 'lucide-react'
 import {
   useClientAssignedRoutines,
   useMyClient,
@@ -9,6 +9,10 @@ import { useStudentArea } from '../hooks/useStudentArea'
 import { useAuth } from '../../auth'
 import ErrorState from '../../../components/ErrorState'
 import './ClientDashboard.css'
+
+function normalizeDay(text: string): string {
+  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
 
 export default function ClientDashboard() {
   const navigate = useNavigate()
@@ -41,20 +45,10 @@ export default function ClientDashboard() {
     return 'Buenas noches'
   }
 
-  const weekProgress = dbClient
-    ? (dbClient.semana_actual - 1) / dbClient.total_semanas
-    : 0
-
-  const RING_R = 44
-  const RING_CIRC = 2 * Math.PI * RING_R
-
   if (isLoading) {
     return (
       <div className="client-dashboard">
-        <div className="cd-loading">
-          <div className="cd-loading__spinner" />
-          <p>Cargando tu programa...</p>
-        </div>
+        <p className="cd-message" role="status">Cargando tu programa…</p>
       </div>
     )
   }
@@ -70,9 +64,8 @@ export default function ClientDashboard() {
   if (!dbClient && isPreview) {
     return (
       <div className="client-dashboard">
-        <div className="cd-not-found">
-          <Dumbbell size={40} opacity={0.25} strokeWidth={1} />
-          <h2>No encontramos a este alumno</h2>
+        <div className="cd-message">
+          <h2 className="cd-message__title">No encontramos a este alumno</h2>
         </div>
       </div>
     )
@@ -81,11 +74,10 @@ export default function ClientDashboard() {
   if (!dbClient) {
     return (
       <div className="client-dashboard">
-        <div className="cd-not-found">
-          <Dumbbell size={40} opacity={0.25} strokeWidth={1} />
-          <h2>Tu cuenta no está vinculada</h2>
+        <div className="cd-message">
+          <h2 className="cd-message__title">Tu cuenta no está vinculada</h2>
           <p>Entrá desde el link que te pasó tu entrenador.</p>
-          <button type="button" className="cd-routine-card__btn" onClick={() => signOut()}>
+          <button type="button" className="cd-outline-btn" onClick={() => signOut()}>
             Cerrar sesión
           </button>
         </div>
@@ -93,177 +85,90 @@ export default function ClientDashboard() {
     )
   }
 
+  const routines = assignedRoutines.filter(ar => ar.routines)
+  const todayName = normalizeDay(new Date().toLocaleDateString('es-AR', { weekday: 'long' }))
+  const nextRoutine =
+    routines.find(ar => normalizeDay(ar.routines?.dia ?? '').includes(todayName)) ?? routines[0]
+
   return (
     <div className="client-dashboard">
-
-      {/* ── Top Header ── */}
       <header className="cd-header">
-        <div className="cd-header__greeting">
-          <p className="cd-header__saludo">{greeting()},</p>
+        <div>
+          <p className="cd-header__greeting">{greeting()},</p>
           <h1 className="cd-header__name">{dbClient.nombre}</h1>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {!isPreview && (
-            <button
-              type="button"
-              className="cd-routine-card__btn"
-              onClick={() => signOut()}
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
-            >
-              <LogOut size={14} strokeWidth={2} />
-            </button>
-          )}
-          <div
-            className="cd-header__avatar"
-            aria-label={`${dbClient.nombre} ${dbClient.apellido}`}
+        {!isPreview && (
+          <button
+            type="button"
+            className="cd-icon-btn"
+            onClick={() => signOut()}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
           >
-            {dbClient.nombre[0]}{dbClient.apellido[0]}
-          </div>
-        </div>
+            <LogOut size={20} strokeWidth={1.5} />
+          </button>
+        )}
       </header>
 
-      {/* ── Bento Grid ── */}
-      <div className="cd-bento">
-
-        {/* ── Weekly Ring Hero — horizontal layout ── */}
-        <div className="cd-bento-card cd-bento-card--ring">
-          <div className="cd-ring-wrap">
-            <svg
-              className="cd-ring-svg"
-              viewBox="0 0 100 100"
-              aria-label={`Semana ${dbClient.semana_actual} de ${dbClient.total_semanas}`}
-            >
-              {/* Track */}
-              <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(82,103,125,0.18)" strokeWidth="9" />
-              {/* Progress */}
-              <circle
-                cx="50" cy="50" r={RING_R}
-                fill="none"
-                stroke="#1C2E4A"
-                strokeWidth="9"
-                strokeLinecap="round"
-                strokeDasharray={RING_CIRC}
-                strokeDashoffset={RING_CIRC * (1 - weekProgress)}
-                transform="rotate(-90 50 50)"
-                style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1)' }}
-              />
-              {/* Inner text */}
-              <text x="50" y="45" textAnchor="middle" fontSize="17" fontWeight="700" fontFamily="'Plus Jakarta Sans', sans-serif" fill="#ffffff">
-                {dbClient.semana_actual}/{dbClient.total_semanas}
-              </text>
-              <text x="50" y="58" textAnchor="middle" fontSize="7.5" fontFamily="'Inter', sans-serif" fill="rgba(82,103,125,0.8)" letterSpacing="0.08em">
-                SEMANAS
-              </text>
-            </svg>
-          </div>
-
-          <div className="cd-ring-info">
-            <p className="cd-ring-info__eyebrow">Progreso</p>
-            <p className="cd-ring-info__headline">
-              Semana {dbClient.semana_actual}
-            </p>
-            <p className="cd-ring-label">
-              {Math.round(weekProgress * 100)}% del programa<br />completado
-            </p>
-          </div>
+      {/* Program: one tick per week */}
+      <section className="cd-program" aria-label={`Semana ${dbClient.semana_actual} de ${dbClient.total_semanas}`}>
+        <p className="cd-program__label">
+          Semana <strong>{dbClient.semana_actual}</strong> de {dbClient.total_semanas}
+        </p>
+        <div className="cd-program__ticks" aria-hidden="true">
+          {Array.from({ length: dbClient.total_semanas }, (_, i) => (
+            <span
+              key={i}
+              className={`cd-program__tick${
+                i + 1 < dbClient.semana_actual
+                  ? ' cd-program__tick--done'
+                  : i + 1 === dbClient.semana_actual
+                    ? ' cd-program__tick--now'
+                    : ''
+              }`}
+            />
+          ))}
         </div>
+      </section>
 
-        {/* Program progress card */}
-        <div className="cd-bento-card cd-bento-card--program">
-          <p className="cd-bento-card__label">Programa</p>
-          <p className="cd-program__weeks">
-            <strong>{dbClient.semana_actual}</strong>
-            de {dbClient.total_semanas} sem.
-          </p>
-          <div className="cd-program__bar-wrap" aria-label={`Semana ${dbClient.semana_actual} de ${dbClient.total_semanas}`}>
-            <div className="cd-program__bar">
-              <div
-                className="cd-program__bar-fill"
-                style={{ width: `${weekProgress * 100}%` }}
-              />
-            </div>
-          </div>
-          <p className="cd-program__pct">
-            {Math.round(weekProgress * 100)}% completado
-          </p>
-        </div>
-
-        {/* Routines count card */}
-        <div className="cd-bento-card cd-bento-card--program">
-          <p className="cd-bento-card__label">Mis Rutinas</p>
-          <p className="cd-program__weeks">
-            <strong>{assignedRoutines.length}</strong>
-            {assignedRoutines.length !== 1 ? ' asignadas' : ' asignada'}
-          </p>
-          <p className="cd-program__pct" style={{ marginTop: 4 }}>
-            {assignedRoutines.length === 0
-              ? 'Tu entrenador aún no asignó rutinas'
-              : 'Ver rutinas abajo ↓'}
-          </p>
-        </div>
-
-      </div>
-
-      {/* ── Rutinas Asignadas ── */}
-      <section className="cd-routines-section">
-        <h2 className="cd-routines-section__title">
-          <Dumbbell size={16} strokeWidth={1.5} />
-          Mis Rutinas
-        </h2>
+      <section className="cd-routines">
+        <h2 className="cd-routines__title">Mis rutinas</h2>
 
         {startSession.isError && (
-          <p role="alert" style={{ margin: '0 0 12px', padding: '12px', borderRadius: '6px', background: '#ffdad6', color: '#93000a', fontSize: '14px' }}>
+          <p role="alert" className="alert cd-routines__alert">
             No pudimos abrir la rutina. Revisá tu conexión e intentá de nuevo.
           </p>
         )}
 
-        {assignedRoutines.length === 0 ? (
-          <div className="cd-routines-empty">
-            <Dumbbell size={32} opacity={0.2} strokeWidth={1} />
-            <p>Tu entrenador aún no te asignó ninguna rutina.</p>
-            <span>¡Pronto aparecerán aquí!</span>
-          </div>
+        {routines.length === 0 ? (
+          <p className="cd-routines__empty">Tu entrenador todavía no te asignó rutinas. Cuando lo haga, van a aparecer acá.</p>
         ) : (
-          <div className="cd-routines-grid">
-            {assignedRoutines.map(ar => {
-              const routine = ar.routines
-              if (!routine) return null
+          <ul className="cd-routines__list">
+            {routines.map(ar => {
+              const routine = ar.routines!
+              const isNext = ar.id === nextRoutine?.id
               return (
-                <div key={ar.id} className="cd-routine-card">
-                  <div className="cd-routine-card__accent" />
-                  <div className="cd-routine-card__body">
-                    <div className="cd-routine-card__info">
-                      <h3 className="cd-routine-card__name">{routine.nombre}</h3>
-                      {routine.dia && (
-                        <div className="cd-routine-card__day">
-                          <Calendar size={11} strokeWidth={1.5} />
-                          {routine.dia}
-                        </div>
-                      )}
-                      {routine.descripcion && (
-                        <p className="cd-routine-card__desc">{routine.descripcion}</p>
-                      )}
-                    </div>
-                    <button
-                      className="cd-routine-card__btn"
-                      onClick={() => handleStart(routine.id)}
-                      disabled={startSession.isPending}
-                      aria-label={`Entrenar rutina ${routine.nombre}`}
-                    >
-                      Entrenar
-                      <ChevronRight size={13} strokeWidth={2} />
-                    </button>
+                <li key={ar.id} className={`cd-routine${isNext ? ' cd-routine--next' : ''}`}>
+                  <div className="cd-routine__info">
+                    <h3 className="cd-routine__name">{routine.nombre}</h3>
+                    {routine.dia && <p className="cd-routine__day">{routine.dia}</p>}
+                    {routine.descripcion && <p className="cd-routine__desc">{routine.descripcion}</p>}
                   </div>
-                </div>
+                  <button
+                    className={`cd-routine__btn${isNext ? ' cd-routine__btn--next' : ''}`}
+                    onClick={() => handleStart(routine.id)}
+                    disabled={startSession.isPending}
+                    aria-label={`Entrenar rutina ${routine.nombre}`}
+                  >
+                    Entrenar
+                    <ChevronRight size={18} strokeWidth={2} />
+                  </button>
+                </li>
               )
             })}
-          </div>
+          </ul>
         )}
       </section>
-
-      {/* Bottom safe area */}
-      <div style={{ height: 48 }} />
     </div>
   )
 }

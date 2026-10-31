@@ -6,6 +6,7 @@ import { clientKeys } from '../../../lib/queryKeys'
 import { claimClientAccess, getTrainerPublic, requestClientAccess } from '../api/auth.api'
 import { useAuth } from '../hooks/useAuth'
 import './LoginPage.css'
+import Logo from '../../../components/Logo'
 
 export default function TrainerAccessPage() {
   const { slug = '' } = useParams()
@@ -166,9 +167,9 @@ export default function TrainerAccessPage() {
   }
 
   return (
-    <div className="auth-viewport">
-      <div className="auth-terminal" style={{ width: '100%' }}>
-        <div className="auth-card">{content}</div>
+    <div className="auth-viewport auth-viewport--single">
+      <div className="auth-terminal">
+        <div className="auth-card"><span className="auth-card__mobile-logo"><Logo /></span>{content}</div>
       </div>
     </div>
   )

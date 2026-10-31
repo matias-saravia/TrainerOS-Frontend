@@ -141,7 +141,7 @@ export default function AssignRoutineModal({
           <section className="assign-modal__section">
             <div className="assign-modal__section-header">
               <h4 className="assign-modal__section-title">
-                Banco de Rutinas Disponibles
+                Rutinas disponibles
               </h4>
             </div>
 

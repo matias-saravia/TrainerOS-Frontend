@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Dumbbell } from 'lucide-react'
 import type { Block, BlockExercise } from '../api/workouts.api'
 import SetRepEditor from './SetRepEditor'
 import './BlockCard.css'
@@ -104,7 +104,7 @@ function ExerciseRow({
 
       {/* Thumb */}
       <div className="block-ex-row__thumb" aria-hidden="true">
-        <span style={{ fontSize: 18 }}>🏋️</span>
+        <Dumbbell size={18} strokeWidth={1.5} />
       </div>
 
       {/* Info */}

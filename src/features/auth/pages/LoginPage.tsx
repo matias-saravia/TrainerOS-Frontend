@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { requestPasswordReset } from '../api/auth.api'
 import { useAuth } from '../hooks/useAuth'
+import Logo from '../../../components/Logo'
 import './LoginPage.css'
 
 type AuthMode = 'login' | 'register'
@@ -64,7 +65,7 @@ export default function LoginPage() {
     if (!data.email.trim()) {
       errs.email = 'El correo electrónico es obligatorio.'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
-      errs.email = 'Ingresa un formato de correo válido (ej. entrenador@gym.com).'
+      errs.email = 'Escribí un correo válido, por ejemplo entrenador@gym.com.'
     }
 
     // Password
@@ -77,21 +78,21 @@ export default function LoginPage() {
     if (currentMode === 'register') {
       // Nombre
       if (!data.nombre.trim()) {
-        errs.nombre = 'Ingresa tu nombre.'
+        errs.nombre = 'Escribí tu nombre.'
       } else if (data.nombre.trim().length < 2) {
         errs.nombre = 'El nombre debe tener al menos 2 caracteres.'
       }
 
       // Apellido
       if (!data.apellido.trim()) {
-        errs.apellido = 'Ingresa tu apellido.'
+        errs.apellido = 'Escribí tu apellido.'
       } else if (data.apellido.trim().length < 2) {
         errs.apellido = 'El apellido debe tener al menos 2 caracteres.'
       }
 
       // Confirm Password
       if (!data.confirmPassword) {
-        errs.confirmPassword = 'Debes confirmar la contraseña.'
+        errs.confirmPassword = 'Confirmá la contraseña.'
       } else if (data.confirmPassword !== data.password) {
         errs.confirmPassword = 'Las contraseñas no coinciden.'
       }
@@ -116,10 +117,10 @@ export default function LoginPage() {
 
   const pwdStrength = calculatePasswordStrength(fields.password)
   const getStrengthLabel = (s: number) => {
-    if (s <= 1) return { text: 'Débil', color: '#ba1a1a' }
-    if (s <= 2) return { text: 'Aceptable', color: '#f59e0b' }
-    if (s === 3) return { text: 'Buena', color: '#3b82f6' }
-    return { text: 'Fuerte', color: '#22c55e' }
+    if (s <= 1) return { text: 'Débil', color: 'var(--color-error)' }
+    if (s <= 2) return { text: 'Aceptable', color: 'var(--color-warning)' }
+    if (s === 3) return { text: 'Buena', color: 'var(--color-midnight-blue)' }
+    return { text: 'Fuerte', color: 'var(--color-success)' }
   }
 
   // ── Handlers ───────────────────────────────────────────────────────
@@ -170,7 +171,7 @@ export default function LoginPage() {
     setTouched(allTouched)
 
     if (!isFormValid) {
-      setServerError('Por favor completa todos los campos requeridos correctamente.')
+      setServerError('Revisá los campos marcados.')
       return
     }
 
@@ -195,7 +196,7 @@ export default function LoginPage() {
 
         if (requiresConfirmation) {
           setSuccessNotice(
-            '¡Cuenta creada con éxito! Por favor revisa tu bandeja de correo para confirmar tu cuenta antes de ingresar.'
+            'Cuenta creada. Revisá tu correo y confirmala antes de entrar.'
           )
           setMode('login')
         } else {
@@ -207,13 +208,13 @@ export default function LoginPage() {
       console.error('Auth error:', err)
       const rawMsg = err instanceof Error ? err.message : String(err)
       if (rawMsg.includes('Invalid login credentials')) {
-        setServerError('Correo o contraseña incorrectos. Verifica tus datos.')
+        setServerError('Correo o contraseña incorrectos.')
       } else if (rawMsg.includes('User already registered') || rawMsg.includes('already exists')) {
         setServerError('Ya existe un entrenador registrado con este correo.')
       } else if (rawMsg.includes('Password should be at least')) {
         setServerError('La contraseña debe tener al menos 6 caracteres.')
       } else {
-        setServerError(rawMsg || 'Ocurrió un error al procesar la solicitud. Intenta nuevamente.')
+        setServerError(rawMsg || 'Algo salió mal. Intentá de nuevo.')
       }
     } finally {
       setSubmitting(false)
@@ -222,34 +223,37 @@ export default function LoginPage() {
 
   return (
     <div className="auth-viewport">
-      <div className="auth-container">
-        {/* ── LEFT PANEL: Brand Thesis & Athletic Telemetry ────────────── */}
-        <div className="auth-showcase">
-          <div className="auth-showcase__header">
-            <div className="auth-logo-badge">
-              <span className="auth-logo-badge__mark">T</span>
-            </div>
-            <div>
-              <span className="auth-logo-badge__title">TrainerOS</span>
-              <span className="auth-logo-badge__sub">Coach Operating System</span>
-            </div>
-          </div>
+      <>
+        <aside className="auth-showcase">
+          <Logo />
 
-          <div className="auth-showcase__hero">
-            <h1 className="auth-showcase__title">
-              Arquitectura para entrenadores de alto rendimiento.
-            </h1>
+          <div>
+            <h1 className="auth-showcase__title">Lo que armás es lo que entrenan.</h1>
             <p className="auth-showcase__copy">
-              Estructura periodizaciones, diseña rutinas hiper-personalizadas y centraliza
-              el seguimiento de carga y fuerza con precisión.
+              Cargá a tus alumnos, armá sus rutinas y seguí cada serie que registran desde el celular. Gratis.
             </p>
           </div>
 
-        </div>
+          <figure className="auth-sample" aria-hidden="true">
+            <figcaption className="auth-sample__caption">Ejemplo: sentadilla, 4 series de 8</figcaption>
+            <table>
+              <thead>
+                <tr><th>Serie</th><th>Reps</th><th>Carga</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>8</td><td>60 kg</td></tr>
+                <tr><td>2</td><td>8</td><td>65 kg</td></tr>
+                <tr className="marker"><td>3</td><td>8</td><td>65 kg</td></tr>
+                <tr><td className="auth-sample__blank">4</td><td className="auth-sample__blank">8</td><td className="auth-sample__blank">—</td></tr>
+              </tbody>
+            </table>
+          </figure>
+        </aside>
 
         {/* ── RIGHT PANEL: Terminal / Access Card ──────────────────────── */}
         <div className="auth-terminal">
           <div className="auth-card">
+            <span className="auth-card__mobile-logo"><Logo /></span>
             {/* Segmented Mode Switcher */}
             <div className="auth-switcher">
               <button
@@ -271,12 +275,12 @@ export default function LoginPage() {
             {/* Title */}
             <div className="auth-card__header">
               <h2 className="auth-card__title">
-                {mode === 'login' ? 'Bienvenido a tu panel' : 'Crear cuenta de Coach'}
+                {mode === 'login' ? 'Entrá a tu panel' : 'Creá tu cuenta'}
               </h2>
               <p className="auth-card__desc">
                 {mode === 'login'
-                  ? 'Ingresa tus credenciales para acceder a tus clientes y rutinas.'
-                  : 'Empieza a gestionar tu cartera de atletas en la nube.'}
+                  ? 'Tus alumnos y rutinas te esperan.'
+                  : 'Es gratis y empezás a cargar alumnos enseguida.'}
               </p>
             </div>
 
@@ -423,7 +427,7 @@ export default function LoginPage() {
                             background:
                               idx <= pwdStrength
                                 ? getStrengthLabel(pwdStrength).color
-                                : 'rgba(82, 103, 125, 0.2)',
+                                : 'var(--color-ivory)',
                           }}
                         />
                       ))}
@@ -475,7 +479,7 @@ export default function LoginPage() {
                   <span className="auth-btn-spinner" />
                 ) : (
                   <>
-                    <span>{mode === 'login' ? 'Entrar al Sistema' : 'Crear Cuenta de Entrenador'}</span>
+                    <span>{mode === 'login' ? 'Entrar' : 'Crear Cuenta de Entrenador'}</span>
                     <ArrowRight size={16} />
                   </>
                 )}
@@ -486,13 +490,13 @@ export default function LoginPage() {
             <div className="auth-footer-prompt">
               {mode === 'login' ? (
                 <>
-                  ¿Aún no tienes cuenta?{' '}
+                  ¿No tenés cuenta?{' '}
                   <button
                     type="button"
                     className="auth-text-btn"
                     onClick={() => switchMode('register')}
                   >
-                    Regístrate aquí
+                    Registrate
                   </button>
                 </>
               ) : (
@@ -503,7 +507,7 @@ export default function LoginPage() {
                     className="auth-text-btn"
                     onClick={() => switchMode('login')}
                   >
-                    Inicia sesión
+                    Iniciá sesión
                   </button>
                 </>
               )}
@@ -513,7 +517,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-      </div>
+      </>
     </div>
   )
 }

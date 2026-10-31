@@ -91,7 +91,7 @@ export default function ArmarRutinaPage() {
     }
 
     if (totalExercises === 0) {
-      setValidationError('Debes añadir al menos un ejercicio a la rutina.')
+      setValidationError('Agregá al menos un ejercicio a la rutina.')
       return
     }
 
@@ -171,7 +171,7 @@ export default function ArmarRutinaPage() {
           onClick={handleFinalize}
           disabled={saveRoutine.isPending}
         >
-          {saveRoutine.isPending ? 'Guardando...' : 'Finalizar'}
+          {saveRoutine.isPending ? 'Guardando…' : 'Guardar rutina'}
         </button>
       </header>
 
@@ -249,7 +249,7 @@ export default function ArmarRutinaPage() {
             }}
           >
             <Plus size={18} strokeWidth={2} />
-            Agregar Ejercicio
+            Agregar ejercicio
           </button>
         </div>
 
@@ -275,7 +275,7 @@ export default function ArmarRutinaPage() {
             onClick={e => e.stopPropagation()}
           >
             <div className="armar-rutina__sheet-header">
-              <span className="armar-rutina__sheet-title">Banco de Ejercicios</span>
+              <span className="armar-rutina__sheet-title">Ejercicios</span>
               <button
                 className="armar-rutina__sheet-close"
                 onClick={() => setIsPickerOpen(false)}

@@ -31,7 +31,7 @@
 }
 
 .sre-exercise-name {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-midnight-blue);
@@ -103,7 +103,7 @@
 .sre-counter__value {
   flex: 1;
   text-align: center;
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 20px;
   font-weight: 700;
   color: var(--color-midnight-blue);
@@ -115,7 +115,7 @@
   background: var(--color-surface-card);
   border: 1px solid var(--color-outline-var);
   border-radius: var(--radius-sm);
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 16px;
   font-weight: 600;
   color: var(--color-midnight-blue);
@@ -138,7 +138,7 @@
 
 .sre-quick {
   padding: 4px 10px;
-  border-radius: 9999px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-outline-var);
   background: var(--color-surface-card);
   font-size: 12px;
@@ -172,7 +172,7 @@
 
 .sre-preview__sets,
 .sre-preview__reps {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 32px;
   font-weight: 700;
   color: var(--color-midnight-blue);
@@ -189,7 +189,7 @@
 }
 
 .sre-preview__x {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 20px;
   color: var(--color-dusty-blue);
   margin: 0 4px;
@@ -234,4 +234,4 @@
   transition: background 0.15s;
 }
 
-.sre-btn-save:hover { background: var(--color-primary-container, #1c2e4a); }
+.sre-btn-save:hover { background: var(--color-primary-container, var(--color-midnight-blue)); }

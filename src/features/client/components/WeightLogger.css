@@ -1,192 +1,40 @@
-/* ─── Weight Logger ─────────────────────────────────────────────────── */
-/* Design tokens: DESIGNGlobal.md */
+.weight-logger { display: flex; flex-direction: column; gap: 10px; }
 
-.weight-logger {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.weight-logger__sets { display: flex; align-items: center; gap: 12px; }
+.weight-logger__ticks { display: flex; flex: 1; gap: 3px; }
+.weight-logger__tick { flex: 1; height: 10px; background: var(--color-ivory); }
+.weight-logger__tick--done { background: var(--color-midnight-blue); }
+.weight-logger__tick--now { background: var(--color-marker); box-shadow: inset 0 0 0 1px var(--color-midnight-blue); }
+.weight-logger__count { font-family: var(--font-display); font-size: 26px; font-weight: 800; line-height: 1; color: var(--color-midnight-blue); }
 
-/* ── Input row ── */
-.weight-logger__input-row {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-}
-
-/* Input field — DESIGNGlobal: 4px radius, Dusty Blue border, focus = Midnight Blue */
-.weight-logger__input-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(82, 103, 125, 0.07);
-  border: 1px solid rgba(82, 103, 125, 0.25);
-  border-radius: 4px;
-  padding: 0 14px;
-  min-height: 50px;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.weight-logger__input-wrap:focus-within {
-  border-color: var(--color-midnight-blue, #1C2E4A);
-  box-shadow: 0 0 0 2px rgba(28, 46, 74, 0.4);
-}
-
+.weight-logger__row { display: flex; gap: 8px; }
+.weight-logger__input-wrap { position: relative; flex: 1; min-width: 0; }
 .weight-logger__input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 500;
-  color: #ffffff;
   width: 100%;
-  min-width: 0;
+  height: 64px;
+  padding: 0 44px 0 14px;
+  border: 1px solid var(--color-midnight-blue);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-midnight-blue);
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
+.weight-logger__input::-webkit-outer-spin-button,
+.weight-logger__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.weight-logger__input:focus { outline: 2px solid var(--color-midnight-blue); outline-offset: -1px; }
+.weight-logger__input:disabled { border-color: var(--color-ivory); background: var(--color-surface-low); color: var(--color-dusty-blue); }
+.weight-logger__unit { position: absolute; top: 50%; right: 14px; transform: translateY(-50%); font-weight: 600; color: var(--color-dusty-blue); }
 
-.weight-logger__input::placeholder {
-  color: rgba(82, 103, 125, 0.45);
-}
+.weight-logger__check { display: flex; flex: none; align-items: center; justify-content: center; width: 84px; height: 64px; border: 0; border-radius: var(--radius-md); background: var(--color-marker); color: var(--color-deep-navy); cursor: pointer; }
+.weight-logger__check:hover:not(:disabled) { background: var(--color-marker-deep); }
+.weight-logger__check:disabled { background: var(--color-buttercream); color: var(--color-outline); cursor: not-allowed; }
+.weight-logger__check--flash { animation: weight-flash 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes weight-flash { from { background: var(--color-midnight-blue); color: #fff; } }
 
-.weight-logger__unit {
-  font-size: 12px;
-  color: rgba(82, 103, 125, 0.65);
-  font-weight: 600;
-  flex-shrink: 0;
-  letter-spacing: 0.02em;
-}
-
-/* ── Check button — DESIGNGlobal Primary: Midnight Blue, 4px radius ── */
-.weight-logger__check-btn {
-  width: 50px;
-  height: 50px;
-  flex-shrink: 0;
-  border-radius: 4px;
-  background: var(--color-midnight-blue, #1C2E4A);
-  border: 1px solid rgba(82, 103, 125, 0.4);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
-}
-
-.weight-logger__check-btn:hover:not(:disabled) {
-  background: #253d5f;
-  transform: scale(1.04);
-}
-
-.weight-logger__check-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.weight-logger__check-btn--flash {
-  background: rgba(34, 197, 94, 0.18);
-  border-color: rgba(34, 197, 94, 0.4);
-  animation: check-flash 0.35s ease;
-}
-
-@keyframes check-flash {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(0.92); }
-  100% { transform: scale(1); }
-}
-
-/* ── Sets row ── */
-.weight-logger__sets-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.weight-logger__sets-label {
-  font-size: 11px;
-  color: rgba(82, 103, 125, 0.65);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.weight-logger__dots {
-  display: flex;
-  gap: 6px;
-  flex: 1;
-  justify-content: center;
-}
-
-.weight-logger__dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: rgba(82, 103, 125, 0.12);
-  border: 1.5px solid rgba(82, 103, 125, 0.25);
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.weight-logger__dot--done {
-  background: var(--color-midnight-blue, #1C2E4A);
-  border-color: rgba(82, 103, 125, 0.75);
-}
-
-.weight-logger__sets-count {
-  font-size: 11px;
-  color: rgba(82, 103, 125, 0.65);
-  white-space: nowrap;
-  font-weight: 600;
-}
-
-/* Objetivo */
-.weight-logger__objective {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
-  text-align: right;
-}
-
-/* Done state */
-.weight-logger__done-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 14px;
-  background: rgba(34, 197, 94, 0.07);
-  border: 1px solid rgba(34, 197, 94, 0.18);
-  border-radius: 4px;
-  color: #86efac;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-/* ── Tiny screens (<360px) ── */
-@media (max-width: 359px) {
-  .weight-logger__input-wrap {
-    min-height: 44px;
-  }
-
-  .weight-logger__check-btn {
-    width: 44px;
-    height: 44px;
-  }
-
-  .weight-logger__input {
-    font-size: 15px;
-  }
-}
-
-/* ── Reduced motion ── */
-@media (prefers-reduced-motion: reduce) {
-  .weight-logger__check-btn--flash {
-    animation: none;
-    background: rgba(34, 197, 94, 0.18);
-    border-color: rgba(34, 197, 94, 0.4);
-  }
-
-  .weight-logger__dot,
-  .weight-logger__dot--done {
-    transition: none;
-  }
-}
+.weight-logger__target { font-size: 14px; font-weight: 600; color: var(--color-on-surface-var); }
+.weight-logger__done { display: flex; align-items: center; gap: 8px; font-weight: 700; }

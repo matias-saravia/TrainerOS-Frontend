@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31T15:00:00-03:00",
+  "title": "Design System: TrainerOS",
+  "extensions": {
+    "colorMeta": {
+      "midnight-blue": { "role": "primary", "displayName": "Midnight Blue" },
+      "deep-navy": { "role": "primary", "displayName": "Deep Navy" },
+      "marker": { "role": "secondary", "displayName": "Marker" },
+      "paper": { "role": "neutral", "displayName": "Paper" },
+      "surface": { "role": "neutral", "displayName": "Surface" }
+    },
+    "typographyMeta": {
+      "display-page": { "displayName": "Page", "purpose": "Title of each view, uppercase." },
+      "display-section": { "displayName": "Section", "purpose": "Title of a sheet, uppercase." },
+      "numeral-lead": { "displayName": "Lead numeral", "purpose": "First column of a table, real data only." },
+      "body": { "displayName": "Body", "purpose": "Running text, tabular numerals." },
+      "label": { "displayName": "Label", "purpose": "Table headers and field labels, sentence case." }
+    },
+    "shadows": [
+      { "name": "overlay", "value": "0 12px 32px rgba(15, 26, 43, 0.22)", "purpose": "Modals and overlays only." }
+    ],
+    "motion": [
+      { "name": "marker-sweep", "value": "0.5s cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The highlighter sweeping across a row." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "767px" },
+      { "name": "table-stack", "value": "900px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action on a trainer screen.",
+      "html": "<button class=\"ds-btn\">Nuevo alumno</button>",
+      "css": ".ds-btn { min-height: 42px; padding: 0 16px; border: 0; border-radius: 3px; background: #1C2E4A; color: #fff; font: 700 15px 'Sofia Sans Variable', sans-serif; cursor: pointer; } .ds-btn:hover { background: #2A4065; }"
+    },
+    {
+      "name": "Marker Button",
+      "kind": "button",
+      "refersTo": "button-marker",
+      "description": "The action for right now.",
+      "html": "<button class=\"ds-btn-marker\">Entrenar</button>",
+      "css": ".ds-btn-marker { min-height: 42px; padding: 0 16px; border: 0; border-radius: 3px; background: #E6F23C; color: #0F1A2B; font: 700 15px 'Sofia Sans Variable', sans-serif; cursor: pointer; } .ds-btn-marker:hover { background: #D3DF22; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard text field.",
+      "html": "<input class=\"ds-input\" placeholder=\"Buscar ejercicio\" />",
+      "css": ".ds-input { height: 44px; padding: 0 12px; border: 1px solid #BCC8D6; border-radius: 3px; background: #fff; color: #0F1A2B; font: 400 15px 'Sofia Sans Variable', sans-serif; } .ds-input:focus { outline: 2px solid #1C2E4A; outline-offset: -1px; }"
+    },
+    {
+      "name": "Rail Item",
+      "kind": "nav",
+      "description": "Active navigation item on the navy rail.",
+      "html": "<a class=\"ds-nav\">Alumnos</a>",
+      "css": ".ds-nav { display: flex; align-items: center; min-height: 42px; padding: 0 10px; border-radius: 3px; background: #1C2E4A; color: #fff; font: 600 15px 'Sofia Sans Variable', sans-serif; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Hoja de Series",
+    "overview": "Rutinas y alumnos leídos como el programa impreso de un torneo: columnas fijas, numerales condensados y tu fila marcada con resaltador.",
+    "keyCharacteristics": ["Azul marino en regiones enteras", "Resaltador flúo reservado", "Tablas de columnas fijas", "Plano, sin elevación en reposo"],
+    "rules": [
+      { "name": "La regla del resaltador", "body": "Solo significa 'esto es ahora' o 'esto te necesita'.", "section": "colors" },
+      { "name": "La regla del dato real", "body": "Cada número viene de la base de datos.", "section": "colors" }
+    ],
+    "dos": ["Usar .hoja para cualquier lista de entidades", "Escribir en voseo y en frase"],
+    "donts": ["Emojis como íconos", "Grillas de tarjetas con métricas", "Anillos de progreso"]
+  }
+}
