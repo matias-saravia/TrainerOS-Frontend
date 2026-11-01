@@ -23,6 +23,7 @@ const features = [
   ['Rutinas', 'Editalas cuando quieras. Las sesiones ya hechas conservan lo que se entrenó ese día.'],
   ['Banco de ejercicios', 'El tuyo: con instrucciones y video de YouTube o Vimeo.'],
   ['Cargas e historial', 'Cada alumno ve cuánto levantó antes. Vos ves lo que registra.'],
+  ['Finanzas', 'Un libro diario de entradas y salidas, con el resumen de cada mes.'],
   ['Vista previa', 'Mirá la pantalla de cualquier alumno sin tocar sus datos.'],
   ['Tus datos, separados', 'Cada entrenador ve solo a sus alumnos. Lo controla la base de datos, no un botón.'],
 ]

@@ -6,7 +6,6 @@ export { default as ClientesPage }       from './pages/ClientesPage'
 export { default as NuevoClientePage }   from './pages/NuevoClientePage'
 export { default as EntrenamientosPage } from './pages/EntrenamientosPage'
 export { default as ArmarRutinaPage }    from './pages/ArmarRutinaPage'
-export { default as FinanzasPage }       from './pages/FinanzasPage'
 export {
   useClients,
   useClient,

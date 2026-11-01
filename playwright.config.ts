@@ -19,6 +19,7 @@ process.env.E2E_MAIL_URL = status.INBUCKET_URL ?? status.MAILPIT_URL
 
 export default defineConfig({
   testDir: './e2e',
+  workers: 1,
   use: {
     baseURL: 'http://localhost:5174',
     ...devices['Pixel 7'],

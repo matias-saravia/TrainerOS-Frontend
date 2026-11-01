@@ -180,4 +180,4 @@ Sobre azul, con contorno. Solo el ejercicio activo es hoja blanca y muestra el v
 - **Don't:** usar emojis ni caracteres Unicode como íconos.
 - **Don't:** usar el resaltador como decoración o en más de una idea por pantalla.
 - **Don't:** volver a grillas de tarjetas con métricas, anillos de progreso o bordes laterales de color.
-- **Don't:** mostrar datos inventados; Finanzas sigue siendo "todavía no está listo" hasta que exista.
+- **Don't:** mostrar datos inventados; en Finanzas, cada monto sale del libro diario del entrenador.

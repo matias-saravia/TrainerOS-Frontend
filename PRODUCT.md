@@ -31,7 +31,7 @@ Un entrenador y sus alumnos comparten el mismo programa: lo que el entrenador ar
 
 - Entrenador: panel general, clientes (alta y edición), rutinas, banco de ejercicios, asignación de rutinas, vista previa de alumno.
 - Alumno: programa, sesión de entrenamiento, detalle de ejercicio, registro de cargas e historial.
-- Finanzas todavía no existe: es una página "próximamente". No mostrar datos financieros inventados.
+- Finanzas es un libro diario de entradas y salidas cargadas a mano, sin categorías (el concepto es texto libre), con resumen por mes. Los movimientos se anulan con motivo, no se borran. Vincular un alumno a una entrada solo lo anota: no hay cuotas, vencimientos ni cambios en el estado de pago, y el concepto es libre (una mensualidad, 4 meses de preparación). No procesa pagos. No mostrar datos financieros inventados.
 - Stack: React 19, TypeScript, Vite, TanStack Query, Supabase. Sin backend propio; los permisos viven en RLS.
 - Idioma de la interfaz: español rioplatense.
 

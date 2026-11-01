@@ -1,0 +1,119 @@
+.finanzas { padding-bottom: 40px; }
+.finanzas__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.finanzas__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; margin: 0 var(--gutter) 16px; }
+.finanzas__period { display: flex; align-items: center; gap: 4px; }
+.finanzas__period strong { min-width: 170px; font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; text-align: center; text-transform: uppercase; color: var(--color-midnight-blue); }
+.finanzas__period .icon-action-btn { width: 44px; height: 44px; }
+.finanzas .skeleton-container { margin: 12px var(--gutter); }
+
+.fin-pos { color: var(--color-success); }
+.fin-neg { color: var(--color-error); }
+
+/* Numbers strip */
+.fin-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 var(--gutter) 16px; border-radius: var(--radius-lg); background: var(--color-midnight-blue); color: #fff; }
+.fin-strip__cell { min-width: 0; padding: 16px 22px; border-right: 1px solid var(--navy-rule); }
+.fin-strip__cell:last-child { border-right: 0; }
+.fin-strip__value { font-family: var(--font-display); font-size: clamp(36px, 4.4vw, 60px); font-weight: 800; line-height: 0.95; overflow-wrap: anywhere; }
+.fin-strip__value--neg { color: #FFB4AB; }
+.fin-strip__label { margin-top: 4px; color: var(--on-navy-2); font-weight: 600; }
+
+.fin-year { margin: 0 var(--gutter); }
+
+/* Months */
+.fin-months th, .fin-months td { padding: 9px 14px; }
+.fin-months td { font-size: 15px; }
+.fin-months__pick { padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: inherit; cursor: pointer; }
+.fin-months__pick small { font-weight: 600; color: var(--color-dusty-blue); }
+.fin-months__on td { background: var(--color-buttercream); }
+.fin-months__on .fin-months__pick { text-decoration: underline; text-underline-offset: 3px; }
+.fin-months__saldo { font-weight: 700; }
+.fin-months__chart { width: 26%; min-width: 90px; }
+.fin-bar { display: block; height: 5px; min-width: 0; }
+.fin-bar + .fin-bar { margin-top: 2px; }
+.fin-bar--entrada { background: var(--color-midnight-blue); }
+.fin-bar--salida { background: var(--color-ivory); }
+.fin-legend { display: inline-flex; align-items: center; gap: 5px; margin-right: 10px; }
+.fin-legend::before { content: ''; width: 9px; height: 9px; }
+.fin-legend--entrada::before { background: var(--color-midnight-blue); }
+.fin-legend--salida::before { background: var(--color-ivory); }
+.fin-months tfoot th, .fin-months tfoot td { border-top: 2px solid var(--color-midnight-blue); border-bottom: 0; font-size: 15px; font-weight: 800; color: var(--color-midnight-blue); }
+
+/* Ledger */
+.fin-libro { margin: 0 var(--gutter); }
+.fin-libro__head { flex-wrap: wrap; padding-block: 12px; }
+.fin-search { display: flex; flex: 0 1 260px; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid var(--color-ivory); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-dusty-blue); }
+.fin-search:focus-within { border-color: var(--color-midnight-blue); box-shadow: 0 0 0 1px var(--color-midnight-blue); }
+.fin-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 16px; color: var(--color-on-surface); }
+.fin-table thead th:nth-child(5) { width: 96px; }
+.fin-day th, .fin-day td { padding: 14px 20px 6px; border-bottom: 2px solid var(--color-midnight-blue); }
+.fin-day th { font-family: var(--font-display); font-size: 22px; font-weight: 800; line-height: 1; text-align: left; text-transform: uppercase; color: var(--color-midnight-blue); }
+.fin-day td { font-weight: 700; white-space: nowrap; }
+.fin-day td span + span { margin-left: 12px; }
+.hoja tbody tr.fin-day:last-child td { border-bottom: 2px solid var(--color-midnight-blue); }
+.fin-table__concept small { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--color-error); overflow-wrap: anywhere; }
+.fin-table__concept .hoja__name { overflow-wrap: anywhere; }
+.fin-table__client { display: block; margin-top: 2px; font-size: 14px; color: var(--color-on-surface-var); overflow-wrap: anywhere; }
+.fin-table__method { color: var(--color-on-surface-var); }
+.fin-table__amount { font-family: var(--font-display); font-size: 24px; font-weight: 800; line-height: 1; }
+.fin-table__tools { width: 96px; padding-block: 4px !important; }
+.fin-voided .hoja__name, .fin-voided .fin-table__amount { color: var(--color-dusty-blue); text-decoration: line-through; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Modal */
+.fin-modal-overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 26, 43, 0.55); }
+.fin-modal { width: 100%; max-width: 520px; max-height: 100%; overflow-y: auto; border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-overlay); }
+.fin-form { display: flex; flex-direction: column; gap: 14px; padding: 16px 20px 20px; }
+.fin-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fin-form__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.fin-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; font-size: 14px; font-weight: 600; color: var(--color-midnight-blue); }
+.fin-input { width: 100%; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--color-ivory); border-radius: var(--radius-md); background: var(--color-surface); font: inherit; font-size: 16px; font-weight: 400; color: var(--color-on-surface); }
+.fin-input:focus { outline: 0; border-color: var(--color-midnight-blue); box-shadow: 0 0 0 1px var(--color-midnight-blue); }
+.fin-input--amount { font-family: var(--font-display); font-size: 28px; font-weight: 800; }
+.fin-segmented { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--color-midnight-blue); border-radius: var(--radius-md); }
+.fin-segmented label { display: flex; align-items: center; justify-content: center; min-height: 44px; font-weight: 700; color: var(--color-midnight-blue); cursor: pointer; }
+.fin-segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.fin-segmented label:has(input:focus-visible) { outline: 2px solid var(--color-midnight-blue); outline-offset: 2px; }
+.fin-segmented__on { background: var(--color-midnight-blue); color: #fff !important; }
+
+/* With the rail, a table of amounts stops fitting well before phone width */
+@media (max-width: 1000px) {
+  /* Each movement becomes a two-line entry */
+  .fin-table thead { display: none; }
+  .fin-table, .fin-table tbody { display: block; }
+  .fin-table tr:not(.fin-day) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; padding: 10px 16px; border-bottom: 1px solid var(--color-rule); }
+  .fin-table tr:not(.fin-day) td { display: block; padding: 0 !important; border: 0; width: auto; }
+  .fin-day { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding: 14px 16px 6px; border-bottom: 2px solid var(--color-midnight-blue); }
+  .fin-day th, .fin-day td { display: block; padding: 0; border: 0 !important; }
+  .fin-table__concept { grid-column: 1; grid-row: 1; }
+  .fin-table__amount { grid-column: 2; grid-row: 1; }
+  .fin-table__method { grid-column: 1; grid-row: 2; font-size: 14px; }
+  .fin-table__tools { grid-column: 2; grid-row: 2; align-self: end; }
+  .fin-table .icon-action-btn { width: 44px; height: 44px; }
+
+  /* Each month: name and balance, then what came in and went out */
+  .fin-months thead, .hoja.fin-months td.fin-months__chart { display: none; }
+  .fin-months, .fin-months tbody, .fin-months tfoot { display: block; }
+  .fin-months tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 10px 16px; border-bottom: 1px solid var(--color-rule); }
+  .hoja.fin-months td, .hoja.fin-months th { display: block; padding: 0; border: 0; text-align: left; }
+  .fin-months td.fin-months__saldo { grid-column: 2; grid-row: 1; text-align: right !important; }
+  .fin-months td:nth-child(2), .fin-months td:nth-child(3) { grid-column: 1 / -1; font-size: 14px; text-align: left !important; color: var(--color-on-surface-var); }
+  .fin-months td:nth-child(2)::before { content: 'Entradas: '; }
+  .fin-months td:nth-child(3)::before { content: 'Salidas: '; }
+  .fin-months__on { background: var(--color-buttercream); }
+  .fin-months tfoot tr { border-top: 2px solid var(--color-midnight-blue); border-bottom: 0; }
+}
+
+@media (max-width: 767px) {
+  .finanzas__actions { width: 100%; }
+  .finanzas__actions button { flex: 1; }
+  .finanzas__period { width: 100%; justify-content: space-between; }
+  .fin-strip { grid-template-columns: minmax(0, 1fr); }
+  .fin-strip__cell { padding: 12px 16px; }
+  .fin-strip__cell { border-right: 0; }
+  .fin-strip__cell + .fin-strip__cell { border-top: 1px solid var(--navy-rule); }
+  .fin-search { flex: 1 1 100%; }
+
+  .fin-modal-overlay { align-items: flex-end; padding: 0; }
+  .fin-modal { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .fin-form__actions button { flex: 1; }
+}
