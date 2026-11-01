@@ -46,7 +46,9 @@ export default function LoginPage() {
   const location = useLocation()
   const { signIn, signUp } = useAuth()
 
-  const [mode, setMode] = useState<AuthMode>('login')
+  const [mode, setMode] = useState<AuthMode>(
+    new URLSearchParams(location.search).get('modo') === 'registro' ? 'register' : 'login'
+  )
   const [fields, setFields] = useState<FormFields>(INITIAL_FIELDS)
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [showPassword, setShowPassword] = useState(false)
