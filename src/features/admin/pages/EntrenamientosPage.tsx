@@ -33,6 +33,7 @@ function RutinasList() {
   const { data: routines = [], isLoading, error, refetch } = useRoutines()
   const deleteRoutine = useDeleteRoutine()
   const [routineToDelete, setRoutineToDelete] = useState<RoutineRow | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const handleDeleteRoutine = async () => {
     if (!routineToDelete) return
@@ -41,6 +42,8 @@ function RutinasList() {
       setRoutineToDelete(null)
     } catch (err) {
       console.error('Error al eliminar rutina:', err)
+      setRoutineToDelete(null)
+      setDeleteError('No pudimos eliminar la rutina. Revisá tu conexión e intentá de nuevo.')
     }
   }
 
@@ -49,6 +52,7 @@ function RutinasList() {
 
   return (
     <section className="sheet entrenamientos-page__sheet">
+      {deleteError && <div className="alert" role="alert">{deleteError}</div>}
       {routines.length === 0 ? (
         <EmptyState
           icon={Dumbbell}

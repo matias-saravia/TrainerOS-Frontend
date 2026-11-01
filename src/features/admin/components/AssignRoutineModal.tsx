@@ -18,6 +18,7 @@ export default function AssignRoutineModal({
   onClose,
 }: AssignRoutineModalProps) {
   const [search, setSearch] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const { data: allRoutines = [], isLoading: loadingRoutines } = useRoutines()
   const { data: assignedRoutines = [], isLoading: loadingAssigned } = useClientRoutines(clientId)
@@ -34,18 +35,22 @@ export default function AssignRoutineModal({
 
   const handleAssign = async (routineId: string) => {
     if (assignedIds.has(routineId)) return
+    setActionError(null)
     try {
       await assignRoutine.mutateAsync({ clientId, routineId })
     } catch (err) {
       console.error('Error assigning routine:', err)
+      setActionError('No pudimos asignar la rutina. Revisá tu conexión e intentá de nuevo.')
     }
   }
 
   const handleUnassign = async (routineId: string) => {
+    setActionError(null)
     try {
       await unassignRoutine.mutateAsync({ clientId, routineId })
     } catch (err) {
       console.error('Error unassigning routine:', err)
+      setActionError('No pudimos quitar la rutina. Revisá tu conexión e intentá de nuevo.')
     }
   }
 
@@ -82,7 +87,8 @@ export default function AssignRoutineModal({
 
         {/* Modal Body with scroll */}
         <div className="assign-modal__body">
-          
+          {actionError && <div className="alert" role="alert">{actionError}</div>}
+
           {/* ── Section 1: Currently Assigned Routines ── */}
           <section className="assign-modal__section">
             <div className="assign-modal__section-header">

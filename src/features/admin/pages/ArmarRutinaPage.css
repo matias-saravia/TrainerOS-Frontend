@@ -236,7 +236,7 @@
 }
 
 /* ── Responsive ── */
-@media (max-width: 767px) {
+@media (max-width: 1100px) {
   .armar-rutina__body { display: none; }
   .armar-rutina__mobile-body {
     display: flex;
@@ -262,7 +262,17 @@
 .armar-rutina__picker-panel { background: var(--color-surface); }
 .armar-rutina__fab { display: none !important; }
 
-@media (max-width: 767px) {
+@media (max-width: 1100px) {
   .armar-rutina__title-input { max-width: none; font-size: 26px; }
   .routine-builder__finalize { display: none; }
 }
+
+/* Stacked layout: exercises are added with the button, there is nothing to drag onto */
+.armar-rutina__mobile-body .routine-builder { height: auto; }
+.armar-rutina__mobile-body .routine-builder__topbar,
+.armar-rutina__mobile-body .routine-builder__final-drop,
+.armar-rutina__mobile-body .routine-builder__block-drop,
+.armar-rutina__mobile-body .routine-builder__drop-hint { display: none; }
+.armar-rutina__mobile-body .routine-builder__canvas { padding: 12px 16px 16px; overflow: visible; }
+.armar-rutina__mobile-body .routine-builder__blocks { max-width: 100%; }
+.armar-rutina__title-input { min-width: 0; }

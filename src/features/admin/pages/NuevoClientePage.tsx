@@ -1,7 +1,7 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { User, CreditCard, Activity, Flag, AlertCircle, ArrowLeft, Trash2, Dumbbell, Link2, X, Plus } from 'lucide-react'
-import { useCreateClient, useUpdateClient, useDeleteClient, useClient } from '../hooks/useClients'
+import { useCreateClient, useUpdateClient, useDeleteClient, useClient, type ClientRow } from '../hooks/useClients'
 import { useClientRoutines, useUnassignRoutine } from '../hooks/useClientRoutines'
 import { useAuth } from '../../auth'
 import ConfirmModal from '../../../components/ConfirmModal'
@@ -9,6 +9,7 @@ import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
 import AssignRoutineModal from '../components/AssignRoutineModal'
 import { getTrainerLink } from '../../../utils/trainerLink'
+import { CLIENT_STATUS } from '../clientStatus'
 import './NuevoClientePage.css'
 
 interface FormState {
@@ -18,7 +19,9 @@ interface FormState {
   fechaNacimiento: string
   tipoPlan: 'basico' | 'estandar' | 'premium' | 'personalizado'
   fechaInicio: string
-  estadoPago: 'pagado' | 'pendiente'
+  status: ClientRow['status']
+  semanaActual: string
+  totalSemanas: string
   peso: string
   altura: string
   grasaCorporal: string
@@ -32,6 +35,8 @@ interface FormErrors {
   nombre?: string
   email?: string
   telefono?: string
+  semanaActual?: string
+  totalSemanas?: string
   peso?: string
   altura?: string
   grasaCorporal?: string
@@ -44,7 +49,9 @@ const INITIAL: FormState = {
   fechaNacimiento: '',
   tipoPlan: 'basico',
   fechaInicio: '',
-  estadoPago: 'pagado',
+  status: 'aldia',
+  semanaActual: '1',
+  totalSemanas: '12',
   peso: '',
   altura: '',
   grasaCorporal: '',
@@ -92,6 +99,7 @@ export default function NuevoClientePage() {
       await unassignRoutine.mutateAsync({ clientId: id, routineId })
     } catch (err) {
       console.error('Error unassigning routine:', err)
+      setSubmitError('No pudimos quitar la rutina. Revisá tu conexión e intentá de nuevo.')
     }
   }
 
@@ -107,7 +115,9 @@ export default function NuevoClientePage() {
         fechaNacimiento: existingClient.fecha_nacimiento || '',
         tipoPlan: (existingClient.plan_tier as FormState['tipoPlan']) || 'basico',
         fechaInicio: existingClient.fecha_inicio || '',
-        estadoPago: (existingClient.estado_pago as FormState['estadoPago']) || 'pagado',
+        status: existingClient.status,
+        semanaActual: String(existingClient.semana_actual),
+        totalSemanas: String(existingClient.total_semanas),
         peso: existingClient.peso_inicial != null ? String(existingClient.peso_inicial) : '',
         altura: existingClient.altura != null ? String(existingClient.altura) : '',
         grasaCorporal: existingClient.grasa_corporal != null ? String(existingClient.grasa_corporal) : '',
@@ -138,6 +148,18 @@ export default function NuevoClientePage() {
 
     if (state.telefono.trim() && !/^[+0-9\s-]{6,20}$/.test(state.telefono.trim())) {
       errs.telefono = 'Escribí un teléfono válido, de al menos 6 dígitos.'
+    }
+
+    const total = Number(state.totalSemanas)
+    if (!/^[0-9]+$/.test(state.totalSemanas) || total < 1 || total > 52) {
+      errs.totalSemanas = 'Escribí un total entre 1 y 52 semanas.'
+    }
+
+    const semana = Number(state.semanaActual)
+    if (!/^[0-9]+$/.test(state.semanaActual) || semana < 1) {
+      errs.semanaActual = 'Escribí una semana de 1 en adelante.'
+    } else if (!errs.totalSemanas && semana > total) {
+      errs.semanaActual = `La semana no puede ser mayor que el total (${total}).`
     }
 
     if (state.peso) {
@@ -189,6 +211,8 @@ export default function NuevoClientePage() {
       nombre: true,
       email: true,
       telefono: true,
+      semanaActual: true,
+      totalSemanas: true,
       peso: true,
       altura: true,
       grasaCorporal: true,
@@ -210,15 +234,20 @@ export default function NuevoClientePage() {
       avanzado: 'Avanzado',
     }
 
+    const [nombre, ...apellido] = form.nombre.trim().split(/\s+/)
+
     const clientPayload = {
-      nombre: form.nombre.trim().split(' ')[0] || form.nombre.trim(),
-      apellido: form.nombre.trim().split(' ').slice(1).join(' ') || '',
+      nombre,
+      apellido: apellido.join(' '),
       email: form.email.trim().toLowerCase(),
       telefono: form.telefono.trim() || null,
       fecha_nacimiento: form.fechaNacimiento || null,
       plan_tier: form.tipoPlan,
       fecha_inicio: form.fechaInicio || new Date().toISOString().split('T')[0],
-      estado_pago: form.estadoPago,
+      status: form.status,
+      estado_pago: form.status === 'pendiente' ? 'pendiente' : 'pagado',
+      semana_actual: Number(form.semanaActual),
+      total_semanas: Number(form.totalSemanas),
       peso_inicial: form.peso ? parseFloat(form.peso) : null,
       altura: form.altura ? parseFloat(form.altura) : null,
       grasa_corporal: form.grasaCorporal ? parseFloat(form.grasaCorporal) : null,
@@ -448,6 +477,45 @@ export default function NuevoClientePage() {
                 <option value="personalizado">Personalizado</option>
               </select>
             </div>
+            <div className="form-grid form-grid--2">
+              <div className="form-field">
+                <label className="form-label" htmlFor="semanaActual">Semana actual</label>
+                <input
+                  id="semanaActual"
+                  className={`form-input ${errors.semanaActual && touched.semanaActual ? 'form-input--error' : ''}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={form.semanaActual}
+                  onChange={e => set('semanaActual', e.target.value)}
+                  onBlur={() => handleBlur('semanaActual')}
+                />
+                {errors.semanaActual && touched.semanaActual && (
+                  <span style={{ fontSize: '11.5px', color: 'var(--color-error)', marginTop: '4px' }}>
+                    {errors.semanaActual}
+                  </span>
+                )}
+              </div>
+              <div className="form-field">
+                <label className="form-label" htmlFor="totalSemanas">Total de semanas</label>
+                <input
+                  id="totalSemanas"
+                  className={`form-input ${errors.totalSemanas && touched.totalSemanas ? 'form-input--error' : ''}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={52}
+                  value={form.totalSemanas}
+                  onChange={e => set('totalSemanas', e.target.value)}
+                  onBlur={() => handleBlur('totalSemanas')}
+                />
+                {errors.totalSemanas && touched.totalSemanas && (
+                  <span style={{ fontSize: '11.5px', color: 'var(--color-error)', marginTop: '4px' }}>
+                    {errors.totalSemanas}
+                  </span>
+                )}
+              </div>
+            </div>
             <div className="form-field">
               <label className="form-label" htmlFor="fechaInicio">Fecha de inicio</label>
               <input
@@ -459,19 +527,19 @@ export default function NuevoClientePage() {
               />
             </div>
             <div className="form-field">
-              <label className="form-label">Estado de pago</label>
-              <div className="radio-group">
-                {(['pagado', 'pendiente'] as const).map(v => (
-                  <label key={v} className="radio-label">
+              <span className="form-label" id="estado-pago-label">Estado de pago</span>
+              <div className="radio-group" role="radiogroup" aria-labelledby="estado-pago-label">
+                {Object.entries(CLIENT_STATUS).map(([value, { label }]) => (
+                  <label key={value} className="radio-label">
                     <input
                       type="radio"
-                      name="estadoPago"
-                      value={v}
-                      checked={form.estadoPago === v}
-                      onChange={() => set('estadoPago', v)}
+                      name="status"
+                      value={value}
+                      checked={form.status === value}
+                      onChange={() => set('status', value as ClientRow['status'])}
                     />
                     <span className="radio-custom" />
-                    {v.charAt(0).toUpperCase() + v.slice(1)}
+                    {label}
                   </label>
                 ))}
               </div>

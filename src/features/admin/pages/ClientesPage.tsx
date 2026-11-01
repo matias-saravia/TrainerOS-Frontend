@@ -9,7 +9,7 @@ import ConfirmModal from '../../../components/ConfirmModal'
 import AssignRoutineModal from '../components/AssignRoutineModal'
 import { useAuth } from '../../auth'
 import { getTrainerLink } from '../../../utils/trainerLink'
-import { CLIENT_STATUS } from '../clientStatus'
+import { CLIENT_STATUS, PLAN_LABELS } from '../clientStatus'
 import './ClientesPage.css'
 
 type Tab = 'todos' | 'activos' | 'pendientes' | 'vencer'
@@ -133,7 +133,7 @@ export default function ClientesPage() {
                   >
                     <td className="hoja__lead">{client.semana_actual}<small>/{client.total_semanas}</small></td>
                     <td className="hoja__name">{client.nombre} {client.apellido}</td>
-                    <td className="clientes-table__goal">{client.objetivo ?? client.plan_tier}</td>
+                    <td className="clientes-table__goal">{client.objetivo ?? PLAN_LABELS[client.plan_tier]}</td>
                     <td className="clientes-table__status">
                       <span className={`status ${status?.tone ?? ''}`}>{status?.label ?? client.status}</span>
                     </td>

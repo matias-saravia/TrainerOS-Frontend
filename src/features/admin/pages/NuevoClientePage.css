@@ -184,6 +184,8 @@ select.form-input { cursor: pointer; appearance: auto; }
   gap: 10px;
 }
 
+.assigned-routines__link-label { min-width: 0; overflow-wrap: anywhere; }
+
 .assigned-routines__link-info {
   display: flex;
   align-items: center;
