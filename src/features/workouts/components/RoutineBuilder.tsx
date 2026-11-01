@@ -76,7 +76,7 @@ export default function RoutineBuilder({
             <polyline points="17 21 17 13 7 13 7 21"/>
             <polyline points="7 3 7 8 15 8"/>
           </svg>
-          Finalizar Rutina
+          Guardar rutina
         </button>
       </div>
 
@@ -91,7 +91,7 @@ export default function RoutineBuilder({
           <div className="routine-builder__drop-hint">
             <div className="routine-builder__drop-hint-inner">
               <span className="routine-builder__drop-hint-text">
-                ARRASTRA UN EJERCICIO AQUÍ
+                Arrastrá un ejercicio acá o tocá + en la lista
               </span>
             </div>
           </div>

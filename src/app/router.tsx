@@ -10,9 +10,10 @@ const ClientesPage = lazy(() => import('../features/admin/pages/ClientesPage'))
 const NuevoClientePage = lazy(() => import('../features/admin/pages/NuevoClientePage'))
 const EntrenamientosPage = lazy(() => import('../features/admin/pages/EntrenamientosPage'))
 const ArmarRutinaPage = lazy(() => import('../features/admin/pages/ArmarRutinaPage'))
-const FinanzasPage = lazy(() => import('../features/admin/pages/FinanzasPage'))
+const FinanzasPage = lazy(() => import('../features/finance/FinanzasPage'))
 const ExerciseBankPage = lazy(() => import('../features/exercises/pages/ExerciseBankPage'))
 const NuevoEjercicioPage = lazy(() => import('../features/exercises/pages/NuevoEjercicioPage'))
+const VistaAlumnoPage = lazy(() => import('../features/admin/pages/VistaAlumnoPage'))
 const ClientLayout = lazy(() => import('../features/client/components/ClientLayout'))
 const ClientDashboard = lazy(() => import('../features/client/pages/ClientDashboard'))
 const WorkoutSessionPage = lazy(() => import('../features/client/pages/WorkoutSessionPage'))
@@ -71,6 +72,21 @@ const router = createBrowserRouter([
       { path: 'sesion/:sesionId/ejercicio/:ejercicioId', element: <ExerciseDetailPage /> },
       // Old /alumno/:clienteId links show no data: they fall back to the login
       { path: '*', element: <Navigate to="/alumno" replace /> },
+    ],
+  },
+  // ── Read-only preview of the student area, for trainers ──
+  {
+    path: '/vista-alumno',
+    element: (
+      <ProtectedRoute requiredRole="trainer">
+        <ClientLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      { index: true, element: <VistaAlumnoPage /> },
+      { path: ':clienteId', element: <ClientDashboard /> },
+      { path: ':clienteId/sesion/:sesionId', element: <WorkoutSessionPage /> },
+      { path: ':clienteId/sesion/:sesionId/ejercicio/:ejercicioId', element: <ExerciseDetailPage /> },
     ],
   },
   // ── 404 — catch all unmatched routes ──

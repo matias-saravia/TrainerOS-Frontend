@@ -7,13 +7,11 @@
   transition: box-shadow 0.15s;
 }
 
-.block-card:hover {
-  box-shadow: var(--shadow-card);
-}
+.block-card:hover {}
 
-/* Superset: left accent border */
+/* Superset: heavier frame */
 .block-card--superset {
-  border-left: 3px solid var(--color-midnight-blue);
+  border-color: var(--color-midnight-blue);
 }
 
 /* Header */
@@ -84,8 +82,8 @@
 }
 
 .block-card__remove:hover {
-  background: var(--color-error-container, #ffdad6);
-  color: var(--color-error, #ba1a1a);
+  background: var(--color-error-container, var(--color-error-bg));
+  color: var(--color-error, var(--color-error));
 }
 
 /* Body */
@@ -142,7 +140,7 @@
 }
 
 .block-ex-row__name {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-midnight-blue);
@@ -165,7 +163,7 @@
 }
 
 .block-ex-row__sets {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 24px;
   font-weight: 700;
   color: var(--color-midnight-blue);
@@ -179,7 +177,7 @@
 }
 
 .block-ex-row__reps {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 24px;
   font-weight: 700;
   color: var(--color-midnight-blue);
@@ -226,9 +224,9 @@
 }
 
 .block-ex-row__remove:hover {
-  color: var(--color-error, #ba1a1a);
-  border-color: var(--color-error-container, #ffdad6);
-  background: var(--color-error-container, #ffdad6);
+  color: var(--color-error, var(--color-error));
+  border-color: var(--color-error-container, var(--color-error-bg));
+  background: var(--color-error-container, var(--color-error-bg));
 }
 
 /* ── Mobile ── */

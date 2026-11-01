@@ -41,6 +41,12 @@ export const dashboardKeys = {
   heatmap: () => [...dashboardKeys.all, 'heatmap'] as const,
 }
 
+export const financeKeys = {
+  all: ['finance'] as const,
+  month: (year: number, month: number) => [...financeKeys.all, 'month', year, month] as const,
+  summary: (year: number) => [...financeKeys.all, 'summary', year] as const,
+}
+
 export const clientRoutineKeys = {
   all: ['client-routines'] as const,
   byClient: (clientId: string) =>

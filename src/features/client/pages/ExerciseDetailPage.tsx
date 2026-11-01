@@ -7,13 +7,15 @@ import {
   useWeightHistory,
   useWorkoutSession,
 } from '../hooks/useClientDashboard'
+import { useStudentArea } from '../hooks/useStudentArea'
 import ExerciseHistoryChart from '../components/ExerciseHistoryChart'
 import { parseVideoUrl } from '../../../utils/video'
 import './ExerciseDetailPage.css'
 
 export default function ExerciseDetailPage() {
   const { sesionId = '', ejercicioId = '' } = useParams()
-  const basePath = `/alumno/sesion/${sesionId}`
+  const { isPreview, basePath: areaPath } = useStudentArea()
+  const basePath = `${areaPath}/sesion/${sesionId}`
 
   const navigate = useNavigate()
 
@@ -61,7 +63,7 @@ export default function ExerciseDetailPage() {
   }
 
   const handleSerieComplete = () => {
-    if (!exercise || setsCompleted >= exercise.series) return
+    if (isPreview || !exercise || setsCompleted >= exercise.series) return
     logSet.mutate(
       { id: exercise.id },
       {
@@ -101,9 +103,9 @@ export default function ExerciseDetailPage() {
 
   if (!exercise) {
     return (
-      <div className="exercise-detail-page" style={{ justifyContent: 'center', alignItems: 'center' }}>
-        <p style={{ color: 'rgba(255,255,255,0.7)' }}>Ejercicio no encontrado</p>
-        <button className="ed-footer__btn" onClick={handleBack} style={{ marginTop: 16 }}>
+      <div className="exercise-detail-page ed-center">
+        <p>No encontramos este ejercicio.</p>
+        <button className="ed-footer__btn" onClick={handleBack}>
           Volver a la rutina
         </button>
       </div>
@@ -127,9 +129,7 @@ export default function ExerciseDetailPage() {
           <ArrowLeft size={18} strokeWidth={2} />
           <span className="ed-back-btn__label">Volver a la rutina</span>
         </button>
-        <span className="ed-top-nav__title">{exercise.nombre}</span>
-        <div className="ed-top-nav__space" />
-      </header>
+              </header>
 
       {/* ── Main Grid Layout (2 cols on desktop, 1 col on mobile) ── */}
       <div className="ed-grid-layout">
@@ -167,22 +167,22 @@ export default function ExerciseDetailPage() {
             ) : video.type === 'unsupported' && video.rawUrl ? (
               <div className="ed-video-external">
                 <div className="ed-video-placeholder__icon" aria-hidden="true">
-                  <ExternalLink size={24} color="#b5c7ea" />
+                  <ExternalLink size={24} strokeWidth={1.5} />
                 </div>
-                <p className="ed-video-external__title">Video disponible en enlace externo</p>
+                <p className="ed-video-external__title">El video está en otro sitio</p>
                 <a
                   href={video.rawUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ed-video-external__btn"
                 >
-                  Abrir video original ↗
+                  Abrir video
                 </a>
               </div>
             ) : (
               <div className="ed-video-placeholder">
                 <div className="ed-video-placeholder__icon" aria-hidden="true">
-                  <VideoOff size={24} color="rgba(82, 103, 125, 0.7)" />
+                  <VideoOff size={24} strokeWidth={1.5} />
                 </div>
                 <span className="ed-video-placeholder__label">Sin video demostrativo</span>
               </div>
@@ -204,10 +204,10 @@ export default function ExerciseDetailPage() {
 
           {/* Chips */}
           <div className="ed-chips">
-            <span className="ed-chip">{exercise.grupoMuscular.toUpperCase()}</span>
+            <span className="ed-chip">{exercise.grupoMuscular}</span>
             {exercise.categoria && (
               <span className={`ed-chip ed-chip--categoria ed-chip--${exercise.categoria.toLowerCase()}`}>
-                {exercise.categoria.toUpperCase()}
+                {exercise.categoria}
               </span>
             )}
             {video.rawUrl && (
@@ -219,7 +219,7 @@ export default function ExerciseDetailPage() {
                 title="Abrir video en pestaña nueva"
               >
                 <ExternalLink size={10} strokeWidth={2} />
-                VER LINK
+                Abrir link
               </a>
             )}
           </div>
@@ -241,22 +241,18 @@ export default function ExerciseDetailPage() {
                 aria-label={done ? `Serie ${i + 1} completada` : `Serie ${i + 1}`}
               />
             ))}
-            <span className="ed-sets-text">{setsCompleted}/{exercise.series} series</span>
+            <span className="ed-sets-text">{setsCompleted}/{exercise.series}</span>
           </div>
 
           {/* Trainer Notes */}
           {instrucciones.length > 0 && (
             <div className="ed-notes-card">
               <div className="ed-notes-card__header">
-                <h2 className="ed-notes-card__title">Notas del Entrenador</h2>
+                <h2 className="ed-notes-card__title">Técnica</h2>
               </div>
               <ul className="ed-notes-list">
                 {instrucciones.map((inst, i) => (
                   <li key={i} className="ed-notes-item">
-                    <svg className="ed-notes-item__icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                      <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
                     <span>{inst}</span>
                   </li>
                 ))}
@@ -265,12 +261,12 @@ export default function ExerciseDetailPage() {
           )}
 
           {/* History Chart */}
-          <ExerciseHistoryChart historial={historyData} label="Historial (Último mes)" />
+          <ExerciseHistoryChart historial={historyData} label="Historial" />
 
           {/* Completed / Next Action Button */}
           <div className="ed-action-container">
             {logSet.isError && (
-              <p role="alert" style={{ margin: '0 0 12px', padding: '12px', borderRadius: '6px', background: '#ffdad6', color: '#93000a', fontSize: '14px' }}>
+              <p role="alert" className="alert ed-alert">
                 No pudimos guardar la serie. Revisá tu conexión e intentá de nuevo.
               </p>
             )}
@@ -279,10 +275,10 @@ export default function ExerciseDetailPage() {
                 id="btn-serie-completada"
                 className="ed-footer__btn ed-footer__btn--complete"
                 onClick={handleSerieComplete}
-                disabled={logSet.isPending}
+                disabled={isPreview || logSet.isPending}
               >
                 <Check size={18} strokeWidth={2.5} />
-                <span>Serie Completada</span>
+                <span>Serie completada</span>
                 <span className="ed-footer__sets-badge">{setsCompleted + 1}/{exercise.series}</span>
               </button>
             ) : (
@@ -299,7 +295,7 @@ export default function ExerciseDetailPage() {
                 ) : (
                   <>
                     <Check size={18} strokeWidth={2.5} />
-                    <span>Volver a la Rutina</span>
+                    <span>Volver a la rutina</span>
                   </>
                 )}
               </button>

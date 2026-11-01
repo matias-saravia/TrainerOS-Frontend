@@ -5,24 +5,28 @@ import {
   Dumbbell,
   CreditCard,
   UserPlus,
-  HelpCircle,
   LogOut,
   Library,
 } from 'lucide-react'
 import { useAuth } from '../../auth'
+import Logo from '../../../components/Logo'
 import './Sidebar.css'
 
 const navItems = [
-  { to: '/admin/dashboard',                   icon: LayoutDashboard, label: 'Panel General' },
-  { to: '/admin/clientes',                    icon: Users,           label: 'Clientes' },
-  { to: '/admin/entrenamientos',              icon: Dumbbell,        label: 'Workouts' },
-  { to: '/admin/entrenamientos/ejercicios',   icon: Library,         label: 'Exercise Bank' },
-  { to: '/admin/finanzas',                    icon: CreditCard,      label: 'Finanzas' },
+  { to: '/admin/dashboard',                 icon: LayoutDashboard, label: 'Panel',      end: false },
+  { to: '/admin/clientes',                  icon: Users,           label: 'Alumnos',    end: false },
+  { to: '/admin/entrenamientos',            icon: Dumbbell,        label: 'Rutinas',    end: true },
+  { to: '/admin/entrenamientos/ejercicios', icon: Library,         label: 'Ejercicios', end: false },
+  { to: '/admin/finanzas',                  icon: CreditCard,      label: 'Finanzas',   end: false },
 ]
 
 export default function Sidebar() {
   const navigate = useNavigate()
-  const { signOut } = useAuth()
+  const { signOut, profile, user } = useAuth()
+
+  const displayName = profile?.nombre
+    ? `${profile.nombre} ${profile.apellido || ''}`.trim()
+    : user?.email ?? ''
 
   const handleLogout = async () => {
     try {
@@ -36,27 +40,18 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ── Desktop sidebar ───────────────────────────── */}
-      <aside className="sidebar">
-        {/* Logo */}
-        <div className="sidebar__logo">
-          <div className="sidebar__logo-mark">
-            <span>T</span>
-          </div>
-          <div className="sidebar__logo-text">
-            <span className="sidebar__logo-name">TrainerOS</span>
-            <span className="sidebar__logo-tagline">Elite Performance</span>
-          </div>
-        </div>
+      {/* ── Desktop rail ──────────────────────────────── */}
+      <aside className="admin-rail">
+        <Logo />
 
-        {/* Primary Nav */}
-        <nav className="sidebar__nav">
-          {navItems.map(({ to, icon: Icon, label }) => (
+        <nav className="admin-rail__nav" aria-label="Principal">
+          {navItems.map(({ to, icon: Icon, label, end }) => (
             <NavLink
               key={to}
               to={to}
+              end={end}
               className={({ isActive }) =>
-                `sidebar__nav-item${isActive ? ' sidebar__nav-item--active' : ''}`
+                `admin-rail__item${isActive ? ' admin-rail__item--active' : ''}`
               }
             >
               <Icon size={18} strokeWidth={1.5} />
@@ -65,40 +60,33 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        {/* CTA */}
-        <button
-          className="sidebar__cta"
-          onClick={() => navigate('/admin/clientes/nuevo')}
-        >
-          <UserPlus size={16} strokeWidth={1.5} />
-          Añadir Cliente
+        <button className="admin-rail__cta" onClick={() => navigate('/admin/clientes/nuevo')}>
+          <UserPlus size={16} strokeWidth={1.75} />
+          Nuevo alumno
         </button>
 
-        {/* Footer links */}
-        <div className="sidebar__footer">
-          <button className="sidebar__footer-item">
-            <HelpCircle size={16} strokeWidth={1.5} />
-            <span>Soporte</span>
-          </button>
-          <button className="sidebar__footer-item" onClick={handleLogout} title="Cerrar sesión">
+        <div className="admin-rail__footer">
+          {displayName && <p className="admin-rail__user">{displayName}</p>}
+          <button className="admin-rail__logout" onClick={handleLogout}>
             <LogOut size={16} strokeWidth={1.5} />
-            <span>Cerrar Sesión</span>
+            Cerrar sesión
           </button>
         </div>
       </aside>
 
       {/* ── Mobile bottom navigation ──────────────────── */}
-      <nav className="bottom-nav">
-        {navItems.map(({ to, icon: Icon, label }) => (
+      <nav className="bottom-nav" aria-label="Principal">
+        {navItems.map(({ to, icon: Icon, label, end }) => (
           <NavLink
             key={to}
             to={to}
+            end={end}
             className={({ isActive }) =>
               `bottom-nav__item${isActive ? ' bottom-nav__item--active' : ''}`
             }
           >
             <Icon size={22} strokeWidth={1.5} />
-            <span>{label.split(' ')[0]}</span>
+            <span>{label}</span>
           </NavLink>
         ))}
       </nav>

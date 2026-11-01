@@ -1,12 +1,13 @@
-/* ─── Client Layout Shell ──────────────────────────────────────────── */
-.client-layout {
-  min-height: 100dvh;
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
-  background: var(--color-deep-navy, #0F1A2B);
-  color: #ffffff;
-  font-family: var(--font-body, 'Inter', sans-serif);
-  display: flex;
-  flex-direction: column;
-}
+.client-layout { display: flex; flex-direction: column; width: 100%; max-width: 100vw; min-height: 100dvh; overflow-x: hidden; background: var(--color-deep-navy); color: #fff; }
+
+.client-layout__preview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 16px; background: var(--color-marker); color: var(--color-deep-navy); font-size: 14px; font-weight: 700; }
+.client-layout__preview a { color: inherit; text-decoration: underline; }
+.client-layout__preview span { flex: 1 1 200px; }
+
+.vista-alumno { width: 100%; max-width: 640px; margin: 0 auto; padding: 32px 16px; }
+.vista-alumno h1 { margin-bottom: 8px; font-family: var(--font-display); font-size: 56px; font-weight: 800; line-height: 0.95; text-transform: uppercase; }
+.vista-alumno > p { margin-bottom: 20px; color: var(--on-navy-2); }
+.vista-alumno__list { list-style: none; border-top: 2px solid #fff; }
+.vista-alumno__item { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 12px 0; border-bottom: 1px solid var(--navy-rule); color: #fff; font-size: 16px; font-weight: 700; text-decoration: none; }
+.vista-alumno__item:hover { color: var(--color-marker); }
+.vista-alumno__back { color: var(--on-navy-2); }

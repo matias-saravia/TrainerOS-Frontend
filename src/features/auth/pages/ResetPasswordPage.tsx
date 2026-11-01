@@ -4,6 +4,7 @@ import { AlertCircle, Lock } from 'lucide-react'
 import { updatePassword } from '../api/auth.api'
 import { useAuth } from '../hooks/useAuth'
 import './LoginPage.css'
+import Logo from '../../../components/Logo'
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
@@ -102,9 +103,9 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="auth-viewport">
-      <div className="auth-terminal" style={{ width: '100%' }}>
-        <div className="auth-card">{content}</div>
+    <div className="auth-viewport auth-viewport--single">
+      <div className="auth-terminal">
+        <div className="auth-card"><span className="auth-card__mobile-logo"><Logo /></span>{content}</div>
       </div>
     </div>
   )

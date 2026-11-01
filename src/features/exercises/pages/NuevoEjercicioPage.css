@@ -20,7 +20,7 @@
 }
 
 .nuevo-ejercicio__mobile-title {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 17px;
   font-weight: 700;
   color: var(--color-midnight-blue);
@@ -65,7 +65,7 @@
 .nuevo-ejercicio__back-link:hover { color: var(--color-midnight-blue); }
 
 .nuevo-ejercicio__title {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 28px;
   font-weight: 700;
   color: var(--color-midnight-blue);
@@ -129,7 +129,7 @@
 .ne-section__icon { color: var(--color-dusty-blue); }
 
 .ne-section__title {
-  font-family: var(--font-display);
+  font-family: var(--font-display); text-transform: uppercase;
   font-size: 16px;
   font-weight: 600;
   color: var(--color-midnight-blue);
@@ -182,7 +182,6 @@
 
 .ne-input:focus {
   border-color: var(--color-midnight-blue);
-  box-shadow: 0 0 0 2px rgba(28, 46, 74, 0.1);
 }
 
 .ne-input:hover:not(:focus) { border-color: var(--color-dusty-blue); }
@@ -295,3 +294,20 @@ select.ne-input { cursor: pointer; }
 @media (max-width: 600px) {
   .ne-section { padding: 16px; }
 }
+
+/* ─── Hoja de series ─────────────────────────────────────── */
+.nuevo-ejercicio__title { font-size: clamp(38px, 4.4vw, 60px); font-weight: 800; line-height: 0.95; }
+.nuevo-ejercicio__desktop-header { padding: 32px var(--gutter) 20px; }
+.nuevo-ejercicio__body { padding-inline: var(--gutter); }
+.nuevo-ejercicio__subtitle { font-size: 15px; color: var(--color-on-surface-var); }
+.ne-section { background: var(--color-surface); border: 1px solid var(--color-outline-var); border-radius: var(--radius-lg); }
+.ne-section__heading { border-bottom: 2px solid var(--color-midnight-blue); }
+.ne-section__icon { display: none; }
+.ne-section__title { font-size: 28px; font-weight: 800; line-height: 1; color: var(--color-midnight-blue); }
+.ne-label { font-size: 14px; font-weight: 600; color: var(--color-midnight-blue); }
+.ne-input { min-height: 44px; background: var(--color-surface); border: 1px solid var(--color-ivory); border-radius: var(--radius-md); font-size: 15px; color: var(--color-on-surface); }
+.ne-input::placeholder { color: var(--color-outline); }
+.ne-input:focus { outline: 2px solid var(--color-midnight-blue); outline-offset: -1px; border-color: var(--color-midnight-blue); }
+.ne-input--error { border-color: var(--color-error); }
+.ne-hint { font-style: normal; font-size: 14px; color: var(--color-on-surface-var); }
+.ne-input::placeholder { opacity: 1; }

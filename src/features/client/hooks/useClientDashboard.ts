@@ -2,9 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../../lib/supabase'
 import type { Tables } from '../../../lib/supabase'
 import { clientKeys, sessionKeys, clientRoutineKeys } from '../../../lib/queryKeys'
-import type { RoutineRow } from '../../workouts/hooks/useRoutines'
+import type { RoutineBlockWithExercises, RoutineRow } from '../../workouts/hooks/useRoutines'
 import { useAuth } from '../../auth'
 import type { SessionExercise } from '../api/client.api'
+import { useStudentArea } from './useStudentArea'
 
 export type ClientRow = Tables<'clients'>
 export type WorkoutSessionRow = Tables<'workout_sessions'>
@@ -44,20 +45,64 @@ export function toSessionExercise(row: SessionExerciseWithExercise): SessionExer
 }
 
 /**
- * Hook to fetch the client row linked to the signed-in student.
- * Returns null while the account has not been linked to any trainer.
+ * Builds what the student would see when starting a routine, without creating a session.
+ * Mirrors the copy made by start_workout_session.
+ */
+export function toPreviewSession(
+  routine: RoutineRow,
+  blocks: RoutineBlockWithExercises[],
+  clientId: string,
+): WorkoutSessionWithExercises {
+  const exercises = blocks.flatMap(block => block.routine_block_exercises)
+
+  return {
+    id: routine.id,
+    client_id: clientId,
+    routine_id: routine.id,
+    trainer_id: routine.trainer_id,
+    nombre: routine.nombre,
+    fecha: new Date().toLocaleDateString('en-CA'),
+    status: 'in-progress',
+    notes: null,
+    created_at: routine.created_at,
+    started_at: null,
+    completed_at: null,
+    session_exercises: exercises.map((rbe, order_index) => ({
+      id: rbe.id,
+      session_id: routine.id,
+      exercise_id: rbe.exercise_id,
+      order_index,
+      categoria: null,
+      series: rbe.sets,
+      reps: rbe.reps,
+      descanso: rbe.rest_seconds ?? 90,
+      peso_objetivo: null,
+      sets_completados: 0,
+      peso_registrado: null,
+      notes: rbe.notes,
+      exercises: rbe.exercises,
+    })),
+  } as WorkoutSessionWithExercises
+}
+
+/**
+ * Hook to fetch the client row linked to the signed-in student, or the client
+ * a trainer is previewing. Returns null when there is no such client.
  */
 export function useMyClient() {
   const { user } = useAuth()
+  const { previewClientId } = useStudentArea()
   const userId = user?.id ?? ''
+  const column = previewClientId ? 'id' : 'user_id'
+  const value = previewClientId ?? userId
 
   return useQuery({
-    queryKey: clientKeys.me(userId),
+    queryKey: clientKeys.me(value),
     queryFn: async (): Promise<ClientRow | null> => {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('user_id', userId)
+        .eq(column, value)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -68,17 +113,47 @@ export function useMyClient() {
 
       return data
     },
-    enabled: Boolean(userId),
+    enabled: Boolean(value),
   })
 }
 
 /**
  * Hook to fetch one workout session with its exercises, in routine order.
+ * In a preview, sessionId is a routine ID and nothing is written.
  */
 export function useWorkoutSession(sessionId: string) {
+  const { previewClientId } = useStudentArea()
+
   return useQuery({
-    queryKey: sessionKeys.detail(sessionId),
+    queryKey: previewClientId
+      ? [...sessionKeys.detail(sessionId), 'preview', previewClientId]
+      : sessionKeys.detail(sessionId),
     queryFn: async (): Promise<WorkoutSessionWithExercises> => {
+      if (previewClientId) {
+        const { data: routine, error: routineError } = await supabase
+          .from('routines')
+          .select('*')
+          .eq('id', sessionId)
+          .single()
+
+        if (routineError) {
+          throw routineError
+        }
+
+        const { data: blocks, error: blocksError } = await supabase
+          .from('routine_blocks')
+          .select('*, routine_block_exercises(*, exercises(*))')
+          .eq('routine_id', sessionId)
+          .order('order_index')
+          .order('order_index', { referencedTable: 'routine_block_exercises' })
+
+        if (blocksError) {
+          throw blocksError
+        }
+
+        return toPreviewSession(routine, blocks as unknown as RoutineBlockWithExercises[], previewClientId)
+      }
+
       const { data, error } = await supabase
         .from('workout_sessions')
         .select('*, session_exercises(*, exercises(*))')

@@ -144,3 +144,6 @@
   .routine-builder__canvas { padding: 0 16px 80px; }
   .routine-builder__blocks { max-width: 100%; }
 }
+
+/* ─── Hoja de series ─────────────────────────────────────── */
+.routine-builder__drop-hint-text { font-size: 15px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--color-dusty-blue); }

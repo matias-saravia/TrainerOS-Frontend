@@ -107,6 +107,12 @@ ALTER TABLE public.workout_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.session_exercises ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.weight_entries ENABLE ROW LEVEL SECURITY;
 
+-- Explicit, because a project can be set not to expose new tables by default.
+-- RLS decides which rows; these grants only let the roles reach the tables.
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon;
 
 -- Drop anything that was created by hand in the dashboard: a single leftover

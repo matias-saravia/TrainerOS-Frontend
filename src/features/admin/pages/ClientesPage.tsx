@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserPlus, UserCircle, Pencil, Trash2, AlertCircle, Link2, Dumbbell } from 'lucide-react'
+import { UserPlus, Users, Pencil, Trash2, AlertCircle, Link2, Dumbbell, Eye } from 'lucide-react'
 import { useClients, useDeleteClient, type ClientRow } from '../hooks/useClients'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
@@ -9,32 +9,17 @@ import ConfirmModal from '../../../components/ConfirmModal'
 import AssignRoutineModal from '../components/AssignRoutineModal'
 import { useAuth } from '../../auth'
 import { getTrainerLink } from '../../../utils/trainerLink'
+import { CLIENT_STATUS, PLAN_LABELS } from '../clientStatus'
 import './ClientesPage.css'
 
 type Tab = 'todos' | 'activos' | 'pendientes' | 'vencer'
 
-const statusColor: Record<string, string> = {
-  aldia:    '#22c55e',
-  vence:    '#f59e0b',
-  pendiente:'#ba1a1a',
-}
-
-const statusLabels: Record<string, string> = {
-  aldia:     'Al día',
-  vence:     'Vence pronto',
-  pendiente: 'Pendiente',
-}
-
 const tabs: { key: Tab; label: string }[] = [
   { key: 'todos',      label: 'Todos' },
-  { key: 'activos',    label: 'Activos' },
+  { key: 'activos',    label: 'Al día' },
   { key: 'pendientes', label: 'Pendientes' },
-  { key: 'vencer',     label: 'Próximos a Vencer' },
+  { key: 'vencer',     label: 'Por vencer' },
 ]
-
-function getInitials(nombre: string, apellido: string): string {
-  return `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase()
-}
 
 export default function ClientesPage() {
   const navigate = useNavigate()
@@ -64,20 +49,9 @@ export default function ClientesPage() {
       setClientToDelete(null)
     } catch (err: unknown) {
       console.error('Error al eliminar cliente:', err)
-      const msg = err instanceof Error ? err.message : 'Error al eliminar el cliente.'
+      const msg = err instanceof Error ? err.message : 'No pudimos eliminar al alumno.'
       setActionError(msg)
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="clientes-page">
-        <div className="page-header">
-          <h1 className="page-header__title">Gestión de Clientes</h1>
-        </div>
-        <LoadingSkeleton count={4} variant="list" />
-      </div>
-    )
   }
 
   if (error) {
@@ -90,150 +64,136 @@ export default function ClientesPage() {
 
   return (
     <div className="clientes-page">
-      {/* Page header */}
-      <div className="page-header">
-        <h1 className="page-header__title">Gestión de Clientes</h1>
-        <button
-          className="btn-primary"
-          onClick={() => navigate('/admin/clientes/nuevo')}
-        >
-          <UserPlus size={16} strokeWidth={1.5} />
-          Nuevo Cliente
+      <header className="page-header">
+        <h1 className="page-header__title">Alumnos</h1>
+        <button className="btn-primary" onClick={() => navigate('/admin/clientes/nuevo')}>
+          <UserPlus size={16} strokeWidth={1.75} />
+          Nuevo alumno
         </button>
-      </div>
+      </header>
 
-      {/* Action feedback error if any */}
       {actionError && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#991b1b',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          margin: '16px 24px 0 24px',
-          fontSize: '13.5px',
-          fontWeight: 500,
-        }}>
+        <div className="alert clientes-page__alert" role="alert">
           <AlertCircle size={18} />
           <span>{actionError}</span>
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="clientes-page__tabs">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            className={`tab-btn${activeTab === t.key ? ' tab-btn--active' : ''}`}
-            onClick={() => setActiveTab(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <section className="sheet">
+        <div className="sheet__head">
+          <div className="tab-row" role="tablist" aria-label="Filtrar alumnos">
+            {tabs.map(t => (
+              <button
+                key={t.key}
+                role="tab"
+                aria-selected={activeTab === t.key}
+                className={`tab-btn${activeTab === t.key ? ' tab-btn--active' : ''}`}
+                onClick={() => setActiveTab(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Client grid */}
-      {clients.length === 0 ? (
-        <EmptyState
-          icon={UserCircle}
-          title="Sin clientes"
-          description="Aún no tenés clientes registrados. Creá el primero para empezar."
-          action={{
-            label: 'Nuevo Cliente',
-            onClick: () => navigate('/admin/clientes/nuevo'),
-          }}
-        />
-      ) : (
-        <div className="clientes-grid">
-          {clients.map(client => (
-            <div
-              key={client.id}
-              className="client-card"
-              onClick={() => navigate(`/admin/clientes/${client.id}/editar`)}
-            >
-              <div className="client-card__header">
-                <div className="client-card__avatar">
-                  <UserCircle size={28} strokeWidth={1.5} />
-                  <span className="client-card__initials">
-                    {getInitials(client.nombre, client.apellido)}
-                  </span>
-                </div>
-                <div className="client-card__info">
-                  <p className="client-card__name">
-                    {client.nombre} {client.apellido}
-                  </p>
-                  <p className="client-card__goal">{client.objetivo ?? client.plan_tier}</p>
-                </div>
-              </div>
-
-              <div className="client-card__status-row">
-                <div className="client-card__status">
-                  <span
-                    className="status-dot"
-                    style={{ background: statusColor[client.status] ?? '#94a3b8' }}
-                  />
-                  <span className="status-label">
-                    {statusLabels[client.status] ?? client.status}
-                  </span>
-                </div>
-                <span className="client-card__last-session">
-                  Semana {client.semana_actual}/{client.total_semanas}
-                </span>
-              </div>
-
-              <div className="client-card__actions" onClick={e => e.stopPropagation()}>
-                <div className="client-card__actions-left">
-                  <button
-                    className="icon-action-btn"
-                    title="Editar cliente"
+        {isLoading ? (
+          <LoadingSkeleton count={4} variant="list" />
+        ) : clients.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="Sin alumnos"
+            description={activeTab === 'todos'
+              ? 'Cargá tu primer alumno y pasale tu link para que empiece a entrenar.'
+              : 'Ningún alumno coincide con este filtro.'}
+            action={activeTab === 'todos' ? {
+              label: 'Nuevo alumno',
+              onClick: () => navigate('/admin/clientes/nuevo'),
+            } : undefined}
+          />
+        ) : (
+          <table className="hoja clientes-table">
+            <thead>
+              <tr>
+                <th>Semana</th>
+                <th>Alumno</th>
+                <th>Objetivo</th>
+                <th>Estado</th>
+                <th className="hoja__end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {clients.map(client => {
+                const status = CLIENT_STATUS[client.status]
+                return (
+                  <tr
+                    key={client.id}
+                    data-clickable
+                    className={client.status === 'pendiente' ? 'marker' : undefined}
                     onClick={() => navigate(`/admin/clientes/${client.id}/editar`)}
                   >
-                    <Pencil size={15} strokeWidth={1.5} />
-                  </button>
-                  <button
-                    className="icon-action-btn icon-action-btn--danger"
-                    title="Eliminar cliente"
-                    onClick={() => setClientToDelete(client)}
-                  >
-                    <Trash2 size={15} strokeWidth={1.5} />
-                  </button>
-                  <button
-                    className={`icon-action-btn${copiedClientId === client.id ? ' icon-action-btn--copied' : ''}`}
-                    title={copiedClientId === client.id ? '¡Copiado!' : 'Copiar link del alumno'}
-                    onClick={e => handleCopyClientLink(client.id, e)}
-                    aria-label="Copiar link del alumno"
-                  >
-                    <Link2 size={15} strokeWidth={1.5} />
-                  </button>
-                </div>
+                    <td className="hoja__lead">{client.semana_actual}<small>/{client.total_semanas}</small></td>
+                    <td className="hoja__name">{client.nombre} {client.apellido}</td>
+                    <td className="clientes-table__goal">{client.objetivo ?? PLAN_LABELS[client.plan_tier]}</td>
+                    <td className="clientes-table__status">
+                      <span className={`status ${status?.tone ?? ''}`}>{status?.label ?? client.status}</span>
+                    </td>
+                    <td className="hoja__end clientes-table__tools" onClick={e => e.stopPropagation()}>
+                      <div className="clientes-table__actions">
+                        <button
+                          className="icon-action-btn"
+                          title="Editar alumno"
+                          aria-label={`Editar a ${client.nombre}`}
+                          onClick={() => navigate(`/admin/clientes/${client.id}/editar`)}
+                        >
+                          <Pencil size={16} strokeWidth={1.5} />
+                        </button>
+                        <button
+                          className={`icon-action-btn${copiedClientId === client.id ? ' icon-action-btn--copied' : ''}`}
+                          title={copiedClientId === client.id ? 'Copiado' : 'Copiar link del alumno'}
+                          aria-label="Copiar link del alumno"
+                          onClick={e => handleCopyClientLink(client.id, e)}
+                        >
+                          <Link2 size={16} strokeWidth={1.5} />
+                        </button>
+                        <button
+                          className="icon-action-btn"
+                          title="Ver como alumno"
+                          aria-label={`Ver como alumno a ${client.nombre}`}
+                          onClick={() => navigate(`/vista-alumno/${client.id}`)}
+                        >
+                          <Eye size={16} strokeWidth={1.5} />
+                        </button>
+                        <button
+                          className="clientes-table__routines"
+                          aria-label={`Gestionar rutinas de ${client.nombre}`}
+                          onClick={() => setClientForRoutines(client)}
+                        >
+                          <Dumbbell size={15} strokeWidth={1.5} />
+                          Rutinas
+                        </button>
+                        <button
+                          className="icon-action-btn icon-action-btn--danger"
+                          title="Eliminar alumno"
+                          aria-label={`Eliminar a ${client.nombre}`}
+                          onClick={() => setClientToDelete(client)}
+                        >
+                          <Trash2 size={16} strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </section>
 
-                <button
-                  className="client-card__routines-btn"
-                  title="Gestionar y asignar rutinas"
-                  onClick={e => {
-                    e.stopPropagation()
-                    setClientForRoutines(client)
-                  }}
-                  aria-label="Gestionar rutinas"
-                >
-                  <Dumbbell size={13} strokeWidth={2} />
-                  <span>Rutinas</span>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Modal de confirmación para eliminar cliente */}
       <ConfirmModal
         isOpen={Boolean(clientToDelete)}
-        title="Eliminar Cliente"
+        title="Eliminar alumno"
         variant="danger"
-        confirmText="Eliminar Cliente"
+        confirmText="Eliminar alumno"
         cancelText="Cancelar"
         isLoading={deleteClient.isPending}
         onConfirm={handleDeleteClient}
@@ -241,15 +201,14 @@ export default function ClientesPage() {
         description={
           clientToDelete ? (
             <p>
-              ¿Estás seguro de que deseas eliminar permanentemente a{' '}
+              ¿Querés eliminar a{' '}
               <strong>{clientToDelete.nombre} {clientToDelete.apellido}</strong>?
-              Esta acción no se puede deshacer y borrará su información asociada.
+              No se puede deshacer y se borra toda su información.
             </p>
           ) : null
         }
       />
 
-      {/* Modal para agregar y gestionar rutinas directamente */}
       <AssignRoutineModal
         isOpen={Boolean(clientForRoutines)}
         clientId={clientForRoutines?.id ?? ''}

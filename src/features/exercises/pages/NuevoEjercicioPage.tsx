@@ -67,7 +67,7 @@ export default function NuevoEjercicioPage() {
     }
 
     if (!state.grupoMuscular) {
-      errs.grupoMuscular = 'Debes seleccionar un grupo muscular principal.'
+      errs.grupoMuscular = 'Elegí un grupo muscular.'
     }
 
     if (!state.instrucciones.trim()) {
@@ -112,7 +112,7 @@ export default function NuevoEjercicioPage() {
     }
 
     if (!user) {
-      setSubmitError('Debes haber iniciado sesión para crear un ejercicio.')
+      setSubmitError('Iniciá sesión para crear ejercicios.')
       return
     }
 
@@ -170,11 +170,11 @@ export default function NuevoEjercicioPage() {
             onClick={() => navigate(-1)}
           >
             <ArrowLeft size={14} strokeWidth={1.5} />
-            Banco de Ejercicios
+            Ejercicios
           </button>
           <h1 className="nuevo-ejercicio__title">{pageTitle}</h1>
           <p className="nuevo-ejercicio__subtitle">
-            Añade un nuevo movimiento a tu base de datos de ejercicios.
+            Tus alumnos ven este nombre, el video y la técnica.
           </p>
         </div>
         <button
@@ -188,7 +188,7 @@ export default function NuevoEjercicioPage() {
             <polyline points="17 21 17 13 7 13 7 21"/>
             <polyline points="7 3 7 8 15 8"/>
           </svg>
-          {isSaving ? 'Guardando...' : 'Guardar Ejercicio'}
+          {isSaving ? 'Guardando...' : 'Guardar ejercicio'}
         </button>
       </div>
 
@@ -222,16 +222,16 @@ export default function NuevoEjercicioPage() {
         {/* LEFT COLUMN */}
         <div className="nuevo-ejercicio__left">
 
-          {/* Detalles del Ejercicio */}
+          {/* Detalles */}
           <div className="ne-section">
             <div className="ne-section__heading">
               <FileText size={16} strokeWidth={1.5} className="ne-section__icon" />
-              <h2 className="ne-section__title">Detalles del Ejercicio</h2>
+              <h2 className="ne-section__title">Detalles</h2>
             </div>
 
             <div className="ne-field">
               <label htmlFor="ne-nombre" className="ne-label">
-                Nombre del Ejercicio *
+                Nombre del ejercicio *
               </label>
               <input
                 id="ne-nombre"
@@ -254,7 +254,7 @@ export default function NuevoEjercicioPage() {
             <div className="ne-row">
               <div className="ne-field">
                 <label htmlFor="ne-grupo" className="ne-label">
-                  Grupo Muscular Principal *
+                  Grupo muscular *
                 </label>
                 <select
                   id="ne-grupo"
@@ -277,7 +277,7 @@ export default function NuevoEjercicioPage() {
               </div>
 
               <div className="ne-field">
-                <label className="ne-label">Nivel de Dificultad</label>
+                <label className="ne-label">Dificultad</label>
                 {/* Desktop: select */}
                 <select
                   id="ne-dificultad-select"
@@ -307,13 +307,13 @@ export default function NuevoEjercicioPage() {
 
             <div className="ne-field">
               <label htmlFor="ne-instrucciones" className="ne-label">
-                Instrucciones de Ejecución *
+                Técnica *
                 <span className="ne-label-hint">(una por línea)</span>
               </label>
               <textarea
                 id="ne-instrucciones"
                 className={`ne-input ne-textarea ${errors.instrucciones && touched.instrucciones ? 'ne-input--error' : ''}`}
-                placeholder={`Describe los puntos clave para una técnica perfecta…\n\nEj.\nMantén los codos altos y el pecho erguido durante todo el movimiento.\nDesciende hasta que los muslos estén paralelos al suelo.`}
+                placeholder={`Los puntos clave de la técnica, uno por línea.\n\nEj.\nMantené los codos altos y el pecho erguido durante todo el movimiento.\nDesciende hasta que los muslos estén paralelos al suelo.`}
                 value={form.instrucciones}
                 onChange={e => set('instrucciones', e.target.value)}
                 onBlur={() => handleBlur('instrucciones')}
@@ -332,12 +332,12 @@ export default function NuevoEjercicioPage() {
           <div className="ne-section">
             <div className="ne-section__heading">
               <Video size={16} strokeWidth={1.5} className="ne-section__icon" />
-              <h2 className="ne-section__title">Multimedia</h2>
+              <h2 className="ne-section__title">Video</h2>
             </div>
 
             <div className="ne-field">
               <label htmlFor="ne-video" className="ne-label">
-                URL de Video (YouTube/Vimeo)
+                Link del video (YouTube o Vimeo)
               </label>
               <div className="ne-url-wrap">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="ne-url-icon">
@@ -354,7 +354,7 @@ export default function NuevoEjercicioPage() {
                 />
               </div>
               <p className="ne-hint">
-                Proporciona un enlace directo para mostrarlo en la app del cliente.
+                Pegá el link: tus alumnos lo ven en su celular.
               </p>
             </div>
           </div>
@@ -402,7 +402,7 @@ export default function NuevoEjercicioPage() {
           type="submit"
           disabled={isSaving}
         >
-          {isSaving ? 'Guardando...' : 'Guardar Ejercicio'}
+          {isSaving ? 'Guardando...' : 'Guardar ejercicio'}
         </button>
       </div>
 

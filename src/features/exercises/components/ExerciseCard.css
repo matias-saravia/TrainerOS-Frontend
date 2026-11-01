@@ -1,147 +1,15 @@
-/* ─── Exercise Card ────────────────────────────────────────────────── */
-.exercise-card {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  padding: 16px;
-  background: var(--color-surface-low);
-  border: 1px solid var(--color-outline-var);
-  border-radius: var(--radius-lg);
-  transition: border-color 0.15s, box-shadow 0.15s;
-  position: relative;
+.exercise-row__muscle { white-space: nowrap; }
+.exercise-row__secondary { margin-left: 8px; font-size: 14px; color: var(--color-on-surface-var); }
+.exercise-row__level { white-space: nowrap; font-weight: 600; color: var(--color-on-surface-var); }
+.exercise-row__howto { max-width: 420px; font-size: 14px; color: var(--color-on-surface-var); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (max-width: 1100px) {
+  .exercise-row__howto, .exercise-row__secondary { display: none; }
 }
 
-.exercise-card:hover {
-  border-color: var(--color-dusty-blue);
-  box-shadow: var(--shadow-card);
-}
-
-/* Thumbnail */
-.exercise-card__thumb {
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  background: var(--color-surface-card);
-  border: 1px solid var(--color-outline-var);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.exercise-card__thumb-icon {
-  font-size: 24px;
-  line-height: 1;
-}
-
-/* Body */
-.exercise-card__body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.exercise-card__header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.exercise-card__name {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-midnight-blue);
-  margin: 0;
-  flex: 1;
-  min-width: 0;
-}
-
-.exercise-card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.exercise-card__instructions {
-  font-size: 12px;
-  color: var(--color-on-surface-var);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Edit button */
-.exercise-card__edit-btn {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  background: none;
-  border: 1px solid var(--color-outline-var);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-dusty-blue);
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-
-.exercise-card__edit-btn:hover {
-  color: var(--color-midnight-blue);
-  border-color: var(--color-midnight-blue);
-  background: var(--color-surface-card);
-}
-
-/* ─── Chips shared ─────────────────────────────────────────────────── */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  font-weight: 500;
-  font-family: var(--font-body);
-  white-space: nowrap;
-}
-
-.chip--green {
-  background: rgba(34, 197, 94, 0.12);
-  color: #15803d;
-  border: 1px solid rgba(34, 197, 94, 0.25);
-}
-
-.chip--blue {
-  background: rgba(75, 96, 118, 0.1);
-  color: var(--color-dusty-blue);
-  border: 1px solid rgba(75, 96, 118, 0.2);
-}
-
-.chip--navy {
-  background: rgba(28, 46, 74, 0.1);
-  color: var(--color-midnight-blue);
-  border: 1px solid rgba(28, 46, 74, 0.2);
-}
-
-.chip--muscle {
-  background: var(--color-surface-card);
-  color: var(--color-on-surface-var);
-  border: 1px solid var(--color-outline-var);
-}
-
-.chip--muscle.chip--secondary {
-  opacity: 0.75;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .exercise-card { gap: 12px; padding: 12px; }
-  .exercise-card__thumb { width: 44px; height: 44px; }
-  .exercise-card__thumb-icon { font-size: 20px; }
-  .exercise-card__instructions { display: none; }
+@media (max-width: 767px) {
+  .exercise-row__level { display: none; }
+  .exercise-row td { padding-inline: 12px; }
+  .exercise-row .hoja__name { font-size: 15px; }
+  .exercise-row .icon-action-btn { width: 44px; height: 44px; }
 }

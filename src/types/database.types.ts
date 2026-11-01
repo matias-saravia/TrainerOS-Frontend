@@ -222,6 +222,66 @@ export type Database = {
           },
         ]
       }
+      finance_movements: {
+        Row: {
+          anulado_at: string | null
+          anulado_motivo: string | null
+          client_id: string | null
+          concepto: string
+          created_at: string
+          fecha: string
+          id: string
+          metodo_pago: string
+          monto: number
+          tipo: string
+          trainer_id: string
+          updated_at: string
+        }
+        Insert: {
+          anulado_at?: string | null
+          anulado_motivo?: string | null
+          client_id?: string | null
+          concepto: string
+          created_at?: string
+          fecha: string
+          id?: string
+          metodo_pago?: string
+          monto: number
+          tipo: string
+          trainer_id: string
+          updated_at?: string
+        }
+        Update: {
+          anulado_at?: string | null
+          anulado_motivo?: string | null
+          client_id?: string | null
+          concepto?: string
+          created_at?: string
+          fecha?: string
+          id?: string
+          metodo_pago?: string
+          monto?: number
+          tipo?: string
+          trainer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_movements_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_movements_trainer_id_fkey"
+            columns: ["trainer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           apellido: string
@@ -574,6 +634,15 @@ export type Database = {
         Args: { p_session_id: string }
         Returns: undefined
       }
+      finance_year_summary: {
+        Args: { p_year: number }
+        Returns: {
+          mes: number
+          movimientos: number
+          tipo: string
+          total: number
+        }[]
+      }
       get_trainer_public: {
         Args: { p_slug: string }
         Returns: {
@@ -604,6 +673,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      register_access_attempt: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
       }
       save_routine: {
         Args: {

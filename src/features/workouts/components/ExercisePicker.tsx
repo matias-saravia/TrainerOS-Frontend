@@ -31,8 +31,8 @@ export default function ExercisePicker({ onAdd }: ExercisePickerProps) {
   const FILTERS: FilterValue[] = [FILTER_ALL, ...MUSCLE_GROUPS.slice(0, 5)]
 
   return (
-    <aside className="exercise-picker" aria-label="Banco de Ejercicios">
-      <h2 className="exercise-picker__title">Banco de Ejercicios</h2>
+    <aside className="exercise-picker" aria-label="Ejercicios">
+      <h2 className="exercise-picker__title">Ejercicios</h2>
 
       {/* Search */}
       <div className="exercise-picker__search-wrap">
@@ -97,15 +97,6 @@ function ExercisePickerItem({
       <span className="ep-item__handle" aria-hidden="true">⠿</span>
 
       {/* Thumb */}
-      <div className="ep-item__thumb" aria-hidden="true">
-        <svg viewBox="0 0 40 40" fill="none" className="ep-item__thumb-svg">
-          <rect width="40" height="40" rx="4" fill="var(--color-surface-card)" />
-          <text x="20" y="26" textAnchor="middle" fontSize="18" fill="var(--color-dusty-blue)" fontFamily="sans-serif">
-            🏋️
-          </text>
-        </svg>
-      </div>
-
       {/* Info */}
       <div className="ep-item__info">
         <span className="ep-item__name">{exercise.nombre}</span>

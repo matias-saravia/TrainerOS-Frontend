@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Copy, UserPlus, Plus, CalendarPlus, MoreHorizontal, Check } from 'lucide-react'
+import { Copy, Check, UserPlus, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import {
   useDashboardStats,
@@ -9,107 +9,59 @@ import {
 } from '../hooks/useDashboardStats'
 import { useAuth } from '../../auth'
 import { getTrainerLink } from '../../../utils/trainerLink'
+import { CLIENT_STATUS } from '../clientStatus'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
 import './DashboardPage.css'
 
-/* ── Progress Ring SVG ─────────────────────────────────────────── */
-function ProgressRing({ percent }: { percent: number }) {
-  const r = 54
-  const circ = 2 * Math.PI * r
-  const filled = (percent / 100) * circ
+const ACTIVITY_DAYS = 30
 
-  return (
-    <svg className="progress-ring" viewBox="0 0 128 128" width="128" height="128">
-      {/* Outer track */}
-      <circle cx="64" cy="64" r={r} fill="none" stroke="rgba(189,196,212,0.25)" strokeWidth="10" />
-      {/* Outer fill */}
-      <circle
-        cx="64" cy="64" r={r}
-        fill="none"
-        stroke="white"
-        strokeWidth="10"
-        strokeDasharray={`${filled} ${circ}`}
-        strokeLinecap="round"
-        transform="rotate(-90 64 64)"
-        style={{ transition: 'stroke-dasharray 1s ease' }}
-      />
-      {/* Inner track */}
-      <circle cx="64" cy="64" r="38" fill="none" stroke="rgba(189,196,212,0.15)" strokeWidth="8" />
-      {/* Inner fill */}
-      <circle
-        cx="64" cy="64" r="38"
-        fill="none"
-        stroke="rgba(189,196,212,0.55)"
-        strokeWidth="8"
-        strokeDasharray={`${(0.68 * 2 * Math.PI * 38)} ${2 * Math.PI * 38}`}
-        strokeLinecap="round"
-        transform="rotate(-90 64 64)"
-      />
-      <text x="64" y="60" textAnchor="middle" fill="white" fontSize="18" fontWeight="700" fontFamily="'Plus Jakarta Sans',sans-serif">
-        {percent}%
-      </text>
-      <text x="64" y="76" textAnchor="middle" fill="rgba(255,255,255,0.55)" fontSize="10" fontFamily="Inter,sans-serif">
-        Meta
-      </text>
-    </svg>
-  )
+function localDateKey(d: Date): string {
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${month}-${day}`
 }
 
-/* ── Heatmap ────────────────────────────────────────────────────── */
-const intensityBg = ['#e5e2dc', '#8496b7', '#4d6080', '#1C2E4A']
+function formatSessionDate(fecha: string): string {
+  return new Date(`${fecha}T12:00:00`).toLocaleDateString('es-AR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+}
 
-function HeatmapGrid({ activityData }: { activityData: { date: string; count: number }[] }) {
-  // Build a 5x7 grid from the 30-35 days of data or default empty
-  const activityMap = new Map(activityData.map(d => [d.date, d.count]))
-  const days: number[] = []
-  
-  for (let i = 34; i >= 0; i--) {
+/* ── Activity: one bar per day, completed sessions ─────────────── */
+function ActivityBars({ activityData }: { activityData: { date: string; count: number }[] }) {
+  const counts = new Map(activityData.map(d => [d.date, d.count]))
+  const days = Array.from({ length: ACTIVITY_DAYS }, (_, i) => {
     const d = new Date()
-    d.setDate(d.getDate() - i)
-    const dateKey = d.toISOString().split('T')[0]
-    const count = activityMap.get(dateKey) ?? 0
-    const level = count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : 3
-    days.push(level)
-  }
-
-  // Slice into 5 rows of 7
-  const rows: number[][] = []
-  for (let r = 0; r < 5; r++) {
-    rows.push(days.slice(r * 7, (r + 1) * 7))
-  }
+    d.setDate(d.getDate() - (ACTIVITY_DAYS - 1 - i))
+    return { key: localDateKey(d), count: counts.get(localDateKey(d)) ?? 0 }
+  })
+  const max = Math.max(1, ...days.map(d => d.count))
+  const total = days.reduce((sum, d) => sum + d.count, 0)
 
   return (
-    <div className="heatmap">
-      {rows.map((row, ri) => (
-        <div key={ri} className="heatmap__row">
-          {row.map((lvl, ci) => (
-            <div
-              key={ci}
-              className="heatmap__cell"
-              style={{ background: intensityBg[lvl] }}
-              title={`Nivel de actividad: ${lvl}`}
-            />
-          ))}
-        </div>
-      ))}
-      <div className="heatmap__legend">
-        <span>Menos Activo</span>
-        <div className="heatmap__legend-swatches">
-          {intensityBg.map((bg, i) => (
-            <div key={i} className="heatmap__cell heatmap__cell--sm" style={{ background: bg }} />
-          ))}
-        </div>
-        <span>Muy Activo</span>
+    <div className="activity">
+      <p className="activity__total">
+        <strong>{total}</strong> {total === 1 ? 'sesión completada' : 'sesiones completadas'}
+      </p>
+      <div className="activity__bars" role="img" aria-label={`${total} sesiones completadas en ${ACTIVITY_DAYS} días`}>
+        {days.map(d => (
+          <span
+            key={d.key}
+            className="activity__bar"
+            style={{ height: d.count === 0 ? undefined : `${(d.count / max) * 100}%` }}
+            title={`${d.key}: ${d.count}`}
+          />
+        ))}
+      </div>
+      <div className="activity__axis">
+        <span>Hace {ACTIVITY_DAYS} días</span>
+        <span>Hoy</span>
       </div>
     </div>
   )
-}
-
-function getInitials(nombre: string, apellido?: string | null): string {
-  const first = nombre.charAt(0) || ''
-  const second = (apellido && apellido.charAt(0)) || ''
-  return (first + second).toUpperCase() || 'C'
 }
 
 /* ── Page ───────────────────────────────────────────────────────── */
@@ -130,13 +82,19 @@ export default function DashboardPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const today = new Date().toLocaleDateString('es-AR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+
   if (loadingStats) {
     return (
       <div className="dashboard">
-        <div className="dashboard__header">
-          <h1 className="dashboard__greeting">Cargando estadísticas...</h1>
-        </div>
-        <LoadingSkeleton count={3} variant="card" />
+        <header className="page-header">
+          <h1 className="page-header__title">{today}</h1>
+        </header>
+        <LoadingSkeleton count={3} variant="stat" />
       </div>
     )
   }
@@ -149,137 +107,127 @@ export default function DashboardPage() {
     )
   }
 
-  const clientCount = stats?.totalClients ?? 0
-  const monthlySessions = stats?.sessionsThisMonth ?? 0
-
   return (
     <div className="dashboard">
-      {/* Header */}
-      <div className="dashboard__header">
-        <div className="dashboard__header-left">
-          <h1 className="dashboard__greeting">¡Bienvenido de nuevo, Coach!</h1>
-          <p className="dashboard__sub">Tu link de acceso para alumnos es:</p>
-        </div>
-        <div className="dashboard__link-chip">
-          <span>{trainerLink.replace(/^https?:\/\//, '')}</span>
-          <button className="dashboard__copy-btn" onClick={handleCopyLink} aria-label="Copiar link">
-            {copied ? <Check size={14} strokeWidth={2} /> : <Copy size={14} strokeWidth={1.5} />}
+      <header className="page-header">
+        <h1 className="page-header__title">{today}</h1>
+        <div className="dashboard__actions">
+          <button className="btn-secondary" onClick={() => navigate('/admin/entrenamientos/rutinas/nueva')}>
+            <Plus size={16} strokeWidth={1.75} />
+            Nueva rutina
+          </button>
+          <button className="btn-secondary" onClick={() => navigate('/admin/entrenamientos/ejercicios/nuevo')}>
+            <Plus size={16} strokeWidth={1.75} />
+            Nuevo ejercicio
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Bento grid */}
-      <div className="dashboard__bento">
-
-        {/* ── Resumen Mensual ── */}
-        <div className="bento-card bento-card--dark bento-span-8">
-          <div className="resumen__data">
-            <p className="resumen__label">Sesiones este Mes</p>
-            <p className="resumen__value">{monthlySessions}</p>
-            <p className="resumen__label resumen__label--mt">Alumnos Activos</p>
-            <p className="resumen__active">{clientCount}</p>
-          </div>
-          <div className="resumen__ring">
-            <ProgressRing percent={Math.min(100, Math.round((clientCount / 20) * 100))} />
-          </div>
+      {/* Numbers strip */}
+      <section className="strip" aria-label="Resumen">
+        <div className="strip__cell">
+          <p className="strip__value">{stats?.totalClients ?? 0}</p>
+          <p className="strip__label">Alumnos</p>
         </div>
-
-        {/* ── Acciones Rápidas ── */}
-        <div className="bento-card bento-span-4">
-          <p className="bento-card__title">Acciones Rápidas</p>
-          <div className="quick-actions">
-            <button
-              className="quick-action quick-action--primary"
-              onClick={() => navigate('/admin/clientes/nuevo')}
-            >
-              <UserPlus size={16} strokeWidth={1.5} />
-              Añadir Nuevo Cliente
-            </button>
-            <button
-              className="quick-action quick-action--secondary"
-              onClick={() => navigate('/admin/entrenamientos/rutinas/nueva')}
-            >
-              <Plus size={16} strokeWidth={1.5} />
-              Crear Rutina
-            </button>
-            <button
-              className="quick-action quick-action--secondary"
-              onClick={() => navigate('/admin/entrenamientos/ejercicios/nuevo')}
-            >
-              <CalendarPlus size={16} strokeWidth={1.5} />
-              Crear Ejercicio
+        <div className="strip__cell">
+          <p className="strip__value">{stats?.sessionsThisMonth ?? 0}</p>
+          <p className="strip__label">Sesiones este mes</p>
+        </div>
+        <div className="strip__cell strip__cell--link">
+          <p className="strip__label">Link para tus alumnos</p>
+          <div className="strip__link">
+            <span>{trainerLink.replace(/^https?:\/\//, '')}</span>
+            <button onClick={handleCopyLink} aria-label="Copiar link">
+              {copied ? <Check size={16} strokeWidth={2} /> : <Copy size={16} strokeWidth={1.5} />}
+              {copied ? 'Copiado' : 'Copiar'}
             </button>
           </div>
         </div>
+      </section>
 
-        {/* ── Check-ins Heatmap ── */}
-        <div className="bento-card bento-span-7">
-          <div className="bento-card__header">
-            <p className="bento-card__title">Check-ins de Clientes (30 Días)</p>
-            <button className="bento-card__more"><MoreHorizontal size={16} strokeWidth={1.5} /></button>
+      <div className="dashboard__columns">
+        {/* Students */}
+        <section className="sheet">
+          <div className="sheet__head">
+            <h2 className="sheet__title">Últimos alumnos</h2>
+            <button className="sheet__link" onClick={() => navigate('/admin/clientes')}>Ver todos</button>
           </div>
-          <HeatmapGrid activityData={heatmapData} />
-        </div>
-
-        {/* ── Próximas Sesiones ── */}
-        <div className="bento-card bento-span-5">
-          <div className="bento-card__header">
-            <p className="bento-card__title">Próximas Sesiones</p>
-            <span className="bento-card__link" onClick={() => navigate('/admin/entrenamientos')}>Ver Rutinas</span>
-          </div>
-          <div className="sessions">
-            {loadingSessions ? (
-              <p style={{ fontSize: 13, color: 'var(--color-dusty-blue)', padding: '12px 0' }}>Cargando sesiones...</p>
-            ) : upcomingSessions.length === 0 ? (
-              <p style={{ fontSize: 13, color: 'var(--color-dusty-blue)', padding: '12px 0' }}>No hay sesiones programadas.</p>
-            ) : (
-              upcomingSessions.map(s => {
-                const clientName = s.clients ? `${s.clients.nombre} ${s.clients.apellido}`.trim() : 'Alumno'
-                return (
-                  <div key={s.id} className="session-item">
-                    <div className="session-item__icon">🏋️</div>
-                    <div className="session-item__info">
-                      <p className="session-item__name">{clientName}</p>
-                      <p className="session-item__type">{s.nombre} • {s.fecha}</p>
-                    </div>
-                    <span className="session-item__badge">{s.status === 'completed' ? 'Hecha' : 'Pendiente'}</span>
-                  </div>
-                )
-              })
-            )}
-          </div>
-        </div>
-
-        {/* ── Clientes Recientes ── */}
-        <div className="bento-card bento-span-12">
-          <div className="bento-card__header">
-            <p className="bento-card__title">Clientes Recientes</p>
-            <a href="#" className="bento-card__link" onClick={e => { e.preventDefault(); navigate('/admin/clientes') }}>Ver Todos los Clientes</a>
-          </div>
-          <div className="recent-clients">
-            {loadingClients ? (
-              <p style={{ fontSize: 13, color: 'var(--color-dusty-blue)', padding: '12px 0' }}>Cargando alumnos...</p>
-            ) : (
-              recentClients.map(c => (
-                <div key={c.id} className="recent-client-card" onClick={() => navigate('/admin/clientes')}>
-                  <div className="recent-client-card__avatar" style={{ background: 'var(--color-ivory)' }}>
-                    <span style={{ color: 'var(--color-midnight-blue)', fontWeight: 600 }}>
-                      {getInitials(c.nombre, c.apellido)}
-                    </span>
-                  </div>
-                  <p className="recent-client-card__name">{c.nombre} {c.apellido}</p>
-                </div>
-              ))
-            )}
-            <div className="recent-client-card recent-client-card--add" onClick={() => navigate('/admin/clientes/nuevo')}>
-              <div className="recent-client-card__avatar recent-client-card__avatar--add">
-                <Plus size={20} strokeWidth={1.5} />
-              </div>
-              <p className="recent-client-card__name">Añadir</p>
+          {loadingClients ? (
+            <LoadingSkeleton count={3} variant="list" />
+          ) : recentClients.length === 0 ? (
+            <div className="dashboard__empty">
+              <p>Todavía no cargaste alumnos. Cargá el primero y pasale tu link.</p>
+              <button className="btn-primary" onClick={() => navigate('/admin/clientes/nuevo')}>
+                <UserPlus size={16} strokeWidth={1.75} />
+                Nuevo alumno
+              </button>
             </div>
-          </div>
-        </div>
+          ) : (
+            <table className="hoja">
+              <thead>
+                <tr>
+                  <th>Semana</th>
+                  <th>Alumno</th>
+                  <th>Objetivo</th>
+                  <th className="hoja__end">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentClients.map(c => {
+                  const status = CLIENT_STATUS[c.status]
+                  return (
+                    <tr
+                      key={c.id}
+                      data-clickable
+                      className={c.status === 'pendiente' ? 'marker' : undefined}
+                      onClick={() => navigate(`/admin/clientes/${c.id}/editar`)}
+                    >
+                      <td className="hoja__lead">{c.semana_actual}<small>/{c.total_semanas}</small></td>
+                      <td className="hoja__name">{c.nombre} {c.apellido}</td>
+                      <td>{c.objetivo ?? c.plan_tier}</td>
+                      <td className="hoja__end"><span className={`status ${status?.tone ?? ''}`}>{status?.label ?? c.status}</span></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </section>
 
+        <div className="dashboard__side">
+          {/* Upcoming */}
+          <section className="sheet">
+            <div className="sheet__head">
+              <h2 className="sheet__title">Próximas sesiones</h2>
+            </div>
+            {loadingSessions ? (
+              <LoadingSkeleton count={2} variant="list" />
+            ) : upcomingSessions.length === 0 ? (
+              <p className="dashboard__none">No hay sesiones programadas.</p>
+            ) : (
+              <ul className="sessions">
+                {upcomingSessions.map(s => (
+                  <li key={s.id} className="sessions__row">
+                    <span className="sessions__date">{formatSessionDate(s.fecha)}</span>
+                    <span className="sessions__who">
+                      <strong>{s.clients ? `${s.clients.nombre} ${s.clients.apellido}`.trim() : 'Alumno'}</strong>
+                      {s.nombre}
+                    </span>
+                    {s.status === 'completed' && <span className="status status--ok">Hecha</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Activity */}
+          <section className="sheet">
+            <div className="sheet__head">
+              <h2 className="sheet__title">Actividad</h2>
+            </div>
+            <ActivityBars activityData={heatmapData} />
+          </section>
+        </div>
       </div>
     </div>
   )

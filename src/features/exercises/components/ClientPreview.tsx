@@ -25,7 +25,7 @@ export default function ClientPreview({ exercise }: ClientPreviewProps) {
 
   return (
     <aside className="client-preview">
-      <span className="client-preview__label">VISTA PREVIA DEL CLIENTE</span>
+      <span className="client-preview__label">Lo que ve el alumno</span>
 
       <div className="client-preview__card">
         {/* Header */}
@@ -86,7 +86,7 @@ export default function ClientPreview({ exercise }: ClientPreviewProps) {
                 <line x1="17" y1="17" x2="22" y2="17"/>
                 <line x1="17" y1="7" x2="22" y2="7"/>
               </svg>
-              <span>Sin video cargado</span>
+              <span>Sin video</span>
             </div>
           )}
         </div>
@@ -94,7 +94,7 @@ export default function ClientPreview({ exercise }: ClientPreviewProps) {
         {/* Instructions */}
         {(exercise.instrucciones?.length ?? 0) > 0 && (
           <div className="client-preview__instructions">
-            <span className="client-preview__instructions-label">INSTRUCCIONES</span>
+            <span className="client-preview__instructions-label">Técnica</span>
             <ol className="client-preview__instructions-list">
               {exercise.instrucciones?.map((inst, i) => (
                 <li key={i}>{inst}</li>
@@ -105,9 +105,9 @@ export default function ClientPreview({ exercise }: ClientPreviewProps) {
 
         {(exercise.instrucciones?.length ?? 0) === 0 && (
           <div className="client-preview__instructions">
-            <span className="client-preview__instructions-label">INSTRUCCIONES</span>
+            <span className="client-preview__instructions-label">Técnica</span>
             <p className="client-preview__instructions-empty">
-              Las instrucciones aparecerán aquí conforme las escribas…
+              Acá aparece la técnica a medida que la escribís.
             </p>
           </div>
         )}

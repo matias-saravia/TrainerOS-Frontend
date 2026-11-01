@@ -8,7 +8,7 @@ interface ExerciseHistoryChartProps {
 
 export default function ExerciseHistoryChart({
   historial,
-  label = 'Historial (Último mes)',
+  label = 'Historial',
 }: ExerciseHistoryChartProps) {
   if (!historial || historial.length === 0) return null
 
@@ -53,18 +53,18 @@ export default function ExerciseHistoryChart({
                   y={y}
                   width={BAR_W}
                   height={barH}
-                  rx={4}
-                  fill={isLatest ? 'rgba(82, 103, 125, 0.9)' : 'rgba(82, 103, 125, 0.35)'}
+                  rx={1}
+                  fill={isLatest ? 'var(--color-marker)' : 'var(--color-ivory)'}
                 />
                 {/* Value label above bar */}
                 <text
                   x={x + BAR_W / 2}
                   y={y - 5}
                   textAnchor="middle"
-                  fontSize="11"
-                  fontWeight="600"
+                  fontSize="16"
+                  fontWeight="800"
                   fontFamily="var(--font-display)"
-                  fill={isLatest ? '#ffffff' : 'rgba(255,255,255,0.55)'}
+                  fill={'currentColor'}
                 >
                   {entry.kg}
                 </text>
@@ -73,9 +73,9 @@ export default function ExerciseHistoryChart({
                   x={x + BAR_W / 2}
                   y={BAR_MAX_H + 18}
                   textAnchor="middle"
-                  fontSize="10"
+                  fontSize="11"
                   fontFamily="var(--font-body)"
-                  fill="rgba(255,255,255,0.4)"
+                  fill="currentColor"
                 >
                   {formatDate(entry.fecha)}
                 </text>
