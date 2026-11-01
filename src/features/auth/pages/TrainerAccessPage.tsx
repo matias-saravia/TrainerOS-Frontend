@@ -24,6 +24,7 @@ export default function TrainerAccessPage() {
     enabled: Boolean(slug),
   })
 
+  const trainerName = trainer ? `${trainer.nombre} ${trainer.apellido}`.trim() : ''
   const isStudentSession = Boolean(user && profile?.role === 'client')
 
   const claim = useQuery({
@@ -47,8 +48,14 @@ export default function TrainerAccessPage() {
     setSubmitting(true)
     setFormError(null)
     try {
-      await requestClientAccess(slug, email)
-      setSent(true)
+      const status = await requestClientAccess(slug, email)
+      if (status === 'email_sent') setSent(true)
+      if (status === 'rate_limited') {
+        setFormError('Hiciste demasiados intentos. Esperá 15 minutos y volvé a probar.')
+      }
+      if (status === 'not_found') {
+        setFormError(`Este correo no está cargado por ${trainerName}. Revisá que esté bien escrito o pedile que lo agregue.`)
+      }
     } catch (err) {
       console.error('Access request error:', err)
       setFormError('No pudimos procesar el pedido. Intentá de nuevo en unos minutos.')
@@ -59,7 +66,6 @@ export default function TrainerAccessPage() {
 
   if (claim.data) return <Navigate to="/alumno" replace />
 
-  const trainerName = trainer ? `${trainer.nombre} ${trainer.apellido}`.trim() : ''
   const isBusy = loading || loadingTrainer || claim.isLoading
 
   let content: React.ReactNode
@@ -108,7 +114,7 @@ export default function TrainerAccessPage() {
       <>
         <div className="auth-alert auth-alert--success" role="status">
           <CheckCircle2 size={18} className="auth-alert__icon" />
-          <span>Si tu correo está cargado por {trainerName}, te enviamos un link para entrar.</span>
+          <span>Por seguridad, a esta cuenta le enviamos un link al correo para entrar.</span>
         </div>
         <p className="auth-card__desc">Revisá también la carpeta de spam.</p>
       </>
@@ -119,7 +125,7 @@ export default function TrainerAccessPage() {
         <div className="auth-card__header">
           <h2 className="auth-card__title">Entrená con {trainerName}</h2>
           <p className="auth-card__desc">
-            Ingresá el correo que le diste a tu entrenador. Te enviamos un link para entrar, sin contraseña.
+            Ingresá el correo que le diste a tu entrenador y entrás a tus rutinas, sin contraseña.
           </p>
         </div>
 
@@ -156,7 +162,7 @@ export default function TrainerAccessPage() {
               <span className="auth-btn-spinner" />
             ) : (
               <>
-                <span>Enviarme el link</span>
+                <span>Ver mis rutinas</span>
                 <ArrowRight size={16} />
               </>
             )}

@@ -605,6 +605,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      register_access_attempt: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
+      }
       save_routine: {
         Args: {
           p_blocks: Json

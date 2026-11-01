@@ -54,11 +54,24 @@ export async function getTrainerPublic(slug: string) {
   return data?.[0] ?? null
 }
 
-export async function requestClientAccess(slug: string, email: string) {
-  const { error } = await supabase.functions.invoke('request-client-access', {
+/** Signs the student in when the email allows it; otherwise says what happened instead. */
+export async function requestClientAccess(
+  slug: string,
+  email: string,
+): Promise<'ok' | 'email_sent' | 'not_found' | 'rate_limited'> {
+  const { data, error } = await supabase.functions.invoke('request-client-access', {
     body: { slug, email: email.trim().toLowerCase() },
   })
-  if (error) throw error
+  if (error) {
+    if ((error as { context?: Response }).context?.status === 429) return 'rate_limited'
+    throw error
+  }
+
+  if (data.status === 'ok') {
+    const { error: otpError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: 'magiclink' })
+    if (otpError) throw otpError
+  }
+  return data.status
 }
 
 export async function claimClientAccess(slug: string): Promise<string> {
