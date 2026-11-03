@@ -72,7 +72,7 @@ npx supabase functions serve --env-file supabase/.env.e2e
    ```
 
 4. Publicá la función: `npx supabase functions deploy request-client-access`.
-5. Definí su variable: `npx supabase secrets set APP_URL=https://tu-dominio`.
+5. Definí su variable: `npx supabase secrets set APP_URL=https://tu-dominio`. Para permitir más de una dirección, separalas con comas; la primera es la principal.
 6. En Supabase, en Authentication → URL Configuration, cargá el dominio en Site URL y en Redirect URLs.
 7. Configurá un SMTP propio: el correo incluido en Supabase tiene un límite de envío muy bajo.
 8. Publicá el frontend con las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
