@@ -1,162 +1,166 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CheckCheck, Dumbbell } from 'lucide-react'
-import { MOCK_SESSIONS, MOCK_CLIENT, type SessionExercise } from '../api/client.api'
-import { useUpdateSessionProgress, useLogWeight, useClientProfile } from '../hooks/useClientDashboard'
-import { useRoutine } from '../../workouts/hooks/useRoutines'
+import { CheckCheck, ChevronLeft } from 'lucide-react'
+import {
+  toSessionExercise,
+  useCompleteWorkoutSession,
+  useLogWorkoutSet,
+  usePreviousWeights,
+  useUndoWorkoutSet,
+  useWorkoutSession,
+} from '../hooks/useClientDashboard'
+import { useStudentArea } from '../hooks/useStudentArea'
 import ExerciseSessionCard from '../components/ExerciseSessionCard'
+import RestTimer from '../components/RestTimer'
+import { useRestTimer } from '../hooks/useRestTimer'
+import ErrorState from '../../../components/ErrorState'
 import './WorkoutSessionPage.css'
 
 export default function WorkoutSessionPage() {
-  const { clienteId = '', sesionId = '', rutinaId = '' } = useParams()
-  const activeId = rutinaId || sesionId || 'sesion-001'
+  const { sesionId = '' } = useParams()
   const navigate = useNavigate()
+  const { isPreview, basePath } = useStudentArea()
 
-  const { data: dbClient } = useClientProfile(clienteId)
-  const { data: dbRoutine, isLoading: loadingRoutine } = useRoutine(activeId)
+  const { data: session, isLoading, error, refetch } = useWorkoutSession(sesionId)
+  const logSet = useLogWorkoutSet(sesionId)
+  const undoSet = useUndoWorkoutSet(sesionId)
+  const completeSession = useCompleteWorkoutSession(sesionId)
+  const restTimer = useRestTimer()
+  const [confirmingFinish, setConfirmingFinish] = useState(false)
 
-  const updateProgress = useUpdateSessionProgress()
-  const logWeight = useLogWeight()
-
-  // Fallback to mock session if not found in db
-  const mockSession = MOCK_SESSIONS.find(s => s.id === activeId) ?? MOCK_SESSIONS[0]
-  const clientName = dbClient ? `${dbClient.nombre} ${dbClient.apellido}` : `${MOCK_CLIENT.nombre} ${MOCK_CLIENT.apellido}`
-  const clientInitials = dbClient
-    ? `${dbClient.nombre?.[0] || ''}${dbClient.apellido?.[0] || ''}`
-    : `${MOCK_CLIENT.nombre[0]}${MOCK_CLIENT.apellido[0]}`
-
-  const [exercises, setExercises] = useState<SessionExercise[]>([])
-
-  // Load exercises from database routine if available, or fallback to mock
-  useEffect(() => {
-    if (dbRoutine && dbRoutine.blocks) {
-      const routineExercises: SessionExercise[] = []
-      dbRoutine.blocks.forEach(block => {
-        block.routine_block_exercises.forEach(rbe => {
-          const exInfo = rbe.exercises
-          routineExercises.push({
-            id: rbe.id,
-            ejercicioId: rbe.exercise_id,
-            nombre: exInfo?.nombre ?? 'Ejercicio',
-            grupoMuscular: exInfo?.grupo_muscular ?? 'General',
-            categoria: 'Fuerza',
-            series: rbe.sets ?? 3,
-            reps: rbe.reps ?? '10-12',
-            descanso: rbe.rest_seconds ?? 60,
-            instrucciones: exInfo?.instrucciones ?? (rbe.notes ? [rbe.notes] : []),
-            videoUrl: exInfo?.video_url || undefined,  // null → undefined; '' → undefined
-            historialPesos: [],
-            setsCompletados: 0,
-          })
-        })
-      })
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setExercises(routineExercises)
-    } else if (!loadingRoutine && !dbRoutine) {
-      setExercises(mockSession.ejercicios.map(e => ({ ...e })))
-    }
-  }, [dbRoutine, loadingRoutine, mockSession])
-
-  const sessionTitle = dbRoutine?.nombre ?? mockSession.nombre
-  const sessionDay = dbRoutine?.dia
+  const exercises = (session?.session_exercises ?? []).map(toSessionExercise)
+  const isFinished = session?.status === 'completed'
 
   const completedCount = exercises.filter(e => e.setsCompletados >= e.series).length
   const totalCount = exercises.length
-  const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
   const allDone = totalCount > 0 && completedCount === totalCount
+  const activeIndex = exercises.findIndex(e => e.setsCompletados < e.series)
+  const pendingCount = totalCount - completedCount
 
-  const handleSetComplete = useCallback((exerciseId: string, kg: number) => {
-    setExercises(prev =>
-      prev.map(ex => {
-        if (ex.id !== exerciseId) return ex
-        const newSets = Math.min(ex.setsCompletados + 1, ex.series)
-        // Fire mutation in background if valid UUID
-        if (exerciseId.includes('-') && exerciseId.length > 20) {
-          updateProgress.mutate({
-            id: exerciseId,
-            sessionId: activeId,
-            sets_completados: newSets,
-            peso_registrado: kg,
-          })
-          logWeight.mutate({
-            client_id: clienteId,
-            exercise_id: ex.ejercicioId,
-            session_id: activeId,
-            kg,
-            fecha: new Date().toISOString().split('T')[0],
-          })
-        }
-        return { ...ex, setsCompletados: newSets, pesoRegistrado: kg }
-      })
+  const { data: previousWeights = {} } = usePreviousWeights(
+    session?.client_id ?? '',
+    sesionId,
+    exercises.map(e => e.ejercicioId),
+  )
+
+  const handleSetComplete = (id: string, kg?: number) => {
+    if (isPreview) return
+    const exercise = exercises.find(e => e.id === id)
+    logSet.mutate(
+      { id, kg },
+      {
+        onSuccess: () => {
+          // No rest after the last set of the whole session
+          const isLastSet = exercise && exercise.setsCompletados + 1 >= exercise.series
+          if (exercise && !(isLastSet && pendingCount <= 1)) restTimer.start(exercise.descanso)
+        },
+      },
     )
-  }, [clienteId, activeId, updateProgress, logWeight])
+  }
 
-  const handleFinalize = () => {
-    navigate(`/alumno/${clienteId}`)
+  const handleUndo = (id: string) => {
+    if (isPreview) return
+    undoSet.mutate(id, { onSuccess: () => restTimer.stop() })
+  }
+
+  const handleFinalize = async () => {
+    if (isFinished || isPreview) {
+      navigate(basePath)
+      return
+    }
+    if (pendingCount > 0 && !confirmingFinish) {
+      setConfirmingFinish(true)
+      return
+    }
+    try {
+      await completeSession.mutateAsync()
+      restTimer.stop()
+      navigate(basePath, { state: { finished: session?.nombre } })
+    } catch (err) {
+      console.error('Error finishing session:', err)
+    }
   }
 
   const formatDate = () => {
-    return new Date().toLocaleDateString('es-AR', {
+    return new Date(`${session?.fecha}T12:00:00`).toLocaleDateString('es-AR', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
     })
   }
 
-  if (loadingRoutine && activeId && activeId.includes('-') && activeId.length > 20) {
+  if (isLoading) {
     return (
-      <div className="workout-session-page" style={{ justifyContent: 'center', alignItems: 'center' }}>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '15px' }}>Cargando rutina...</p>
+      <div className="workout-session-page">
+        <p className="ws-message" role="status">Cargando sesión…</p>
       </div>
     )
   }
 
+  if (error || !session) {
+    return (
+      <div className="workout-session-page">
+        <ErrorState message="No pudimos cargar esta sesión." onRetry={() => refetch()} />
+      </div>
+    )
+  }
+
+  const saveError = logSet.isError
+    ? 'No pudimos guardar la última serie. Revisá tu conexión y volvé a marcarla.'
+    : undoSet.isError
+      ? 'No pudimos deshacer la serie. Revisá tu conexión e intentá de nuevo.'
+      : completeSession.isError
+      ? 'No pudimos finalizar la sesión. Revisá tu conexión e intentá de nuevo.'
+      : null
+
   return (
     <div className="workout-session-page">
-
-      {/* ── Sticky Top Header ── */}
       <header className="ws-header">
         <div className="ws-header__inner">
           <button
             className="ws-header__back"
-            onClick={() => navigate(`/alumno/${clienteId}`)}
-            aria-label="Volver al dashboard"
+            onClick={() => navigate(basePath)}
+            aria-label="Volver a mis rutinas"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
+            <ChevronLeft size={24} strokeWidth={1.75} />
           </button>
 
           <div className="ws-header__info">
-            <h1 className="ws-header__title">{sessionTitle}</h1>
-            <p className="ws-header__date">{sessionDay ? `${sessionDay} • ` : ''}{formatDate()}</p>
+            <h1 className="ws-header__title">{session.nombre}</h1>
+            <p className="ws-header__date">{formatDate()}</p>
           </div>
 
-          {/* Avatar */}
-          <div className="ws-header__avatar" aria-label={clientName}>
-            {clientInitials}
-          </div>
+          <p className="ws-header__count" aria-label={`${completedCount} de ${totalCount} ejercicios completados`}>
+            {completedCount}<small>/{totalCount}</small>
+          </p>
         </div>
 
-        {/* Progress bar */}
-        <div className="ws-header__progress-bar" role="progressbar" aria-valuenow={completedCount} aria-valuemin={0} aria-valuemax={totalCount}>
-          <div
-            className="ws-header__progress-fill"
-            style={{ width: `${progressPct}%` }}
-          />
+        <div
+          className="ws-header__progress-bar"
+          role="progressbar"
+          aria-valuenow={completedCount}
+          aria-valuemin={0}
+          aria-valuemax={totalCount}
+        >
+          {exercises.map((ex, i) => (
+            <span
+              key={ex.id}
+              className={`ws-header__tick${
+                ex.setsCompletados >= ex.series
+                  ? ' ws-header__tick--done'
+                  : i === activeIndex
+                    ? ' ws-header__tick--now'
+                    : ''
+              }`}
+            />
+          ))}
         </div>
-        <p className="ws-header__progress-label">
-          {completedCount}/{totalCount} ejercicios completados
-        </p>
       </header>
 
-      {/* ── Exercise List ── */}
       <main className="ws-content">
+        {saveError && <p role="alert" className="alert ws-alert">{saveError}</p>}
         {exercises.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 16px', color: 'rgba(255,255,255,0.5)' }}>
-            <Dumbbell size={36} opacity={0.3} strokeWidth={1} style={{ margin: '0 auto 12px' }} />
-            <p style={{ margin: 0, fontSize: '14px' }}>Esta rutina no contiene ejercicios cargados todavía.</p>
-          </div>
+          <p className="ws-empty">Esta rutina todavía no tiene ejercicios.</p>
         ) : (
           <div className="ws-exercises">
             {exercises.map((ex, i) => (
@@ -164,28 +168,42 @@ export default function WorkoutSessionPage() {
                 key={ex.id}
                 exercise={ex}
                 index={i}
+                isActive={i === activeIndex && !isFinished}
+                readOnly={isFinished}
                 onSetComplete={handleSetComplete}
-                clienteId={clienteId}
-                sesionId={activeId}
+                onUndo={handleUndo}
+                previousKg={previousWeights[ex.ejercicioId]}
+                saving={logSet.isPending || undoSet.isPending}
+                sesionId={sesionId}
               />
             ))}
           </div>
         )}
       </main>
 
-      {/* ── Sticky Footer: Finalizar ── */}
       <footer className="ws-footer">
+        {!isFinished && <RestTimer />}
+        {confirmingFinish && (
+          <p className="ws-footer__confirm" role="alert">
+            Te {pendingCount === 1 ? 'falta 1 ejercicio' : `faltan ${pendingCount} ejercicios`}. Si finalizás, la sesión
+            se guarda así.
+          </p>
+        )}
         <button
           id="btn-finalizar-sesion"
           className={`ws-footer__btn${allDone ? ' ws-footer__btn--ready' : ''}`}
           onClick={handleFinalize}
-          aria-label="Finalizar sesión de entrenamiento"
+          disabled={completeSession.isPending}
         >
           <CheckCheck size={20} strokeWidth={2} />
-          Finalizar Sesión
+          {isFinished || isPreview ? 'Volver al inicio' : confirmingFinish ? 'Finalizar igual' : 'Finalizar sesión'}
         </button>
+        {confirmingFinish && (
+          <button type="button" className="ws-footer__cancel" onClick={() => setConfirmingFinish(false)}>
+            Seguir entrenando
+          </button>
+        )}
       </footer>
-
     </div>
   )
 }

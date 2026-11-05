@@ -1,16 +1,77 @@
-import { useNavigate, useParams } from 'react-router-dom'
-import { Dumbbell, ChevronRight, Calendar } from 'lucide-react'
-import { useClientProfile, useClientAssignedRoutines } from '../hooks/useClientDashboard'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Check, ChevronRight, LogOut, X } from 'lucide-react'
+import {
+  countRoutineExercises,
+  useClientAssignedRoutines,
+  useMyClient,
+  useRecentSessions,
+  useStartWorkoutSession,
+  type RecentSessionRow,
+} from '../hooks/useClientDashboard'
+import { useStudentArea } from '../hooks/useStudentArea'
+import { useAuth } from '../../auth'
+import ErrorState from '../../../components/ErrorState'
 import './ClientDashboard.css'
 
-export default function ClientDashboard() {
-  const { clienteId = '' } = useParams()
-  const navigate = useNavigate()
+function normalizeDay(text: string): string {
+  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
 
-  const { data: dbClient, isLoading: loadingClient } = useClientProfile(clienteId)
-  const { data: assignedRoutines = [], isLoading: loadingRoutines } = useClientAssignedRoutines(clienteId)
+/** Local YYYY-MM-DD, the same format sessions are stored with */
+function dayKey(date: Date): string {
+  return date.toLocaleDateString('en-CA')
+}
+
+function fromKey(key: string): Date {
+  return new Date(`${key}T12:00:00`)
+}
+
+function describeDay(key: string): string {
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+  if (key === dayKey(today)) return 'hoy'
+  if (key === dayKey(yesterday)) return 'ayer'
+  const date = fromKey(key)
+  return `${date.toLocaleDateString('es-AR', { weekday: 'long' })} ${date.getDate()}/${date.getMonth() + 1}`
+}
+
+function exercisesDone(session: RecentSessionRow) {
+  return session.session_exercises.filter(e => e.sets_completados >= e.series).length
+}
+
+function hasProgress(session: RecentSessionRow) {
+  return session.status === 'completed' || session.session_exercises.some(e => e.sets_completados > 0)
+}
+
+const WEEK_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+
+export default function ClientDashboard() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { signOut } = useAuth()
+  const { isPreview, basePath } = useStudentArea()
+
+  const { data: dbClient, isLoading: loadingClient, error: clientError, refetch } = useMyClient()
+  const { data: assignedRoutines = [], isLoading: loadingRoutines } = useClientAssignedRoutines(dbClient?.id ?? '')
+  const { data: sessions = [] } = useRecentSessions(dbClient?.id ?? '')
+  const startSession = useStartWorkoutSession()
 
   const isLoading = loadingClient || loadingRoutines
+  const finishedName = (location.state as { finished?: string } | null)?.finished
+
+  const handleStart = async (routineId: string) => {
+    if (isPreview) {
+      navigate(`${basePath}/sesion/${routineId}`)
+      return
+    }
+    try {
+      const sessionId = await startSession.mutateAsync(routineId)
+      navigate(`${basePath}/sesion/${sessionId}`)
+    } catch (err) {
+      console.error('Error starting session:', err)
+    }
+  }
 
   const greeting = () => {
     const h = new Date().getHours()
@@ -19,19 +80,27 @@ export default function ClientDashboard() {
     return 'Buenas noches'
   }
 
-  const weekProgress = dbClient
-    ? (dbClient.semana_actual - 1) / dbClient.total_semanas
-    : 0
-
-  const RING_R = 44
-  const RING_CIRC = 2 * Math.PI * RING_R
-
   if (isLoading) {
     return (
       <div className="client-dashboard">
-        <div className="cd-loading">
-          <div className="cd-loading__spinner" />
-          <p>Cargando tu programa...</p>
+        <p className="cd-message" role="status">Cargando tu programa…</p>
+      </div>
+    )
+  }
+
+  if (clientError) {
+    return (
+      <div className="client-dashboard">
+        <ErrorState message="No pudimos cargar tu programa." onRetry={() => refetch()} />
+      </div>
+    )
+  }
+
+  if (!dbClient && isPreview) {
+    return (
+      <div className="client-dashboard">
+        <div className="cd-message">
+          <h2 className="cd-message__title">No encontramos a este alumno</h2>
         </div>
       </div>
     )
@@ -40,166 +109,252 @@ export default function ClientDashboard() {
   if (!dbClient) {
     return (
       <div className="client-dashboard">
-        <div className="cd-not-found">
-          <Dumbbell size={40} opacity={0.25} strokeWidth={1} />
-          <h2>Cliente no encontrado</h2>
-          <p>El link que usaste no corresponde a ningún alumno registrado.</p>
+        <div className="cd-message">
+          <h2 className="cd-message__title">Tu cuenta no está vinculada</h2>
+          <p>Entrá desde el link que te pasó tu entrenador.</p>
+          <button type="button" className="cd-outline-btn" onClick={() => signOut()}>
+            Cerrar sesión
+          </button>
         </div>
       </div>
     )
   }
 
+  const today = new Date()
+  const todayKey = dayKey(today)
+  const todayName = normalizeDay(today.toLocaleDateString('es-AR', { weekday: 'long' }))
+
+  const routines = assignedRoutines.filter(ar => ar.routines)
+  const openSessionFor = (routineId: string) =>
+    sessions.find(s => s.routine_id === routineId && s.status === 'in-progress')
+  const lastDoneFor = (routineId: string) =>
+    sessions.find(s => s.routine_id === routineId && s.status === 'completed')
+
+  // What to train now: the one left halfway, then today's, then the one done longest ago
+  const openRoutine = routines.find(ar => openSessionFor(ar.routine_id))
+  const todaysRoutine = routines.find(ar => normalizeDay(ar.routines?.dia ?? '').includes(todayName))
+  const oldestRoutine = [...routines].sort(
+    (a, b) => (lastDoneFor(a.routine_id)?.fecha ?? '').localeCompare(lastDoneFor(b.routine_id)?.fecha ?? '')
+  )[0]
+  const featured = openRoutine ?? todaysRoutine ?? oldestRoutine
+  const featuredTitle = openRoutine ? 'Para seguir' : todaysRoutine ? 'Hoy' : 'Tu próxima rutina'
+  const featuredOpen = featured ? openSessionFor(featured.routine_id) : undefined
+  const featuredLast = featured ? lastDoneFor(featured.routine_id) : undefined
+  const featuredDoneToday = featuredLast?.fecha === todayKey && !featuredOpen
+  const featuredCount = featured?.routines ? countRoutineExercises(featured.routines) : 0
+
+  // Monday to Sunday of this week
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+  const week = WEEK_LETTERS.map((letter, i) => {
+    const date = new Date(monday)
+    date.setDate(monday.getDate() + i)
+    const key = dayKey(date)
+    return {
+      key,
+      letter,
+      day: date.getDate(),
+      trained: sessions.some(s => s.fecha === key && hasProgress(s)),
+      isToday: key === todayKey,
+      isFuture: key > todayKey,
+    }
+  })
+  const trainedThisWeek = week.filter(d => d.trained).length
+  const history = sessions.filter(hasProgress).slice(0, 6)
+
   return (
     <div className="client-dashboard">
-
-      {/* ── Top Header ── */}
       <header className="cd-header">
-        <div className="cd-header__greeting">
-          <p className="cd-header__saludo">{greeting()},</p>
+        <div>
+          <p className="cd-header__greeting">{greeting()},</p>
           <h1 className="cd-header__name">{dbClient.nombre}</h1>
         </div>
-        <div
-          className="cd-header__avatar"
-          aria-label={`${dbClient.nombre} ${dbClient.apellido}`}
-        >
-          {dbClient.nombre[0]}{dbClient.apellido[0]}
-        </div>
+        {!isPreview && (
+          <button
+            type="button"
+            className="cd-icon-btn"
+            onClick={() => signOut()}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+          >
+            <LogOut size={20} strokeWidth={1.5} />
+          </button>
+        )}
       </header>
 
-      {/* ── Bento Grid ── */}
-      <div className="cd-bento">
+      {finishedName && (
+        <div className="cd-saved" role="status">
+          <Check size={20} strokeWidth={2.5} aria-hidden="true" />
+          <p>
+            <strong>Sesión guardada: {finishedName}.</strong> Tu entrenador ya la puede ver.
+          </p>
+          <button
+            type="button"
+            className="cd-saved__close"
+            onClick={() => navigate(location.pathname, { replace: true, state: null })}
+            aria-label="Cerrar aviso"
+          >
+            <X size={18} strokeWidth={2.5} />
+          </button>
+        </div>
+      )}
 
-        {/* ── Weekly Ring Hero — horizontal layout ── */}
-        <div className="cd-bento-card cd-bento-card--ring">
-          <div className="cd-ring-wrap">
-            <svg
-              className="cd-ring-svg"
-              viewBox="0 0 100 100"
-              aria-label={`Semana ${dbClient.semana_actual} de ${dbClient.total_semanas}`}
+      {startSession.isError && (
+        <p role="alert" className="alert cd-alert">
+          No pudimos abrir la rutina. Revisá tu conexión e intentá de nuevo.
+        </p>
+      )}
+
+      {featured?.routines && (
+        <section className="cd-today" aria-labelledby="cd-today-title">
+          <h2 id="cd-today-title" className="cd-section-title">{featuredTitle}</h2>
+          <div className="cd-today__sheet">
+            <h3 className="cd-today__name">{featured.routines.nombre}</h3>
+            <p className="cd-today__facts">
+              {[
+                featured.routines.dia,
+                featuredCount > 0 && `${featuredCount} ${featuredCount === 1 ? 'ejercicio' : 'ejercicios'}`,
+              ]
+                .filter(Boolean)
+                .join('. ')}
+            </p>
+            {featured.routines.descripcion && <p className="cd-today__desc">{featured.routines.descripcion}</p>}
+            <p className="cd-today__last">
+              {featuredOpen
+                ? `Empezada ${describeDay(featuredOpen.fecha)}. Llevás ${exercisesDone(featuredOpen)} de ${featuredOpen.session_exercises.length} ejercicios.`
+                : featuredLast
+                  ? `La hiciste por última vez ${describeDay(featuredLast.fecha)}.`
+                  : 'Todavía no la hiciste.'}
+            </p>
+            <button
+              type="button"
+              className={`cd-today__btn${featuredDoneToday ? ' cd-today__btn--quiet' : ''}`}
+              onClick={() => handleStart(featured.routine_id)}
+              disabled={startSession.isPending}
+              aria-label={`${featuredOpen ? 'Seguir' : 'Empezar'} ${featured.routines.nombre}`}
             >
-              {/* Track */}
-              <circle cx="50" cy="50" r={RING_R} fill="none" stroke="rgba(82,103,125,0.18)" strokeWidth="9" />
-              {/* Progress */}
-              <circle
-                cx="50" cy="50" r={RING_R}
-                fill="none"
-                stroke="#1C2E4A"
-                strokeWidth="9"
-                strokeLinecap="round"
-                strokeDasharray={RING_CIRC}
-                strokeDashoffset={RING_CIRC * (1 - weekProgress)}
-                transform="rotate(-90 50 50)"
-                style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1)' }}
+              {featuredOpen ? 'Seguir donde dejé' : featuredDoneToday ? 'Entrenarla de nuevo' : 'Empezar'}
+              <ChevronRight size={22} strokeWidth={2.25} />
+            </button>
+          </div>
+        </section>
+      )}
+
+      <section className="cd-week" aria-labelledby="cd-week-title">
+        <div className="cd-week__head">
+          <h2 id="cd-week-title" className="cd-section-title">Esta semana</h2>
+          <p className="cd-week__count">
+            {trainedThisWeek === 0
+              ? 'Sin entrenamientos todavía'
+              : `${trainedThisWeek} ${trainedThisWeek === 1 ? 'día entrenado' : 'días entrenados'}`}
+          </p>
+        </div>
+        <ol className="cd-week__days">
+          {week.map(d => (
+            <li
+              key={d.key}
+              className={`cd-day${d.trained ? ' cd-day--trained' : ''}${d.isToday ? ' cd-day--today' : ''}${d.isFuture ? ' cd-day--future' : ''}`}
+              aria-label={`${fromKey(d.key).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric' })}${d.trained ? ', entrenaste' : ''}${d.isToday ? ', hoy' : ''}`}
+            >
+              <span className="cd-day__letter" aria-hidden="true">{d.letter}</span>
+              <span className="cd-day__num" aria-hidden="true">{d.day}</span>
+              {d.trained && <Check className="cd-day__check" size={14} strokeWidth={3} aria-hidden="true" />}
+            </li>
+          ))}
+        </ol>
+
+        <div className="cd-program" aria-label={`Semana ${dbClient.semana_actual} de ${dbClient.total_semanas}`}>
+          <p className="cd-program__label">
+            Programa: semana <strong>{dbClient.semana_actual}</strong> de {dbClient.total_semanas}
+          </p>
+          <div className="cd-program__ticks" aria-hidden="true">
+            {Array.from({ length: dbClient.total_semanas }, (_, i) => (
+              <span
+                key={i}
+                className={`cd-program__tick${
+                  i + 1 < dbClient.semana_actual
+                    ? ' cd-program__tick--done'
+                    : i + 1 === dbClient.semana_actual
+                      ? ' cd-program__tick--now'
+                      : ''
+                }`}
               />
-              {/* Inner text */}
-              <text x="50" y="45" textAnchor="middle" fontSize="17" fontWeight="700" fontFamily="'Plus Jakarta Sans', sans-serif" fill="#ffffff">
-                {dbClient.semana_actual}/{dbClient.total_semanas}
-              </text>
-              <text x="50" y="58" textAnchor="middle" fontSize="7.5" fontFamily="'Inter', sans-serif" fill="rgba(82,103,125,0.8)" letterSpacing="0.08em">
-                SEMANAS
-              </text>
-            </svg>
-          </div>
-
-          <div className="cd-ring-info">
-            <p className="cd-ring-info__eyebrow">Progreso</p>
-            <p className="cd-ring-info__headline">
-              Semana {dbClient.semana_actual}
-            </p>
-            <p className="cd-ring-label">
-              {Math.round(weekProgress * 100)}% del programa<br />completado
-            </p>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Program progress card */}
-        <div className="cd-bento-card cd-bento-card--program">
-          <p className="cd-bento-card__label">Programa</p>
-          <p className="cd-program__weeks">
-            <strong>{dbClient.semana_actual}</strong>
-            de {dbClient.total_semanas} sem.
+      <section className="cd-routines" aria-labelledby="cd-routines-title">
+        <h2 id="cd-routines-title" className="cd-section-title">Mis rutinas</h2>
+
+        {routines.length === 0 ? (
+          <p className="cd-routines__empty">
+            Tu entrenador todavía no te asignó rutinas. Cuando lo haga, van a aparecer acá.
           </p>
-          <div className="cd-program__bar-wrap" aria-label={`Semana ${dbClient.semana_actual} de ${dbClient.total_semanas}`}>
-            <div className="cd-program__bar">
-              <div
-                className="cd-program__bar-fill"
-                style={{ width: `${weekProgress * 100}%` }}
-              />
-            </div>
-          </div>
-          <p className="cd-program__pct">
-            {Math.round(weekProgress * 100)}% completado
-          </p>
-        </div>
-
-        {/* Routines count card */}
-        <div className="cd-bento-card cd-bento-card--program">
-          <p className="cd-bento-card__label">Mis Rutinas</p>
-          <p className="cd-program__weeks">
-            <strong>{assignedRoutines.length}</strong>
-            {assignedRoutines.length !== 1 ? ' asignadas' : ' asignada'}
-          </p>
-          <p className="cd-program__pct" style={{ marginTop: 4 }}>
-            {assignedRoutines.length === 0
-              ? 'Tu entrenador aún no asignó rutinas'
-              : 'Ver rutinas abajo ↓'}
-          </p>
-        </div>
-
-      </div>
-
-      {/* ── Rutinas Asignadas ── */}
-      <section className="cd-routines-section">
-        <h2 className="cd-routines-section__title">
-          <Dumbbell size={16} strokeWidth={1.5} />
-          Mis Rutinas
-        </h2>
-
-        {assignedRoutines.length === 0 ? (
-          <div className="cd-routines-empty">
-            <Dumbbell size={32} opacity={0.2} strokeWidth={1} />
-            <p>Tu entrenador aún no te asignó ninguna rutina.</p>
-            <span>¡Pronto aparecerán aquí!</span>
-          </div>
         ) : (
-          <div className="cd-routines-grid">
-            {assignedRoutines.map(ar => {
-              const routine = ar.routines
-              if (!routine) return null
+          <ul className="cd-routines__list">
+            {routines.map(ar => {
+              const routine = ar.routines!
+              const open = openSessionFor(ar.routine_id)
+              const last = lastDoneFor(ar.routine_id)
+              const count = countRoutineExercises(routine)
               return (
-                <div key={ar.id} className="cd-routine-card">
-                  <div className="cd-routine-card__accent" />
-                  <div className="cd-routine-card__body">
-                    <div className="cd-routine-card__info">
-                      <h3 className="cd-routine-card__name">{routine.nombre}</h3>
-                      {routine.dia && (
-                        <div className="cd-routine-card__day">
-                          <Calendar size={11} strokeWidth={1.5} />
-                          {routine.dia}
-                        </div>
-                      )}
-                      {routine.descripcion && (
-                        <p className="cd-routine-card__desc">{routine.descripcion}</p>
-                      )}
-                    </div>
-                    <button
-                      className="cd-routine-card__btn"
-                      onClick={() => navigate(`/alumno/${clienteId}/rutina/${routine.id}`)}
-                      aria-label={`Ver rutina ${routine.nombre}`}
-                    >
-                      Ver Rutina
-                      <ChevronRight size={13} strokeWidth={2} />
-                    </button>
+                <li key={ar.id} className="cd-routine">
+                  <div className="cd-routine__info">
+                    <h3 className="cd-routine__name">{routine.nombre}</h3>
+                    <p className="cd-routine__meta">
+                      {[routine.dia, count > 0 && `${count} ${count === 1 ? 'ejercicio' : 'ejercicios'}`]
+                        .filter(Boolean)
+                        .join('. ')}
+                    </p>
+                    <p className="cd-routine__last">
+                      {open ? 'A mitad de camino' : last ? `Última vez: ${describeDay(last.fecha)}` : 'Sin hacer todavía'}
+                    </p>
                   </div>
-                </div>
+                  <button
+                    type="button"
+                    className="cd-routine__btn"
+                    onClick={() => handleStart(routine.id)}
+                    disabled={startSession.isPending}
+                    aria-label={`Entrenar rutina ${routine.nombre}`}
+                  >
+                    {open ? 'Seguir' : 'Entrenar'}
+                    <ChevronRight size={18} strokeWidth={2} />
+                  </button>
+                </li>
               )
             })}
-          </div>
+          </ul>
         )}
       </section>
 
-      {/* Bottom safe area */}
-      <div style={{ height: 48 }} />
+      {history.length > 0 && (
+        <section className="cd-history" aria-labelledby="cd-history-title">
+          <h2 id="cd-history-title" className="cd-section-title">Últimas sesiones</h2>
+          <ul className="cd-history__list">
+            {history.map(s => {
+              const date = fromKey(s.fecha)
+              const done = exercisesDone(s)
+              const total = s.session_exercises.length
+              return (
+                <li key={s.id} className="cd-history__row">
+                  <span className="cd-history__date">
+                    {date.getDate()}/{date.getMonth() + 1}
+                  </span>
+                  <span className="cd-history__name">{s.nombre}</span>
+                  <span className={`cd-history__state${s.status === 'in-progress' ? ' cd-history__state--open' : ''}`}>
+                    {s.status === 'in-progress'
+                      ? 'En curso'
+                      : done === total
+                        ? 'Completa'
+                        : `${done} de ${total} ejercicios`}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

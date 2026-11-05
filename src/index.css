@@ -1,135 +1,316 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+@import "@fontsource-variable/sofia-sans/wght.css";
+@import "@fontsource-variable/sofia-sans-extra-condensed/wght.css";
 @import "tailwindcss";
 
-
-/* ─── TrainerOS Design Tokens ─────────────────────────────────── */
+/* ─── TrainerOS tokens ─────────────────────────────────────────── */
 :root {
-  /* Brand colors */
-  --color-midnight-blue:   #1C2E4A;
+  /* Ink */
   --color-deep-navy:       #0F1A2B;
-  --color-dusty-blue:      #52677D;
-  --color-ivory:           #BDC4D4;
-  --color-buttercream:     #D1CFC9;
+  --color-midnight-blue:   #1C2E4A;
+  --color-navy-raised:     #2A4065;
+  --color-dusty-blue:      #4A5F76;
+  --color-ivory:           #BCC8D6;
+  --color-buttercream:     #E9EEF5;
 
-  /* Semantic colors */
-  --color-surface:         #fcf9f3;
-  --color-surface-low:     #f6f3ed;
-  --color-surface-card:    #f0eee7;
-  --color-on-surface:      #1b1c18;
-  --color-on-surface-var:  #44474d;
-  --color-outline:         #75777e;
-  --color-outline-var:     rgba(82, 103, 125, 0.2);
+  /* The highlighter: only for "this is now / this needs you" */
+  --color-marker:          #E6F23C;
+  --color-marker-deep:     #D3DF22;
 
-  /* Status colors */
-  --color-success:         #22c55e;
-  --color-warning:         #f59e0b;
-  --color-error:           #ba1a1a;
+  /* Surfaces */
+  --color-surface:         #FFFFFF;
+  --color-surface-low:     #F4F7FA;
+  --color-surface-card:    #E9EEF5;
+  --color-on-surface:      #0F1A2B;
+  --color-on-surface-var:  #3D4F64;
+  --color-outline:         #5B6D82;
+  --color-outline-var:     #BCC8D6;
+  --color-rule:            #DDE4EC;
 
-  /* Typography */
-  --font-display:          'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body:             'Inter', system-ui, sans-serif;
+  /* On navy */
+  --on-navy:               #FFFFFF;
+  --on-navy-2:             #B9C6D6;
+  --navy-rule:             #33486A;
 
-  /* Spacing */
-  --grid-margin:           24px;
+  /* Status */
+  --color-success:         #17734C;
+  --color-success-bg:      #DDF1E7;
+  --color-warning:         #8A5A00;
+  --color-warning-bg:      #FBEFD0;
+  --color-error:           #A3261C;
+  --color-error-bg:        #FBE5E2;
+
+  /* Type */
+  --font-display:          'Sofia Sans Extra Condensed Variable', 'Arial Narrow', sans-serif;
+  --font-body:             'Sofia Sans Variable', system-ui, sans-serif;
+
+  /* Grid */
+  --gutter:                40px;
+  --grid-margin:           var(--gutter);
   --grid-gutter:           16px;
-  --bento-gap:             12px;
+  --bento-gap:             16px;
   --container-padding:     20px;
 
   /* Radii */
-  --radius-sm:             4px;
-  --radius-md:             6px;
-  --radius-lg:             8px;
+  --radius-sm:             3px;
+  --radius-md:             3px;
+  --radius-lg:             4px;
 
-  /* Shadows */
-  --shadow-overlay:        rgba(15, 26, 43, 0.08) 0 4px 16px 0;
-  --shadow-card:           rgba(15, 26, 43, 0.05) 0 1px 4px 0;
+  /* Depth: overlays only */
+  --shadow-overlay:        0 12px 32px rgba(15, 26, 43, 0.22);
+  --shadow-card:           none;
+}
+
+@media (max-width: 767px) {
+  :root { --gutter: 16px; }
 }
 
 /* ─── Reset ────────────────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root {
   height: 100%;
   font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.45;
   color: var(--color-on-surface);
   background: var(--color-buttercream);
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Remove default Vite root constraints */
-#root {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  text-align: left;
-  border: none;
-  display: block;
+#root { width: 100%; max-width: 100%; text-align: left; display: block; }
+
+::selection { background: var(--color-marker); color: var(--color-deep-navy); }
+
+input, textarea, select { caret-color: var(--color-midnight-blue); font-variant-numeric: tabular-nums; }
+button { font-family: inherit; }
+a { text-underline-offset: 3px; }
+
+:focus-visible {
+  outline: 2px solid var(--color-midnight-blue);
+  outline-offset: 2px;
+}
+.client-layout :focus-visible,
+.admin-rail :focus-visible { outline-color: var(--color-marker); }
+
+/* ─── Display type ─────────────────────────────────────────────── */
+.display, .page-header__title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  color: var(--color-midnight-blue);
+  text-wrap: balance;
 }
 
-/* ─── Typography Utilities ──────────────────────────────────────── */
-.headline-lg {
+/* ─── Page frame ───────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 32px var(--gutter) 20px;
+}
+.page-header__title { font-size: clamp(38px, 4.4vw, 60px); }
+.page-header__sub { margin-top: 6px; color: var(--color-on-surface-var); }
+.page-header--border { border-bottom: 1px solid var(--color-outline-var); }
+
+/* The sheet: the one container in the system */
+.sheet {
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-var);
+  border-radius: var(--radius-lg);
+}
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 2px solid var(--color-midnight-blue);
+}
+.sheet__title {
   font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 40px;
-  letter-spacing: -0.02em;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
   color: var(--color-midnight-blue);
 }
-
-.headline-md {
-  font-family: var(--font-display);
-  font-size: 24px;
+.sheet__link {
+  background: none;
+  border: 0;
+  cursor: pointer;
   font-weight: 600;
-  line-height: 32px;
-  color: var(--color-midnight-blue);
-}
-
-.headline-sm {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 24px;
-  color: var(--color-midnight-blue);
-}
-
-.data-display {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 28px;
-}
-
-.body-lg {
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-}
-
-.body-md {
-  font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
+  color: var(--color-midnight-blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.label-md {
+/* ─── Tables set like a heat sheet ─────────────────────────────── */
+.hoja { width: 100%; border-collapse: collapse; }
+.hoja th {
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-dusty-blue);
+  border-bottom: 1px solid var(--color-outline-var);
+  white-space: nowrap;
+}
+.hoja td {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--color-rule);
+  vertical-align: middle;
+}
+.hoja tr:last-child td { border-bottom: 0; }
+.hoja tbody tr[data-clickable] { cursor: pointer; }
+.hoja tbody tr[data-clickable]:hover td { background-color: var(--color-surface-low); }
+.hoja__lead {
+  width: 92px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-midnight-blue);
+  white-space: nowrap;
+}
+.hoja__lead small { font-size: 20px; font-weight: 600; color: var(--color-dusty-blue); }
+.hoja__name { font-weight: 700; font-size: 16px; color: var(--color-on-surface); }
+.hoja__end { text-align: right !important; white-space: nowrap; }
+
+/* ─── Signature: the highlighter stroke ────────────────────────── */
+tr.marker, .marker-inline {
+  background-image: linear-gradient(transparent 7%, var(--color-marker) 7%, var(--color-marker) 93%, transparent 93%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+tr.marker { animation: marker-sweep 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.hoja tr.marker td { color: var(--color-deep-navy); }
+.hoja tbody tr.marker[data-clickable]:hover td { background-color: transparent; }
+.marker .icon-action-btn { color: var(--color-deep-navy); }
+.marker-inline { color: var(--color-deep-navy); padding: 0 6px; animation: marker-sweep 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+@keyframes marker-sweep { from { background-size: 0 100%; } to { background-size: 100% 100%; } }
+
+/* ─── Buttons ──────────────────────────────────────────────────── */
+.btn-primary, .btn-secondary, .btn-marker, .btn-danger-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
   font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-  letter-spacing: 0.01em;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.btn-primary { background: var(--color-midnight-blue); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--color-navy-raised); }
+.btn-secondary { background: var(--color-surface); color: var(--color-midnight-blue); border-color: var(--color-ivory); }
+.btn-secondary:hover:not(:disabled) { border-color: var(--color-midnight-blue); }
+.btn-marker { background: var(--color-marker); color: var(--color-deep-navy); }
+.btn-marker:hover:not(:disabled) { background: var(--color-marker-deep); }
+.btn-danger-outline { background: var(--color-surface); color: var(--color-error); border-color: var(--color-error); }
+.btn-danger-outline:hover:not(:disabled) { background: var(--color-error-bg); }
+.btn-primary:disabled, .btn-secondary:disabled, .btn-marker:disabled, .btn-danger-outline:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.icon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-dusty-blue);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.icon-action-btn:hover { background: var(--color-buttercream); color: var(--color-midnight-blue); }
+.icon-action-btn--danger:hover { background: var(--color-error-bg); color: var(--color-error); }
+.icon-action-btn--copied { background: var(--color-success-bg); color: var(--color-success); }
+
+/* ─── Tabs ─────────────────────────────────────────────────────── */
+.tab-row { display: flex; gap: 20px; overflow-x: auto; scrollbar-width: none; }
+.tab-btn {
+  padding: 4px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-dusty-blue);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab-btn:hover { color: var(--color-midnight-blue); }
+.tab-btn--active { color: var(--color-midnight-blue); border-bottom-color: var(--color-midnight-blue); }
+
+/* ─── Status marks: same shape everywhere ──────────────────────── */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-on-surface-var);
+}
+.status::before { content: ''; width: 9px; height: 9px; border-radius: 1px; background: currentColor; }
+.status--ok { color: var(--color-success); }
+.status--warn { color: var(--color-warning); }
+.status--bad { color: var(--color-error); }
+
+/* ─── Inline alert ─────────────────────────────────────────────── */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-error);
+  border-radius: var(--radius-md);
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  font-size: 14px;
+  font-weight: 600;
 }
 
-/* ─── Scrollbar ─────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ─── Chips ────────────────────────────────────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--color-buttercream);
+  color: var(--color-midnight-blue);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.chip--navy { background: var(--color-midnight-blue); color: #fff; }
+
+/* ─── Logo ─────────────────────────────────────────────────────── */
+.logo { display: inline-flex; align-items: center; gap: 9px; }
+.logo__name { font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; text-transform: uppercase; letter-spacing: 0.01em; }
+
+/* ─── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-ivory); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--color-ivory); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-dusty-blue); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+.page-header__back { width: 44px; height: 44px; margin-left: -12px; color: var(--color-midnight-blue); }

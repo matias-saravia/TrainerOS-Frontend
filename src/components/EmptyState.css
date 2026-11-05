@@ -1,59 +1,6 @@
-/* ─── Empty State ──────────────────────────────────────────────────── */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 60px 24px;
-  gap: 8px;
-}
-
-.empty-state__icon {
-  width: 64px;
-  height: 64px;
-  background: var(--color-surface-card, #f0eee7);
-  border: 1px solid var(--color-outline-var, rgba(82, 103, 125, 0.2));
-  border-radius: var(--radius-lg, 8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-dusty-blue, #52677D);
-  margin-bottom: 4px;
-}
-
-.empty-state__title {
-  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--color-midnight-blue, #1C2E4A);
-  margin: 0;
-}
-
-.empty-state__desc {
-  font-size: 13px;
-  color: var(--color-on-surface-var, #44474d);
-  max-width: 320px;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.empty-state__cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 20px;
-  background: var(--color-midnight-blue, #1C2E4A);
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-md, 6px);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  margin-top: 8px;
-}
-
-.empty-state__cta:hover {
-  opacity: 0.85;
-}
+.empty-state { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: 520px; padding: 40px 20px; }
+.empty-state__icon { color: var(--color-dusty-blue); }
+.empty-state__title { font-family: var(--font-display); font-size: 32px; font-weight: 800; line-height: 1; text-transform: uppercase; color: var(--color-midnight-blue); }
+.empty-state__desc { color: var(--color-on-surface-var); }
+.empty-state__cta { margin-top: 8px; min-height: 42px; padding: 0 16px; border: 0; border-radius: var(--radius-md); background: var(--color-midnight-blue); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; }
+.empty-state__cta:hover { background: var(--color-navy-raised); }

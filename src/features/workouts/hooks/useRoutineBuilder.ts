@@ -14,6 +14,7 @@ interface UseRoutineBuilderReturn {
   blocks: Block[]
   addBlock: (exercise: Tables<'exercises'>, type?: BlockType) => void
   addExerciseToBlock: (blockId: string, exercise: Tables<'exercises'>) => void
+  loadBlocks: (blocks: Block[]) => void
   removeBlock: (blockId: string) => void
   removeExerciseFromBlock: (blockId: string, exerciseId: string) => void
   updateSetsReps: (blockId: string, exerciseId: string, sets: number, reps: string) => void
@@ -35,6 +36,9 @@ export function useRoutineBuilder(initialName = ''): UseRoutineBuilderReturn {
     tempo: '',
     notes: '',
   })
+
+  // Replace the canvas with a routine being edited
+  const loadBlocks = useCallback((loaded: Block[]) => setBlocks(loaded), [])
 
   // Add a new standalone block with one exercise
   const addBlock = useCallback((exercise: Tables<'exercises'>, type: BlockType = 'single') => {
@@ -137,6 +141,7 @@ export function useRoutineBuilder(initialName = ''): UseRoutineBuilderReturn {
     blocks,
     addBlock,
     addExerciseToBlock,
+    loadBlocks,
     removeBlock,
     removeExerciseFromBlock,
     updateSetsReps,

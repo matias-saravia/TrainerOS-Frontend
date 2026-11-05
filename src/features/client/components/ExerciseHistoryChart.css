@@ -1,30 +1,8 @@
-/* ─── Exercise History Chart ───────────────────────────────────────── */
-.history-chart {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(82, 103, 125, 0.2);
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.history-chart__title {
-  font-family: var(--font-display, 'Plus Jakarta Sans', sans-serif);
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
-  margin-bottom: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-}
-
-.history-chart__canvas-wrap {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
-}
-
-.history-chart__svg {
-  display: block;
-  min-width: 200px;
-  width: 100%;
-}
-
+.history-chart { padding-top: 12px; border-top: 2px solid #fff; color: #fff; }
+.history-chart__title { margin-bottom: 12px; font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; text-transform: uppercase; }
+.history-chart__bars { display: flex; align-items: flex-end; gap: 10px; height: 150px; list-style: none; }
+.history-chart__day { display: flex; flex: 0 1 52px; flex-direction: column; align-items: stretch; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; text-align: center; }
+.history-chart__kg { font-family: var(--font-display); font-size: 22px; font-weight: 800; line-height: 1; }
+.history-chart__bar { display: block; max-height: 96px; min-height: 8px; background: var(--color-navy-raised); }
+.history-chart__day--last .history-chart__bar { background: #fff; }
+.history-chart__date { font-size: 13px; font-weight: 600; color: var(--on-navy-2); }

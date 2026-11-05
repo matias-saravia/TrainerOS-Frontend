@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../../lib/supabase'
 import {
   signInWithEmail,
@@ -13,6 +14,7 @@ import {
 import { AuthContext } from './auth-context-base'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<ProfileRow | null>(null)
@@ -28,34 +30,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Initial active session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        loadProfile(session.user.id)
-      }
-      setLoading(false)
-    })
-
-    // Listen to changes (sign in, sign out, token refresh)
+    // Fires once on load with the stored session, then on every auth change.
+    // Supabase calls can deadlock if awaited inside this callback, so the
+    // profile is loaded after it returns.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      (event, newSession) => {
+        if (event === 'SIGNED_OUT') {
+          queryClient.clear()
+        }
         setSession(newSession)
         setUser(newSession?.user ?? null)
-        if (newSession?.user) {
-          await loadProfile(newSession.user.id)
-        } else {
-          setProfile(null)
-        }
-        setLoading(false)
+        if (event === 'TOKEN_REFRESHED') return
+
+        setTimeout(async () => {
+          if (newSession?.user) {
+            await loadProfile(newSession.user.id)
+          } else {
+            setProfile(null)
+          }
+          setLoading(false)
+        }, 0)
       }
     )
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [queryClient])
 
   const handleSignIn = async (credentials: SignInCredentials) => {
     setLoading(true)
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true)
     try {
       await signOutUser()
+      queryClient.clear()
       setUser(null)
       setSession(null)
       setProfile(null)

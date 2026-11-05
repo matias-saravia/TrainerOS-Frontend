@@ -9,6 +9,7 @@ export interface BlockExercise {
   sets: number
   reps: string        // e.g. "8-10" or "12"
   tempo?: string      // e.g. "2-0-1-0"
+  restSeconds?: number
   notes?: string
 }
 
@@ -25,22 +26,6 @@ export interface Routine {
   dia?: string        // e.g. "Día 1: Empuje – Hipertrofia"
   blocks: Block[]
 }
-
-// ─── Mock Routines ─────────────────────────────────────────────────
-export const MOCK_ROUTINES: Routine[] = [
-  {
-    id: 'r-001',
-    nombre: 'Fuerza Hipertrofia A',
-    dia: 'Día 1: Empuje – Hipertrofia',
-    blocks: [],
-  },
-  {
-    id: 'r-002',
-    nombre: 'Full Body Principiante',
-    dia: 'Día 1: Full Body',
-    blocks: [],
-  },
-]
 
 // ─── Helpers ───────────────────────────────────────────────────────
 export function makeBlockLabel(index: number): string {

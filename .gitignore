@@ -28,3 +28,11 @@ dist-ssr
 
 .env.local
 .env
+
+# Playwright
+test-results/
+playwright-report/
+
+# Impeccable working files
+.impeccable/review/
+.impeccable/mocks/

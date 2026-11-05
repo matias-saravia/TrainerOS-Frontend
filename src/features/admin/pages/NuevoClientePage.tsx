@@ -1,13 +1,15 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { User, CreditCard, Activity, Flag, AlertCircle, ArrowLeft, Trash2, Dumbbell, Link2, X, Plus } from 'lucide-react'
-import { useCreateClient, useUpdateClient, useDeleteClient, useClient } from '../hooks/useClients'
+import { useCreateClient, useUpdateClient, useDeleteClient, useClient, type ClientRow } from '../hooks/useClients'
 import { useClientRoutines, useUnassignRoutine } from '../hooks/useClientRoutines'
 import { useAuth } from '../../auth'
 import ConfirmModal from '../../../components/ConfirmModal'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
 import AssignRoutineModal from '../components/AssignRoutineModal'
+import { getTrainerLink } from '../../../utils/trainerLink'
+import { CLIENT_STATUS } from '../clientStatus'
 import './NuevoClientePage.css'
 
 interface FormState {
@@ -17,7 +19,9 @@ interface FormState {
   fechaNacimiento: string
   tipoPlan: 'basico' | 'estandar' | 'premium' | 'personalizado'
   fechaInicio: string
-  estadoPago: 'pagado' | 'pendiente'
+  status: ClientRow['status']
+  semanaActual: string
+  totalSemanas: string
   peso: string
   altura: string
   grasaCorporal: string
@@ -31,6 +35,8 @@ interface FormErrors {
   nombre?: string
   email?: string
   telefono?: string
+  semanaActual?: string
+  totalSemanas?: string
   peso?: string
   altura?: string
   grasaCorporal?: string
@@ -43,7 +49,9 @@ const INITIAL: FormState = {
   fechaNacimiento: '',
   tipoPlan: 'basico',
   fechaInicio: '',
-  estadoPago: 'pagado',
+  status: 'aldia',
+  semanaActual: '1',
+  totalSemanas: '12',
   peso: '',
   altura: '',
   grasaCorporal: '',
@@ -57,7 +65,7 @@ export default function NuevoClientePage() {
   const navigate = useNavigate()
   const { id } = useParams<{ id?: string }>()
   const isEdit = Boolean(id)
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
 
   const createClient = useCreateClient()
   const updateClient = useUpdateClient()
@@ -75,7 +83,7 @@ export default function NuevoClientePage() {
   const { data: assignedRoutines = [], isLoading: loadingAssigned } = useClientRoutines(id ?? '')
   const unassignRoutine = useUnassignRoutine()
 
-  const clientLink = id ? `${window.location.origin}/alumno/${id}` : ''
+  const clientLink = getTrainerLink(profile?.slug)
 
   const handleCopyLink = () => {
     if (!clientLink) return
@@ -91,6 +99,7 @@ export default function NuevoClientePage() {
       await unassignRoutine.mutateAsync({ clientId: id, routineId })
     } catch (err) {
       console.error('Error unassigning routine:', err)
+      setSubmitError('No pudimos quitar la rutina. Revisá tu conexión e intentá de nuevo.')
     }
   }
 
@@ -106,7 +115,9 @@ export default function NuevoClientePage() {
         fechaNacimiento: existingClient.fecha_nacimiento || '',
         tipoPlan: (existingClient.plan_tier as FormState['tipoPlan']) || 'basico',
         fechaInicio: existingClient.fecha_inicio || '',
-        estadoPago: (existingClient.estado_pago as FormState['estadoPago']) || 'pagado',
+        status: existingClient.status,
+        semanaActual: String(existingClient.semana_actual),
+        totalSemanas: String(existingClient.total_semanas),
         peso: existingClient.peso_inicial != null ? String(existingClient.peso_inicial) : '',
         altura: existingClient.altura != null ? String(existingClient.altura) : '',
         grasaCorporal: existingClient.grasa_corporal != null ? String(existingClient.grasa_corporal) : '',
@@ -126,30 +137,42 @@ export default function NuevoClientePage() {
     if (!state.nombre.trim()) {
       errs.nombre = 'El nombre completo es obligatorio.'
     } else if (state.nombre.trim().length < 3) {
-      errs.nombre = 'Ingresa al menos 3 caracteres.'
+      errs.nombre = 'Escribí al menos 3 caracteres.'
     }
 
     if (!state.email.trim()) {
       errs.email = 'El correo electrónico es obligatorio.'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) {
-      errs.email = 'Ingresa un formato de correo válido (ej. alumno@email.com).'
+      errs.email = 'Escribí un correo válido, por ejemplo alumno@email.com.'
     }
 
     if (state.telefono.trim() && !/^[+0-9\s-]{6,20}$/.test(state.telefono.trim())) {
-      errs.telefono = 'Ingresa un número de teléfono válido (mínimo 6 dígitos).'
+      errs.telefono = 'Escribí un teléfono válido, de al menos 6 dígitos.'
+    }
+
+    const total = Number(state.totalSemanas)
+    if (!/^[0-9]+$/.test(state.totalSemanas) || total < 1 || total > 52) {
+      errs.totalSemanas = 'Escribí un total entre 1 y 52 semanas.'
+    }
+
+    const semana = Number(state.semanaActual)
+    if (!/^[0-9]+$/.test(state.semanaActual) || semana < 1) {
+      errs.semanaActual = 'Escribí una semana de 1 en adelante.'
+    } else if (!errs.totalSemanas && semana > total) {
+      errs.semanaActual = `La semana no puede ser mayor que el total (${total}).`
     }
 
     if (state.peso) {
       const p = parseFloat(state.peso)
       if (isNaN(p) || p <= 20 || p >= 350) {
-        errs.peso = 'Ingresa un peso válido entre 20 y 350 kg.'
+        errs.peso = 'Escribí un peso válido entre 20 y 350 kg.'
       }
     }
 
     if (state.altura) {
       const a = parseFloat(state.altura)
       if (isNaN(a) || a <= 80 || a >= 250) {
-        errs.altura = 'Ingresa una altura válida entre 80 y 250 cm.'
+        errs.altura = 'Escribí una altura válida entre 80 y 250 cm.'
       }
     }
 
@@ -188,6 +211,8 @@ export default function NuevoClientePage() {
       nombre: true,
       email: true,
       telefono: true,
+      semanaActual: true,
+      totalSemanas: true,
       peso: true,
       altura: true,
       grasaCorporal: true,
@@ -199,7 +224,7 @@ export default function NuevoClientePage() {
     }
 
     if (!user) {
-      setSubmitError('Debes haber iniciado sesión como entrenador para registrar o editar un cliente.')
+      setSubmitError('Iniciá sesión como entrenador para guardar alumnos.')
       return
     }
 
@@ -209,15 +234,20 @@ export default function NuevoClientePage() {
       avanzado: 'Avanzado',
     }
 
+    const [nombre, ...apellido] = form.nombre.trim().split(/\s+/)
+
     const clientPayload = {
-      nombre: form.nombre.trim().split(' ')[0] || form.nombre.trim(),
-      apellido: form.nombre.trim().split(' ').slice(1).join(' ') || '',
+      nombre,
+      apellido: apellido.join(' '),
       email: form.email.trim().toLowerCase(),
       telefono: form.telefono.trim() || null,
       fecha_nacimiento: form.fechaNacimiento || null,
       plan_tier: form.tipoPlan,
       fecha_inicio: form.fechaInicio || new Date().toISOString().split('T')[0],
-      estado_pago: form.estadoPago,
+      status: form.status,
+      estado_pago: form.status === 'pendiente' ? 'pendiente' : 'pagado',
+      semana_actual: Number(form.semanaActual),
+      total_semanas: Number(form.totalSemanas),
       peso_inicial: form.peso ? parseFloat(form.peso) : null,
       altura: form.altura ? parseFloat(form.altura) : null,
       grasa_corporal: form.grasaCorporal ? parseFloat(form.grasaCorporal) : null,
@@ -242,7 +272,11 @@ export default function NuevoClientePage() {
       navigate('/admin/clientes')
     } catch (err: unknown) {
       console.error(isEdit ? 'Error updating client:' : 'Error creating client:', err)
-      const message = err instanceof Error ? err.message : String(err)
+      const message = (err as { message?: string })?.message ?? String(err)
+      if (message.includes('idx_clients_trainer_email')) {
+        setSubmitError('Ya tenés un alumno con ese correo electrónico.')
+        return
+      }
       setSubmitError(message || `Error al ${isEdit ? 'actualizar' : 'guardar'} el cliente en Supabase.`)
     }
   }
@@ -255,7 +289,7 @@ export default function NuevoClientePage() {
     } catch (err: unknown) {
       console.error('Error deleting client:', err)
       const message = err instanceof Error ? err.message : String(err)
-      setSubmitError(message || 'Error al eliminar el cliente.')
+      setSubmitError(message || 'No pudimos eliminar al alumno.')
       setShowDeleteModal(false)
     }
   }
@@ -264,7 +298,7 @@ export default function NuevoClientePage() {
     return (
       <div className="nuevo-cliente-page">
         <div className="page-header page-header--border">
-          <h1 className="page-header__title">Cargando Cliente...</h1>
+          <h1 className="page-header__title">Cargando alumno…</h1>
         </div>
         <div style={{ padding: '24px' }}>
           <LoadingSkeleton count={4} variant="card" />
@@ -277,11 +311,11 @@ export default function NuevoClientePage() {
     return (
       <div className="nuevo-cliente-page">
         <div className="page-header page-header--border">
-          <h1 className="page-header__title">Editar Cliente</h1>
+          <h1 className="page-header__title">Editar alumno</h1>
         </div>
         <div style={{ padding: '24px' }}>
           <ErrorState
-            message={clientFetchError.message || 'No se pudo cargar la información del cliente.'}
+            message={clientFetchError.message || 'No pudimos cargar a este alumno.'}
             onRetry={() => navigate('/admin/clientes')}
           />
         </div>
@@ -296,15 +330,16 @@ export default function NuevoClientePage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             type="button"
-            className="icon-action-btn"
+            className="icon-action-btn page-header__back"
             title="Volver"
+            aria-label="Volver a alumnos"
             onClick={() => navigate('/admin/clientes')}
           >
-            <ArrowLeft size={16} strokeWidth={1.5} />
+            <ArrowLeft size={20} strokeWidth={1.75} />
           </button>
           <div>
             <h1 className="page-header__title">
-              {isEdit ? 'Editar Cliente' : 'Añadir Nuevo Cliente'}
+              {isEdit ? 'Editar alumno' : 'Nuevo alumno'}
             </h1>
             {isEdit && existingClient && (
               <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-dusty-blue)' }}>
@@ -322,7 +357,7 @@ export default function NuevoClientePage() {
             disabled={isSubmitting || deleteClient.isPending}
           >
             <Trash2 size={16} strokeWidth={1.5} />
-            Eliminar Cliente
+            Eliminar alumno
           </button>
         )}
       </div>
@@ -356,7 +391,7 @@ export default function NuevoClientePage() {
           </div>
           <div className="form-grid form-grid--2">
             <div className="form-field">
-              <label className="form-label" htmlFor="nombre">Nombre Completo *</label>
+              <label className="form-label" htmlFor="nombre">Nombre completo *</label>
               <input
                 id="nombre"
                 className={`form-input ${errors.nombre && touched.nombre ? 'form-input--error' : ''}`}
@@ -374,7 +409,7 @@ export default function NuevoClientePage() {
               )}
             </div>
             <div className="form-field">
-              <label className="form-label" htmlFor="email">Correo Electrónico *</label>
+              <label className="form-label" htmlFor="email">Correo *</label>
               <input
                 id="email"
                 className={`form-input ${errors.email && touched.email ? 'form-input--error' : ''}`}
@@ -409,7 +444,7 @@ export default function NuevoClientePage() {
               )}
             </div>
             <div className="form-field">
-              <label className="form-label" htmlFor="fechaNacimiento">Fecha de Nacimiento</label>
+              <label className="form-label" htmlFor="fechaNacimiento">Fecha de nacimiento</label>
               <input
                 id="fechaNacimiento"
                 className="form-input"
@@ -429,7 +464,7 @@ export default function NuevoClientePage() {
           </div>
           <div className="form-grid form-grid--1">
             <div className="form-field">
-              <label className="form-label" htmlFor="tipoPlan">Tipo de Plan</label>
+              <label className="form-label" htmlFor="tipoPlan">Plan</label>
               <select
                 id="tipoPlan"
                 className="form-input"
@@ -442,8 +477,47 @@ export default function NuevoClientePage() {
                 <option value="personalizado">Personalizado</option>
               </select>
             </div>
+            <div className="form-grid form-grid--2">
+              <div className="form-field">
+                <label className="form-label" htmlFor="semanaActual">Semana actual</label>
+                <input
+                  id="semanaActual"
+                  className={`form-input ${errors.semanaActual && touched.semanaActual ? 'form-input--error' : ''}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={form.semanaActual}
+                  onChange={e => set('semanaActual', e.target.value)}
+                  onBlur={() => handleBlur('semanaActual')}
+                />
+                {errors.semanaActual && touched.semanaActual && (
+                  <span style={{ fontSize: '11.5px', color: 'var(--color-error)', marginTop: '4px' }}>
+                    {errors.semanaActual}
+                  </span>
+                )}
+              </div>
+              <div className="form-field">
+                <label className="form-label" htmlFor="totalSemanas">Total de semanas</label>
+                <input
+                  id="totalSemanas"
+                  className={`form-input ${errors.totalSemanas && touched.totalSemanas ? 'form-input--error' : ''}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={52}
+                  value={form.totalSemanas}
+                  onChange={e => set('totalSemanas', e.target.value)}
+                  onBlur={() => handleBlur('totalSemanas')}
+                />
+                {errors.totalSemanas && touched.totalSemanas && (
+                  <span style={{ fontSize: '11.5px', color: 'var(--color-error)', marginTop: '4px' }}>
+                    {errors.totalSemanas}
+                  </span>
+                )}
+              </div>
+            </div>
             <div className="form-field">
-              <label className="form-label" htmlFor="fechaInicio">Fecha de Inicio</label>
+              <label className="form-label" htmlFor="fechaInicio">Fecha de inicio</label>
               <input
                 id="fechaInicio"
                 className="form-input"
@@ -453,19 +527,19 @@ export default function NuevoClientePage() {
               />
             </div>
             <div className="form-field">
-              <label className="form-label">Estado de Pago</label>
-              <div className="radio-group">
-                {(['pagado', 'pendiente'] as const).map(v => (
-                  <label key={v} className="radio-label">
+              <span className="form-label" id="estado-pago-label">Estado de pago</span>
+              <div className="radio-group" role="radiogroup" aria-labelledby="estado-pago-label">
+                {Object.entries(CLIENT_STATUS).map(([value, { label }]) => (
+                  <label key={value} className="radio-label">
                     <input
                       type="radio"
-                      name="estadoPago"
-                      value={v}
-                      checked={form.estadoPago === v}
-                      onChange={() => set('estadoPago', v)}
+                      name="status"
+                      value={value}
+                      checked={form.status === value}
+                      onChange={() => set('status', value as ClientRow['status'])}
                     />
                     <span className="radio-custom" />
-                    {v.charAt(0).toUpperCase() + v.slice(1)}
+                    {label}
                   </label>
                 ))}
               </div>
@@ -476,11 +550,11 @@ export default function NuevoClientePage() {
         {/* Bottom two-col sections */}
         <div className="form-two-col">
 
-          {/* ── Perfil Físico ── */}
+          {/* ── Perfil físico ── */}
           <div className="form-section">
             <div className="form-section__heading">
               <Activity size={18} strokeWidth={1.5} className="form-section__icon" />
-              <h2 className="form-section__title">Perfil Físico</h2>
+              <h2 className="form-section__title">Perfil físico</h2>
             </div>
             <div className="form-grid form-grid--2">
               <div className="form-field">
@@ -552,15 +626,15 @@ export default function NuevoClientePage() {
             </div>
           </div>
 
-          {/* ── Objetivos y Notas ── */}
+          {/* ── Objetivos y notas ── */}
           <div className="form-section">
             <div className="form-section__heading">
               <Flag size={18} strokeWidth={1.5} className="form-section__icon" />
-              <h2 className="form-section__title">Objetivos y Notas</h2>
+              <h2 className="form-section__title">Objetivos y notas</h2>
             </div>
             <div className="form-grid form-grid--1">
               <div className="form-field">
-                <label className="form-label" htmlFor="objetivo">Objetivo Principal</label>
+                <label className="form-label" htmlFor="objetivo">Objetivo</label>
                 <input
                   id="objetivo"
                   className="form-input"
@@ -607,7 +681,7 @@ export default function NuevoClientePage() {
               disabled={isSubmitting || deleteClient.isPending}
             >
               <Trash2 size={16} strokeWidth={1.5} />
-              Eliminar Cliente
+              Eliminar alumno
             </button>
           )}
           <div className="form-footer__right">
@@ -630,7 +704,7 @@ export default function NuevoClientePage() {
                   : 'Guardando...'
                 : isEdit
                   ? 'Guardar Cambios'
-                  : 'Guardar Cliente'}
+                  : 'Guardar alumno'}
             </button>
           </div>
         </div>
@@ -645,17 +719,17 @@ export default function NuevoClientePage() {
           <div className="assigned-routines__link-panel">
             <div className="assigned-routines__link-info">
               <Link2 size={15} strokeWidth={2} />
-              <span className="assigned-routines__link-label">Link personal del alumno</span>
+              <span className="assigned-routines__link-label">Link de acceso: el alumno entra con {existingClient.email}</span>
             </div>
             <div className="assigned-routines__link-row">
-              <code className="assigned-routines__link-url">/alumno/{id}</code>
+              <code className="assigned-routines__link-url">/t/{profile?.slug}</code>
               <button
                 type="button"
                 className={`assigned-routines__link-copy${linkCopied ? ' assigned-routines__link-copy--copied' : ''}`}
                 onClick={handleCopyLink}
                 title="Copiar link"
               >
-                {linkCopied ? '✓ Copiado' : 'Copiar Link'}
+                {linkCopied ? 'Copiado' : 'Copiar Link'}
               </button>
             </div>
           </div>
@@ -681,7 +755,7 @@ export default function NuevoClientePage() {
           ) : assignedRoutines.length === 0 ? (
             <div className="assigned-routines__empty">
               <Dumbbell size={28} opacity={0.3} strokeWidth={1} />
-              <p>Este cliente no tiene rutinas asignadas aún.</p>
+              <p>Este alumno todavía no tiene rutinas asignadas.</p>
             </div>
           ) : (
             <div className="assigned-routines__list">
@@ -714,9 +788,9 @@ export default function NuevoClientePage() {
       {/* Modal de confirmación para eliminar cliente */}
       <ConfirmModal
         isOpen={showDeleteModal}
-        title="Eliminar Cliente"
+        title="Eliminar alumno"
         variant="danger"
-        confirmText="Eliminar Cliente"
+        confirmText="Eliminar alumno"
         cancelText="Cancelar"
         isLoading={deleteClient.isPending}
         onConfirm={handleDelete}
@@ -729,7 +803,7 @@ export default function NuevoClientePage() {
               Esta acción no se puede deshacer y borrará su información asociada.
             </p>
           ) : (
-            '¿Estás seguro de que deseas eliminar a este cliente permanentemente?'
+            '¿Querés eliminar a este alumno? No se puede deshacer.'
           )
         }
       />

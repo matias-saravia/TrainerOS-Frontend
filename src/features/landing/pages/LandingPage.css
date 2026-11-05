@@ -1,0 +1,65 @@
+.landing { min-height: 100dvh; background: var(--color-buttercream); color: var(--color-on-surface); }
+.landing :is(h1, h2) { font-family: var(--font-display); font-weight: 800; line-height: 0.92; text-transform: uppercase; text-wrap: balance; }
+
+/* ── Hero: navy field, with the program at the bottom edge ── */
+.landing-hero { display: flex; flex-direction: column; gap: 40px; min-height: 100dvh; padding: 20px var(--gutter) 0; background: var(--color-deep-navy); color: #fff; }
+.landing-hero :focus-visible, .landing-close :focus-visible, .landing-student :focus-visible { outline-color: var(--color-marker); }
+
+.landing-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.landing-nav nav { display: flex; align-items: center; gap: 20px; }
+.landing-nav__link { display: inline-flex; align-items: center; min-height: 44px; color: var(--on-navy-2); font-weight: 600; text-decoration: none; }
+.landing-nav__link:hover { color: #fff; text-decoration: underline; }
+.landing-nav__link--strong { color: #fff; }
+
+.landing-hero__body { display: grid; grid-template-columns: minmax(0, 8fr) minmax(280px, 4fr); align-items: end; gap: 40px; margin-top: auto; }
+.landing-hero__title { font-size: clamp(60px, 9.4vw, 96px); max-width: 18ch; }
+.landing-hero__title span { display: block; }
+.landing-hero__offer p { max-width: 42ch; font-size: 18px; color: var(--on-navy-2); }
+.landing-hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 20px; }
+.landing-hero__student { display: inline-flex; align-items: center; min-height: 44px; color: #fff; font-weight: 600; }
+
+.landing-cta { min-height: 52px; padding: 0 20px; font-size: 17px; }
+
+/* The sample sheet is cut by the fold on purpose: it continues into the page */
+.landing-sheet { border-top: 2px solid #fff; }
+.landing-sheet figcaption { padding: 10px 0; font-size: 14px; font-weight: 600; color: var(--on-navy-2); }
+.landing-sheet table { width: 100%; border-collapse: collapse; }
+.landing-sheet th { padding: 6px 12px; font-size: 13px; font-weight: 600; text-align: left; color: var(--on-navy-2); border-bottom: 1px solid var(--navy-rule); }
+.landing-sheet td { padding: 8px 12px; font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 42px); font-weight: 800; line-height: 1; text-transform: uppercase; border-bottom: 1px solid var(--navy-rule); }
+.landing-sheet tr.marker td { color: var(--color-deep-navy); }
+.landing-sheet tbody tr:last-child td { color: var(--on-navy-2); border-bottom: 0; }
+
+/* ── Sections ── */
+.landing-section { padding: 72px var(--gutter); }
+.landing-section__title { max-width: 16ch; margin-bottom: 32px; font-size: clamp(44px, 6vw, 72px); color: var(--color-midnight-blue); }
+.landing-section--sheet { background: var(--color-surface); }
+
+.landing-steps { list-style: none; border-top: 2px solid var(--color-midnight-blue); }
+.landing-steps li { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--color-ivory); }
+.landing-steps__number { font-family: var(--font-display); font-size: 44px; font-weight: 800; line-height: 1; color: var(--color-midnight-blue); }
+.landing-steps div { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 8px 24px; align-items: baseline; }
+.landing-steps h3 { font-size: 20px; font-weight: 700; color: var(--color-midnight-blue); }
+.landing-steps p { max-width: 60ch; font-size: 16px; color: var(--color-on-surface-var); }
+
+.landing-features { border-top: 2px solid var(--color-midnight-blue); }
+.landing-features > div { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 8px 24px; padding: 16px 0; border-bottom: 1px solid var(--color-rule); }
+.landing-features dt { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--color-midnight-blue); }
+.landing-features dd { max-width: 60ch; font-size: 16px; color: var(--color-on-surface-var); }
+
+.landing-student { padding: 56px var(--gutter); background: var(--color-midnight-blue); color: #fff; }
+.landing-student h2 { max-width: 20ch; font-size: clamp(36px, 4.6vw, 56px); }
+.landing-student p { max-width: 56ch; margin-top: 14px; font-size: 17px; color: var(--on-navy-2); }
+
+.landing-close { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px; padding: 72px var(--gutter); background: var(--color-deep-navy); color: #fff; }
+.landing-close h2 { max-width: 15ch; font-size: clamp(52px, 7.4vw, 96px); }
+
+@media (max-width: 900px) {
+  .landing-hero { gap: 28px; min-height: 0; }
+  .landing-hero__body { grid-template-columns: 1fr; gap: 20px; margin-top: 12px; }
+  .landing-hero__title { font-size: clamp(56px, 17vw, 96px); }
+  .landing-cta { width: 100%; }
+  .landing-sheet th, .landing-sheet td { padding-inline: 8px; }
+  .landing-section { padding-block: 48px; }
+  .landing-steps li { grid-template-columns: 48px minmax(0, 1fr); }
+  .landing-steps div, .landing-features > div { grid-template-columns: 1fr; }
+}

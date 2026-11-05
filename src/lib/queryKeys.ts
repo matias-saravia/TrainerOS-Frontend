@@ -14,8 +14,7 @@ export const clientKeys = {
   lists: () => [...clientKeys.all, 'list'] as const,
   list: (status?: string) => [...clientKeys.lists(), { status }] as const,
   detail: (id: string) => [...clientKeys.all, 'detail', id] as const,
-  sessions: (clientId: string) =>
-    [...clientKeys.detail(clientId), 'sessions'] as const,
+  me: (userId: string) => [...clientKeys.all, 'me', userId] as const,
   weightHistory: (clientId: string, exerciseId: string) =>
     [...clientKeys.detail(clientId), 'weight', exerciseId] as const,
 }
@@ -40,6 +39,12 @@ export const dashboardKeys = {
   recentClients: () => [...dashboardKeys.all, 'recent-clients'] as const,
   upcomingSessions: () => [...dashboardKeys.all, 'upcoming-sessions'] as const,
   heatmap: () => [...dashboardKeys.all, 'heatmap'] as const,
+}
+
+export const financeKeys = {
+  all: ['finance'] as const,
+  month: (year: number, month: number) => [...financeKeys.all, 'month', year, month] as const,
+  summary: (year: number) => [...financeKeys.all, 'summary', year] as const,
 }
 
 export const clientRoutineKeys = {

@@ -6,84 +6,43 @@ interface ExerciseHistoryChartProps {
   label?: string
 }
 
+/** Heaviest weight of each of the last days trained, as fixed-size columns. */
 export default function ExerciseHistoryChart({
   historial,
-  label = 'Historial (Último mes)',
+  label = 'Historial',
 }: ExerciseHistoryChartProps) {
   if (!historial || historial.length === 0) return null
 
-  const recent = historial.slice(-5)
+  const recent = historial.slice(-6)
   const maxKg = Math.max(...recent.map(e => e.kg))
   const minKg = Math.min(...recent.map(e => e.kg))
-  const range = maxKg - minKg || 1
+  const range = maxKg - minKg
 
-  const BAR_MAX_H = 80  // px
-  const BAR_W = 32
-  const GAP = 16
-  const CHART_W = recent.length * (BAR_W + GAP) - GAP
-
+  // A plain YYYY-MM-DD: parsing it as a Date would shift it to the previous day west of UTC
   const formatDate = (iso: string) => {
-    const d = new Date(iso)
-    return `${d.getDate()}/${d.getMonth() + 1}`
+    const [, month, day] = iso.split('-').map(Number)
+    return `${day}/${month}`
   }
 
   return (
-    <div className="history-chart">
-      <h3 className="history-chart__title">{label}</h3>
-      <div className="history-chart__canvas-wrap">
-        <svg
-          className="history-chart__svg"
-          viewBox={`0 0 ${CHART_W + 8} ${BAR_MAX_H + 48}`}
-          width="100%"
-          preserveAspectRatio="xMidYMid meet"
-          aria-label={label}
-          role="img"
-        >
-          {recent.map((entry, i) => {
-            const barH = ((entry.kg - minKg) / range) * (BAR_MAX_H * 0.7) + BAR_MAX_H * 0.3
-            const x = i * (BAR_W + GAP)
-            const y = BAR_MAX_H - barH
-            const isLatest = i === recent.length - 1
-
-            return (
-              <g key={entry.fecha}>
-                {/* Bar */}
-                <rect
-                  x={x}
-                  y={y}
-                  width={BAR_W}
-                  height={barH}
-                  rx={4}
-                  fill={isLatest ? 'rgba(82, 103, 125, 0.9)' : 'rgba(82, 103, 125, 0.35)'}
-                />
-                {/* Value label above bar */}
-                <text
-                  x={x + BAR_W / 2}
-                  y={y - 5}
-                  textAnchor="middle"
-                  fontSize="11"
-                  fontWeight="600"
-                  fontFamily="var(--font-display)"
-                  fill={isLatest ? '#ffffff' : 'rgba(255,255,255,0.55)'}
-                >
-                  {entry.kg}
-                </text>
-                {/* Date label below bar */}
-                <text
-                  x={x + BAR_W / 2}
-                  y={BAR_MAX_H + 18}
-                  textAnchor="middle"
-                  fontSize="10"
-                  fontFamily="var(--font-body)"
-                  fill="rgba(255,255,255,0.4)"
-                >
-                  {formatDate(entry.fecha)}
-                </text>
-              </g>
-            )
-          })}
-        </svg>
-      </div>
-    </div>
+    <section className="history-chart" aria-label={label}>
+      <h2 className="history-chart__title">{label}</h2>
+      <ol className="history-chart__bars">
+        {recent.map((entry, i) => {
+          // The lightest day keeps a visible bar; the rest grow with the weight
+          const height = range === 0 ? 100 : 30 + ((entry.kg - minKg) / range) * 70
+          return (
+            <li
+              key={entry.fecha}
+              className={`history-chart__day${i === recent.length - 1 ? ' history-chart__day--last' : ''}`}
+            >
+              <span className="history-chart__kg">{entry.kg.toLocaleString('es-AR')}</span>
+              <span className="history-chart__bar" style={{ height: `${height}%` }} aria-hidden="true" />
+              <span className="history-chart__date">{formatDate(entry.fecha)}</span>
+            </li>
+          )
+        })}
+      </ol>
+    </section>
   )
 }
