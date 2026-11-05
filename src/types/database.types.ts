@@ -691,6 +691,29 @@ export type Database = {
         Args: { p_fecha?: string; p_routine_id: string }
         Returns: string
       }
+      undo_workout_set: {
+        Args: { p_session_exercise_id: string }
+        Returns: {
+          categoria: string | null
+          descanso: number
+          exercise_id: string
+          id: string
+          notes: string | null
+          order_index: number
+          peso_objetivo: number | null
+          peso_registrado: number | null
+          reps: string
+          series: number
+          session_id: string
+          sets_completados: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "session_exercises"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       block_type: "single" | "superset"

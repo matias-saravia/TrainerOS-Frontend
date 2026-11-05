@@ -25,3 +25,5 @@
 .ws-footer__btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px; border: 1px solid var(--on-navy-2); border-radius: var(--radius-md); background: transparent; color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; }
 .ws-footer__btn--ready { border-color: transparent; background: var(--color-marker); color: var(--color-deep-navy); }
 .ws-footer__btn:disabled { opacity: 0.6; cursor: wait; }
+.ws-footer__confirm { margin-bottom: 10px; font-size: 15px; font-weight: 600; color: #fff; }
+.ws-footer__cancel { width: 100%; min-height: 48px; margin-top: 6px; border: 0; background: none; color: var(--on-navy-2); font-size: 16px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

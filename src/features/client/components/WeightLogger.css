@@ -27,14 +27,21 @@
 .weight-logger__input::-webkit-outer-spin-button,
 .weight-logger__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .weight-logger__input:focus { outline: 2px solid var(--color-midnight-blue); outline-offset: -1px; }
+.weight-logger__input::placeholder { font-family: var(--font-body); font-size: 18px; font-weight: 600; color: var(--color-outline); }
+.weight-logger__input--invalid { border-color: var(--color-error); outline-color: var(--color-error) !important; }
 .weight-logger__input:disabled { border-color: var(--color-ivory); background: var(--color-surface-low); color: var(--color-dusty-blue); }
 .weight-logger__unit { position: absolute; top: 50%; right: 14px; transform: translateY(-50%); font-weight: 600; color: var(--color-dusty-blue); }
 
-.weight-logger__check { display: flex; flex: none; align-items: center; justify-content: center; width: 84px; height: 64px; border: 0; border-radius: var(--radius-md); background: var(--color-marker); color: var(--color-deep-navy); cursor: pointer; }
+.weight-logger__check { display: flex; flex: none; flex-direction: column; align-items: center; justify-content: center; gap: 1px; width: 96px; height: 64px; font-size: 13px; font-weight: 700; border: 0; border-radius: var(--radius-md); background: var(--color-marker); color: var(--color-deep-navy); cursor: pointer; }
 .weight-logger__check:hover:not(:disabled) { background: var(--color-marker-deep); }
 .weight-logger__check:disabled { background: var(--color-buttercream); color: var(--color-outline); cursor: not-allowed; }
 .weight-logger__check--flash { animation: weight-flash 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes weight-flash { from { background: var(--color-midnight-blue); color: #fff; } }
 
-.weight-logger__target { font-size: 14px; font-weight: 600; color: var(--color-on-surface-var); }
+.weight-logger__hint { font-size: 14px; font-weight: 600; color: var(--color-on-surface-var); }
+.weight-logger__hint--error { color: var(--color-error); }
 .weight-logger__done { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.weight-logger__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; min-height: 20px; }
+.weight-logger__done-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.weight-logger__undo { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: -12px 0 -12px auto; padding: 0 2px; border: 0; background: none; color: inherit; font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.weight-logger__undo:disabled { opacity: 0.5; cursor: wait; }

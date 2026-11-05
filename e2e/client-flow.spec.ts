@@ -194,6 +194,8 @@ test('a trainer invites a student, and their progress is saved', async ({ page }
 
   // ── Finishing the session is visible to the trainer ──
   await page.getByRole('button', { name: 'Finalizar sesión' }).click()
+  await expect(page.getByText('Te falta 1 ejercicio.', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Finalizar igual' }).click()
   await expect(page).toHaveURL(/\/alumno$/)
 
   expect(await trainer.select('workout_sessions?select=status')).toEqual([{ status: 'completed' }])

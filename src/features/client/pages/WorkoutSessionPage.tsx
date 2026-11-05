@@ -1,13 +1,18 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CheckCheck, ChevronLeft } from 'lucide-react'
 import {
   toSessionExercise,
   useCompleteWorkoutSession,
   useLogWorkoutSet,
+  usePreviousWeights,
+  useUndoWorkoutSet,
   useWorkoutSession,
 } from '../hooks/useClientDashboard'
 import { useStudentArea } from '../hooks/useStudentArea'
 import ExerciseSessionCard from '../components/ExerciseSessionCard'
+import RestTimer from '../components/RestTimer'
+import { useRestTimer } from '../hooks/useRestTimer'
 import ErrorState from '../../../components/ErrorState'
 import './WorkoutSessionPage.css'
 
@@ -18,7 +23,10 @@ export default function WorkoutSessionPage() {
 
   const { data: session, isLoading, error, refetch } = useWorkoutSession(sesionId)
   const logSet = useLogWorkoutSet(sesionId)
+  const undoSet = useUndoWorkoutSet(sesionId)
   const completeSession = useCompleteWorkoutSession(sesionId)
+  const restTimer = useRestTimer()
+  const [confirmingFinish, setConfirmingFinish] = useState(false)
 
   const exercises = (session?.session_exercises ?? []).map(toSessionExercise)
   const isFinished = session?.status === 'completed'
@@ -27,15 +35,47 @@ export default function WorkoutSessionPage() {
   const totalCount = exercises.length
   const allDone = totalCount > 0 && completedCount === totalCount
   const activeIndex = exercises.findIndex(e => e.setsCompletados < e.series)
+  const pendingCount = totalCount - completedCount
+
+  const { data: previousWeights = {} } = usePreviousWeights(
+    session?.client_id ?? '',
+    sesionId,
+    exercises.map(e => e.ejercicioId),
+  )
+
+  const handleSetComplete = (id: string, kg?: number) => {
+    if (isPreview) return
+    const exercise = exercises.find(e => e.id === id)
+    logSet.mutate(
+      { id, kg },
+      {
+        onSuccess: () => {
+          // No rest after the last set of the whole session
+          const isLastSet = exercise && exercise.setsCompletados + 1 >= exercise.series
+          if (exercise && !(isLastSet && pendingCount <= 1)) restTimer.start(exercise.descanso)
+        },
+      },
+    )
+  }
+
+  const handleUndo = (id: string) => {
+    if (isPreview) return
+    undoSet.mutate(id, { onSuccess: () => restTimer.stop() })
+  }
 
   const handleFinalize = async () => {
     if (isFinished || isPreview) {
       navigate(basePath)
       return
     }
+    if (pendingCount > 0 && !confirmingFinish) {
+      setConfirmingFinish(true)
+      return
+    }
     try {
       await completeSession.mutateAsync()
-      navigate(basePath)
+      restTimer.stop()
+      navigate(basePath, { state: { finished: session?.nombre } })
     } catch (err) {
       console.error('Error finishing session:', err)
     }
@@ -67,7 +107,9 @@ export default function WorkoutSessionPage() {
 
   const saveError = logSet.isError
     ? 'No pudimos guardar la última serie. Revisá tu conexión y volvé a marcarla.'
-    : completeSession.isError
+    : undoSet.isError
+      ? 'No pudimos deshacer la serie. Revisá tu conexión e intentá de nuevo.'
+      : completeSession.isError
       ? 'No pudimos finalizar la sesión. Revisá tu conexión e intentá de nuevo.'
       : null
 
@@ -128,9 +170,10 @@ export default function WorkoutSessionPage() {
                 index={i}
                 isActive={i === activeIndex && !isFinished}
                 readOnly={isFinished}
-                onSetComplete={(id, kg) => {
-                  if (!isPreview) logSet.mutate({ id, kg })
-                }}
+                onSetComplete={handleSetComplete}
+                onUndo={handleUndo}
+                previousKg={previousWeights[ex.ejercicioId]}
+                saving={logSet.isPending || undoSet.isPending}
                 sesionId={sesionId}
               />
             ))}
@@ -139,16 +182,27 @@ export default function WorkoutSessionPage() {
       </main>
 
       <footer className="ws-footer">
+        {!isFinished && <RestTimer />}
+        {confirmingFinish && (
+          <p className="ws-footer__confirm" role="alert">
+            Te {pendingCount === 1 ? 'falta 1 ejercicio' : `faltan ${pendingCount} ejercicios`}. Si finalizás, la sesión
+            se guarda así.
+          </p>
+        )}
         <button
           id="btn-finalizar-sesion"
           className={`ws-footer__btn${allDone ? ' ws-footer__btn--ready' : ''}`}
           onClick={handleFinalize}
           disabled={completeSession.isPending}
-          aria-label={isFinished || isPreview ? 'Volver al inicio' : 'Finalizar sesión de entrenamiento'}
         >
           <CheckCheck size={20} strokeWidth={2} />
-          {isFinished || isPreview ? 'Volver al inicio' : 'Finalizar sesión'}
+          {isFinished || isPreview ? 'Volver al inicio' : confirmingFinish ? 'Finalizar igual' : 'Finalizar sesión'}
         </button>
+        {confirmingFinish && (
+          <button type="button" className="ws-footer__cancel" onClick={() => setConfirmingFinish(false)}>
+            Seguir entrenando
+          </button>
+        )}
       </footer>
     </div>
   )

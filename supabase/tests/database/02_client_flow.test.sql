@@ -1,6 +1,6 @@
 -- Client access and workout session tests. Run with: npx supabase test db
 BEGIN;
-SELECT plan(17);
+SELECT plan(24);
 
 INSERT INTO auth.users (id, email, email_confirmed_at, raw_user_meta_data) VALUES
   ('a0000000-0000-0000-0000-000000000001', 'ana@test.com', NOW(), '{"role":"trainer","nombre":"Ana","apellido":"Paz"}'),
@@ -62,10 +62,21 @@ SELECT is((public.log_workout_set((SELECT id FROM se), 55)).peso_registrado, 55.
 SELECT is((public.log_workout_set((SELECT id FROM se), 60)).sets_completados, 2, 'extra sets do not go past the plan');
 SELECT is((SELECT count(*)::int FROM public.weight_entries WHERE fecha = '2026-01-15'), 2, 'history has one entry per counted set, on the session date');
 
+-- ─── Undo ─────────────────────────────────────────────────────────────
+SELECT is((public.undo_workout_set((SELECT id FROM se))).sets_completados, 1, 'undo takes back the last set');
+SELECT is((SELECT count(*)::int FROM public.weight_entries), 1, 'undo removes that set''s weight from the history');
+SELECT is((public.log_workout_set((SELECT id FROM se))).sets_completados, 2, 'a set without weight is counted');
+SELECT is((SELECT count(*)::int FROM public.weight_entries), 1, 'a set without weight leaves no history entry');
+SELECT is((public.undo_workout_set((SELECT id FROM se))).sets_completados, 1, 'a set without weight can be undone');
+SELECT is((SELECT count(*)::int FROM public.weight_entries), 1, 'undoing a set without weight keeps the earlier weight');
+
 SELECT lives_ok(format($$SELECT public.complete_workout_session(%L)$$, (SELECT id FROM started)), 'session can be finished');
 SELECT throws_ok(
   format($$SELECT public.log_workout_set(%L, 70)$$, (SELECT id FROM se)),
   '42501', NULL, 'a finished session no longer accepts sets');
+SELECT throws_ok(
+  format($$SELECT public.undo_workout_set(%L)$$, (SELECT id FROM se)),
+  '42501', NULL, 'a finished session cannot be changed');
 RESET ROLE;
 
 SELECT * FROM finish();

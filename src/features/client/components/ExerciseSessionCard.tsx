@@ -4,13 +4,17 @@ import { Play, X, ExternalLink, FileText, Check } from 'lucide-react'
 import type { SessionExercise } from '../api/client.api'
 import WeightLogger from './WeightLogger'
 import { useStudentArea } from '../hooks/useStudentArea'
+import { formatClock } from '../hooks/useRestTimer'
 import { parseVideoUrl } from '../../../utils/video'
 import './ExerciseSessionCard.css'
 
 interface ExerciseSessionCardProps {
   exercise: SessionExercise
   index: number
-  onSetComplete: (exerciseId: string, kg: number) => void
+  onSetComplete: (exerciseId: string, kg?: number) => void
+  onUndo?: (exerciseId: string) => void
+  previousKg?: number
+  saving?: boolean
   sesionId: string
   readOnly?: boolean
   isActive?: boolean
@@ -20,9 +24,12 @@ export default function ExerciseSessionCard({
   exercise,
   index,
   onSetComplete,
+  onUndo,
   sesionId,
   readOnly = false,
   isActive = false,
+  previousKg,
+  saving = false,
 }: ExerciseSessionCardProps) {
   const navigate = useNavigate()
   const { isPreview, basePath } = useStudentArea()
@@ -76,7 +83,9 @@ export default function ExerciseSessionCard({
         </div>
         {exercise.descanso > 0 && (
           <div>
-            <span className="ex-session-card__metric-value">{exercise.descanso}s</span>
+            <span className="ex-session-card__metric-value">
+              {exercise.descanso >= 60 ? formatClock(exercise.descanso) : `${exercise.descanso}s`}
+            </span>
             <span className="ex-session-card__metric-label">Descanso</span>
           </div>
         )}
@@ -166,10 +175,13 @@ export default function ExerciseSessionCard({
           <WeightLogger
             targetKg={exercise.pesoObjetivo}
             lastKg={exercise.pesoRegistrado}
+            previousKg={previousKg}
             setsTotal={exercise.series}
             setsCompleted={exercise.setsCompletados}
             onSetComplete={kg => onSetComplete(exercise.id, kg)}
+            onUndo={onUndo && (() => onUndo(exercise.id))}
             disabled={isPreview}
+            saving={saving}
           />
         </div>
       )}
