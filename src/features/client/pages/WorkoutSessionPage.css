@@ -25,5 +25,23 @@
 .ws-footer__btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px; border: 1px solid var(--on-navy-2); border-radius: var(--radius-md); background: transparent; color: #fff; font-size: 17px; font-weight: 700; cursor: pointer; }
 .ws-footer__btn--ready { border-color: transparent; background: var(--color-marker); color: var(--color-deep-navy); }
 .ws-footer__btn:disabled { opacity: 0.6; cursor: wait; }
-.ws-footer__confirm { margin-bottom: 10px; font-size: 15px; font-weight: 600; color: #fff; }
 .ws-footer__cancel { width: 100%; min-height: 48px; margin-top: 6px; border: 0; background: none; color: var(--on-navy-2); font-size: 16px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Closing panel: what is missing, how hard it was, a note for the trainer */
+.ws-finish { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+.ws-finish__title { font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; text-transform: uppercase; }
+.ws-finish__warn { font-size: 15px; font-weight: 600; }
+.ws-finish__effort { border: 0; }
+.ws-finish__effort legend { margin-bottom: 6px; font-size: 15px; font-weight: 600; color: var(--on-navy-2); }
+.ws-finish__scale { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
+.ws-finish__scale button { min-height: 44px; border: 1px solid var(--navy-rule); border-radius: var(--radius-md); background: transparent; color: #fff; font-family: var(--font-display); font-size: 22px; font-weight: 800; cursor: pointer; }
+.ws-finish__scale button[aria-pressed='true'] { border-color: #fff; background: #fff; color: var(--color-deep-navy); }
+.ws-finish__ends { display: flex; justify-content: space-between; margin-top: 4px; font-size: 13px; color: var(--on-navy-2); }
+.ws-finish__field { display: flex; flex-direction: column; gap: 6px; font-size: 15px; font-weight: 600; color: var(--on-navy-2); }
+.ws-finish__field textarea { min-height: 64px; padding: 10px 12px; border: 1px solid var(--navy-rule); border-radius: var(--radius-md); background: var(--color-midnight-blue); color: #fff; font: inherit; font-size: 16px; font-weight: 400; resize: vertical; }
+.ws-finish__field textarea::placeholder { color: var(--on-navy-2); opacity: 0.8; }
+.ws-finish :focus-visible { outline: 2px solid var(--color-marker); outline-offset: 2px; }
+
+@media (max-width: 420px) {
+  .ws-finish__scale { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}

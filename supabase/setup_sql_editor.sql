@@ -1223,6 +1223,212 @@ $$;
 
 REVOKE ALL ON FUNCTION private.handle_new_user() FROM PUBLIC;
 
+-- ▼▼▼ 00011_close_stale_sessions.sql ▼▼▼
+-- ═══════════════════════════════════════════════════════════════════════
+-- TrainerOS — A session left open on an earlier day does not carry over
+-- ═══════════════════════════════════════════════════════════════════════
+
+-- Starting a routine used to resume any open session of it, even from last
+-- week. Now an open session from an earlier day is closed as it was left,
+-- or removed if no set was logged, and a new one starts for today.
+CREATE OR REPLACE FUNCTION public.start_workout_session(
+  p_routine_id UUID,
+  p_fecha DATE DEFAULT CURRENT_DATE
+)
+RETURNS UUID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  v_client_id UUID;
+  v_trainer_id UUID;
+  v_nombre TEXT;
+  v_session_id UUID;
+BEGIN
+  SELECT c.id, c.trainer_id, r.nombre INTO v_client_id, v_trainer_id, v_nombre
+  FROM public.client_routines cr
+  JOIN public.clients c ON c.id = cr.client_id
+  JOIN public.routines r ON r.id = cr.routine_id
+  WHERE cr.routine_id = p_routine_id AND c.user_id = (SELECT auth.uid());
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'routine_not_assigned' USING ERRCODE = '42501';
+  END IF;
+
+  DELETE FROM public.workout_sessions ws
+  WHERE ws.client_id = v_client_id
+    AND ws.routine_id = p_routine_id
+    AND ws.status = 'in-progress'
+    AND ws.fecha < p_fecha
+    AND NOT EXISTS (
+      SELECT 1 FROM public.session_exercises se
+      WHERE se.session_id = ws.id AND se.sets_completados > 0
+    );
+
+  UPDATE public.workout_sessions
+  SET status = 'completed', completed_at = NOW()
+  WHERE client_id = v_client_id
+    AND routine_id = p_routine_id
+    AND status = 'in-progress'
+    AND fecha < p_fecha;
+
+  INSERT INTO public.workout_sessions
+    (client_id, routine_id, trainer_id, nombre, fecha, status, started_at)
+  VALUES
+    (v_client_id, p_routine_id, v_trainer_id, v_nombre, p_fecha, 'in-progress', NOW())
+  ON CONFLICT (client_id, routine_id) WHERE status = 'in-progress' DO NOTHING
+  RETURNING id INTO v_session_id;
+
+  IF v_session_id IS NULL THEN
+    SELECT id INTO v_session_id
+    FROM public.workout_sessions
+    WHERE client_id = v_client_id AND routine_id = p_routine_id AND status = 'in-progress';
+    RETURN v_session_id;
+  END IF;
+
+  INSERT INTO public.session_exercises
+    (session_id, exercise_id, order_index, categoria, series, reps, descanso, notes)
+  SELECT
+    v_session_id,
+    rbe.exercise_id,
+    row_number() OVER (ORDER BY b.order_index, rbe.order_index) - 1,
+    NULL,
+    rbe.sets,
+    rbe.reps,
+    coalesce(rbe.rest_seconds, 90),
+    rbe.notes
+  FROM public.routine_blocks b
+  JOIN public.routine_block_exercises rbe ON rbe.block_id = b.id
+  WHERE b.routine_id = p_routine_id;
+
+  RETURN v_session_id;
+END;
+$$;
+
+-- ▼▼▼ 00012_routine_day.sql ▼▼▼
+-- ═══════════════════════════════════════════════════════════════════════
+-- TrainerOS — Routines keep the day they are trained
+-- ═══════════════════════════════════════════════════════════════════════
+
+-- routines.dia existed but nothing could set it. The student home uses it
+-- to show today's routine. The signature changes, so the old one goes first.
+DROP FUNCTION IF EXISTS public.save_routine(UUID, TEXT, TEXT, JSONB);
+
+CREATE OR REPLACE FUNCTION public.save_routine(
+  p_routine_id UUID,
+  p_nombre TEXT,
+  p_descripcion TEXT,
+  p_blocks JSONB,
+  p_dia TEXT DEFAULT NULL
+)
+RETURNS UUID
+LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  v_routine_id UUID := p_routine_id;
+  v_block JSONB;
+  v_exercise JSONB;
+  v_block_id UUID;
+  v_block_index INT := 0;
+  v_exercise_index INT;
+BEGIN
+  IF v_routine_id IS NULL THEN
+    INSERT INTO public.routines (trainer_id, nombre, descripcion, dia)
+    VALUES ((SELECT auth.uid()), p_nombre, p_descripcion, NULLIF(trim(p_dia), ''))
+    RETURNING id INTO v_routine_id;
+  ELSE
+    UPDATE public.routines
+    SET nombre = p_nombre, descripcion = p_descripcion, dia = NULLIF(trim(p_dia), '')
+    WHERE id = v_routine_id;
+
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'routine_not_available' USING ERRCODE = '42501';
+    END IF;
+
+    DELETE FROM public.routine_blocks WHERE routine_id = v_routine_id;
+  END IF;
+
+  FOR v_block IN SELECT value FROM jsonb_array_elements(p_blocks) LOOP
+    INSERT INTO public.routine_blocks (routine_id, label, type, order_index)
+    VALUES (
+      v_routine_id,
+      v_block ->> 'label',
+      (v_block ->> 'type')::public.block_type,
+      v_block_index
+    )
+    RETURNING id INTO v_block_id;
+
+    v_exercise_index := 0;
+    FOR v_exercise IN SELECT value FROM jsonb_array_elements(v_block -> 'exercises') LOOP
+      INSERT INTO public.routine_block_exercises
+        (block_id, exercise_id, sets, reps, tempo, rest_seconds, notes, order_index)
+      VALUES (
+        v_block_id,
+        (v_exercise ->> 'exercise_id')::UUID,
+        (v_exercise ->> 'sets')::INT,
+        v_exercise ->> 'reps',
+        NULLIF(v_exercise ->> 'tempo', ''),
+        coalesce((v_exercise ->> 'rest_seconds')::INT, 90),
+        NULLIF(v_exercise ->> 'notes', ''),
+        v_exercise_index
+      );
+      v_exercise_index := v_exercise_index + 1;
+    END LOOP;
+
+    v_block_index := v_block_index + 1;
+  END LOOP;
+
+  RETURN v_routine_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.save_routine(UUID, TEXT, TEXT, JSONB, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.save_routine(UUID, TEXT, TEXT, JSONB, TEXT) TO authenticated;
+
+-- ▼▼▼ 00013_session_feedback.sql ▼▼▼
+-- ═══════════════════════════════════════════════════════════════════════
+-- TrainerOS — The student rates the effort and leaves a comment on finishing
+-- ═══════════════════════════════════════════════════════════════════════
+
+-- Effort on the RPE scale: 1 is very easy, 10 is all out. The comment goes in
+-- the existing notes column. Both are optional and the trainer reads them.
+ALTER TABLE public.workout_sessions ADD COLUMN IF NOT EXISTS esfuerzo SMALLINT;
+
+ALTER TABLE public.workout_sessions DROP CONSTRAINT IF EXISTS workout_sessions_esfuerzo_range;
+ALTER TABLE public.workout_sessions ADD CONSTRAINT workout_sessions_esfuerzo_range
+  CHECK (esfuerzo IS NULL OR esfuerzo BETWEEN 1 AND 10);
+
+ALTER TABLE public.workout_sessions DROP CONSTRAINT IF EXISTS workout_sessions_notes_length;
+ALTER TABLE public.workout_sessions ADD CONSTRAINT workout_sessions_notes_length
+  CHECK (notes IS NULL OR char_length(notes) <= 500);
+
+-- The signature changes, so the old one goes first
+DROP FUNCTION IF EXISTS public.complete_workout_session(UUID);
+
+CREATE FUNCTION public.complete_workout_session(
+  p_session_id UUID,
+  p_esfuerzo SMALLINT DEFAULT NULL,
+  p_comentario TEXT DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+BEGIN
+  UPDATE public.workout_sessions ws
+  SET status = 'completed',
+      completed_at = coalesce(ws.completed_at, NOW()),
+      esfuerzo = coalesce(p_esfuerzo, ws.esfuerzo),
+      notes = coalesce(NULLIF(trim(p_comentario), ''), ws.notes)
+  FROM public.clients c
+  WHERE ws.id = p_session_id
+    AND c.id = ws.client_id
+    AND c.user_id = (SELECT auth.uid());
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'session_not_available' USING ERRCODE = '42501';
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.complete_workout_session(UUID, SMALLINT, TEXT) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.complete_workout_session(UUID, SMALLINT, TEXT) TO authenticated;
+
 -- ─── VERIFICACIÓN ─────────────────────────────────────────────────────
 -- Tiene que mostrar 10 tablas con rls_activo = true, y 0 ejercicios, clientes y usuarios.
 SELECT

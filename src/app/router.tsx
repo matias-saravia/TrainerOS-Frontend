@@ -8,6 +8,7 @@ const AdminLayout = lazy(() => import('../features/admin/components/AdminLayout'
 const DashboardPage = lazy(() => import('../features/admin/pages/DashboardPage'))
 const ClientesPage = lazy(() => import('../features/admin/pages/ClientesPage'))
 const NuevoClientePage = lazy(() => import('../features/admin/pages/NuevoClientePage'))
+const ProgresoAlumnoPage = lazy(() => import('../features/admin/pages/ProgresoAlumnoPage'))
 const EntrenamientosPage = lazy(() => import('../features/admin/pages/EntrenamientosPage'))
 const ArmarRutinaPage = lazy(() => import('../features/admin/pages/ArmarRutinaPage'))
 const FinanzasPage = lazy(() => import('../features/finance/FinanzasPage'))
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
       { path: 'dashboard',                            element: <DashboardPage /> },
       { path: 'clientes',                             element: <ClientesPage /> },
       { path: 'clientes/nuevo',                       element: <NuevoClientePage /> },
+      { path: 'clientes/:id',                         element: <ProgresoAlumnoPage /> },
       { path: 'clientes/:id/editar',                  element: <NuevoClientePage /> },
       { path: 'entrenamientos',                       element: <EntrenamientosPage /> },
       { path: 'entrenamientos/rutinas/nueva',         element: <ArmarRutinaPage /> },

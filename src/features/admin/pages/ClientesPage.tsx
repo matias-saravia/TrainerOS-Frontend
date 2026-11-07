@@ -129,7 +129,7 @@ export default function ClientesPage() {
                     key={client.id}
                     data-clickable
                     className={client.status === 'pendiente' ? 'marker' : undefined}
-                    onClick={() => navigate(`/admin/clientes/${client.id}/editar`)}
+                    onClick={() => navigate(`/admin/clientes/${client.id}`)}
                   >
                     <td className="hoja__lead">{client.semana_actual}<small>/{client.total_semanas}</small></td>
                     <td className="hoja__name">{client.nombre} {client.apellido}</td>

@@ -114,6 +114,8 @@ export interface SaveRoutineInput {
   id?: string
   nombre: string
   descripcion: string | null
+  /** Days it is trained, as written, like "Lunes y jueves" */
+  dia?: string | null
   blocks: {
     label: string
     type: 'single' | 'superset'
@@ -136,12 +138,59 @@ export function useSaveRoutine() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, nombre, descripcion, blocks }: SaveRoutineInput): Promise<string> => {
+    mutationFn: async ({ id, nombre, descripcion, dia, blocks }: SaveRoutineInput): Promise<string> => {
       const { data, error } = await supabase.rpc('save_routine', {
         p_routine_id: (id ?? null) as string,
         p_nombre: nombre,
         p_descripcion: descripcion as string,
         p_blocks: blocks,
+        p_dia: dia ?? undefined,
+      })
+
+      if (error) {
+        throw error
+      }
+
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: routineKeys.all })
+    },
+  })
+}
+
+/**
+ * Mutation hook to copy a routine with all its blocks, as "<name> (copia)".
+ * Returns the new routine's ID. Assignments to students are not copied.
+ */
+export function useDuplicateRoutine() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<string> => {
+      const [{ data: routine, error: routineError }, { data: blocks, error: blocksError }] = await Promise.all([
+        supabase.from('routines').select('*').eq('id', id).single(),
+        supabase
+          .from('routine_blocks')
+          .select('label, type, routine_block_exercises(exercise_id, sets, reps, tempo, rest_seconds, notes)')
+          .eq('routine_id', id)
+          .order('order_index')
+          .order('order_index', { referencedTable: 'routine_block_exercises' }),
+      ])
+
+      if (routineError) {
+        throw routineError
+      }
+      if (blocksError) {
+        throw blocksError
+      }
+
+      const { data, error } = await supabase.rpc('save_routine', {
+        p_routine_id: null as unknown as string,
+        p_nombre: `${routine.nombre} (copia)`,
+        p_descripcion: routine.descripcion as string,
+        p_dia: routine.dia ?? undefined,
+        p_blocks: blocks.map(b => ({ label: b.label, type: b.type, exercises: b.routine_block_exercises })),
       })
 
       if (error) {

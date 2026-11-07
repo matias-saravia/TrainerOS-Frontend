@@ -332,15 +332,18 @@ export function usePreviousWeights(clientId: string, sessionId: string, exercise
 }
 
 /**
- * Mutation hook to mark a session as completed.
+ * Mutation hook to mark a session as completed, with the effort (1 to 10)
+ * and a comment for the trainer, both optional.
  */
 export function useCompleteWorkoutSession(sessionId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (): Promise<void> => {
+    mutationFn: async ({ esfuerzo, comentario }: { esfuerzo?: number; comentario?: string } = {}): Promise<void> => {
       const { error } = await supabase.rpc('complete_workout_session', {
         p_session_id: sessionId,
+        p_esfuerzo: esfuerzo,
+        p_comentario: comentario?.trim() || undefined,
       })
 
       if (error) {

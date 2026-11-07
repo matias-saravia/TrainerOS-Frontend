@@ -565,6 +565,7 @@ export type Database = {
           client_id: string
           completed_at: string | null
           created_at: string
+          esfuerzo: number | null
           fecha: string
           id: string
           nombre: string
@@ -578,6 +579,7 @@ export type Database = {
           client_id: string
           completed_at?: string | null
           created_at?: string
+          esfuerzo?: number | null
           fecha?: string
           id?: string
           nombre: string
@@ -591,6 +593,7 @@ export type Database = {
           client_id?: string
           completed_at?: string | null
           created_at?: string
+          esfuerzo?: number | null
           fecha?: string
           id?: string
           nombre?: string
@@ -631,7 +634,7 @@ export type Database = {
     Functions: {
       claim_client_access: { Args: { p_slug: string }; Returns: string }
       complete_workout_session: {
-        Args: { p_session_id: string }
+        Args: { p_comentario?: string; p_esfuerzo?: number; p_session_id: string }
         Returns: undefined
       }
       finance_year_summary: {
@@ -682,6 +685,7 @@ export type Database = {
         Args: {
           p_blocks: Json
           p_descripcion: string
+          p_dia?: string
           p_nombre: string
           p_routine_id: string
         }

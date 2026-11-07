@@ -14,7 +14,7 @@ import ErrorState from '../../../components/ErrorState'
 import './ClientDashboard.css'
 
 function normalizeDay(text: string): string {
-  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 }
 
 /** Local YYYY-MM-DD, the same format sessions are stored with */
@@ -125,8 +125,9 @@ export default function ClientDashboard() {
   const todayName = normalizeDay(today.toLocaleDateString('es-AR', { weekday: 'long' }))
 
   const routines = assignedRoutines.filter(ar => ar.routines)
+  // Only today's open session is resumed: starting the routine closes an older one
   const openSessionFor = (routineId: string) =>
-    sessions.find(s => s.routine_id === routineId && s.status === 'in-progress')
+    sessions.find(s => s.routine_id === routineId && s.status === 'in-progress' && s.fecha === todayKey)
   const lastDoneFor = (routineId: string) =>
     sessions.find(s => s.routine_id === routineId && s.status === 'completed')
 
@@ -221,7 +222,7 @@ export default function ClientDashboard() {
             {featured.routines.descripcion && <p className="cd-today__desc">{featured.routines.descripcion}</p>}
             <p className="cd-today__last">
               {featuredOpen
-                ? `Empezada ${describeDay(featuredOpen.fecha)}. Llevás ${exercisesDone(featuredOpen)} de ${featuredOpen.session_exercises.length} ejercicios.`
+                ? `Llevás ${exercisesDone(featuredOpen)} de ${featuredOpen.session_exercises.length} ejercicios de hoy.`
                 : featuredLast
                   ? `La hiciste por última vez ${describeDay(featuredLast.fecha)}.`
                   : 'Todavía no la hiciste.'}
@@ -342,9 +343,11 @@ export default function ClientDashboard() {
                     {date.getDate()}/{date.getMonth() + 1}
                   </span>
                   <span className="cd-history__name">{s.nombre}</span>
-                  <span className={`cd-history__state${s.status === 'in-progress' ? ' cd-history__state--open' : ''}`}>
-                    {s.status === 'in-progress'
+                  <span className={`cd-history__state${s.status === 'in-progress' && s.fecha === todayKey ? ' cd-history__state--open' : ''}`}>
+                    {s.status === 'in-progress' && s.fecha === todayKey
                       ? 'En curso'
+                      : s.status === 'in-progress'
+                        ? `Sin finalizar, ${done} de ${total}`
                       : done === total
                         ? 'Completa'
                         : `${done} de ${total} ejercicios`}

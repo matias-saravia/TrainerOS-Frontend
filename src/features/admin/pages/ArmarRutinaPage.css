@@ -276,3 +276,19 @@
 .armar-rutina__mobile-body .routine-builder__canvas { padding: 12px 16px 16px; overflow: visible; }
 .armar-rutina__mobile-body .routine-builder__blocks { max-width: 100%; }
 .armar-rutina__title-input { min-width: 0; }
+
+/* Days it is trained: the student's home shows it as today's routine */
+.armar-rutina__days { display: flex; flex-wrap: wrap; flex-shrink: 0; align-items: center; gap: 6px 4px; padding: 8px 24px; border-bottom: 1px solid var(--color-outline-var); background: var(--color-surface); }
+.armar-rutina__days-label { margin-right: 8px; font-size: 14px; font-weight: 600; color: var(--color-midnight-blue); }
+.armar-rutina__day { width: 40px; height: 40px; border: 1px solid var(--color-ivory); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-midnight-blue); font-family: var(--font-display); font-size: 20px; font-weight: 800; cursor: pointer; }
+.armar-rutina__day:hover { border-color: var(--color-midnight-blue); }
+.armar-rutina__day[aria-pressed='true'] { border-color: var(--color-midnight-blue); background: var(--color-midnight-blue); color: #fff; }
+.armar-rutina__day:focus-visible { outline: 2px solid var(--color-midnight-blue); outline-offset: 2px; }
+.armar-rutina__days-text { margin-left: 8px; font-size: 14px; color: var(--color-on-surface-var); }
+
+@media (max-width: 1100px) {
+  .armar-rutina__days { padding-inline: 16px; }
+  .armar-rutina__day { width: 44px; height: 44px; }
+  .armar-rutina__days-label { flex-basis: 100%; }
+  .armar-rutina__days-text { flex-basis: 100%; margin-left: 0; }
+}
