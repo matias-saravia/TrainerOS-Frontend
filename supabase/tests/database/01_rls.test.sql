@@ -1,6 +1,6 @@
 -- Tenant isolation tests. Run with: npx supabase test db
 BEGIN;
-SELECT plan(26);
+SELECT plan(31);
 
 -- ─── Fixtures: two trainers, each with a linked student ───────────────
 INSERT INTO auth.users (id, email, raw_user_meta_data) VALUES
@@ -34,6 +34,20 @@ SELECT is((SELECT role::text FROM public.profiles WHERE id = 'a0000000-0000-0000
 SELECT is((SELECT slug FROM public.profiles WHERE id = 'a0000000-0000-0000-0000-000000000001'), 'ana-nunez', 'trainer gets a clean slug');
 SELECT is((SELECT role::text FROM public.profiles WHERE id = 'b0000000-0000-0000-0000-000000000002'), 'client', 'unknown role falls back to client');
 SELECT is((SELECT slug FROM public.profiles WHERE id = 'a0000000-0000-0000-0000-000000000002'), NULL, 'clients have no slug');
+
+INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data) VALUES
+  ('c0000000-0000-0000-0000-000000000001', 'google@test.com', '{"provider":"google","providers":["google"]}', '{"full_name":"María José Pérez"}');
+SELECT is((SELECT role::text FROM public.profiles WHERE id = 'c0000000-0000-0000-0000-000000000001'), 'trainer', 'a Google sign-up is a trainer');
+SELECT is((SELECT nombre || '|' || apellido FROM public.profiles WHERE id = 'c0000000-0000-0000-0000-000000000001'), 'María|José Pérez', 'the Google name is split into name and surname');
+SELECT is((SELECT slug FROM public.profiles WHERE id = 'c0000000-0000-0000-0000-000000000001'), 'maria-jose-perez', 'a Google trainer gets a slug');
+
+INSERT INTO public.clients (trainer_id, nombre, email) VALUES
+  ('a0000000-0000-0000-0000-000000000001', 'Invitado', 'invitado@test.com');
+INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data) VALUES
+  ('c0000000-0000-0000-0000-000000000002', 'Invitado@test.com', '{"provider":"google"}', '{"full_name":"Invitado Uno"}'),
+  ('c0000000-0000-0000-0000-000000000003', 'sin.nombre@test.com', '{"provider":"google"}', '{}');
+SELECT is((SELECT role::text FROM public.profiles WHERE id = 'c0000000-0000-0000-0000-000000000002'), 'client', 'an invited student who uses Google stays a student');
+SELECT is((SELECT nombre FROM public.profiles WHERE id = 'c0000000-0000-0000-0000-000000000003'), 'sin.nombre', 'a Google trainer without a name takes the start of the email');
 
 -- ─── Anonymous ────────────────────────────────────────────────────────
 SET LOCAL ROLE anon;

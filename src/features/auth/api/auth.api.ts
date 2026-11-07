@@ -48,6 +48,21 @@ export async function signUpWithEmail({ email, password, nombre, apellido }: Sig
   return data
 }
 
+/** Off until Google is set up in Supabase: an unset provider would land the user on an error page. */
+export const googleSignInEnabled = import.meta.env.VITE_GOOGLE_SIGN_IN === 'true'
+
+/**
+ * Sends the trainer to Google. A new Google account becomes a trainer (see the
+ * on_auth_user_created trigger); an existing account with that email is linked.
+ */
+export async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  })
+  if (error) throw error
+}
+
 export async function getTrainerPublic(slug: string) {
   const { data, error } = await supabase.rpc('get_trainer_public', { p_slug: slug })
   if (error) throw error

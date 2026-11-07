@@ -8,11 +8,13 @@ const AdminLayout = lazy(() => import('../features/admin/components/AdminLayout'
 const DashboardPage = lazy(() => import('../features/admin/pages/DashboardPage'))
 const ClientesPage = lazy(() => import('../features/admin/pages/ClientesPage'))
 const NuevoClientePage = lazy(() => import('../features/admin/pages/NuevoClientePage'))
+const ProgresoAlumnoPage = lazy(() => import('../features/admin/pages/ProgresoAlumnoPage'))
 const EntrenamientosPage = lazy(() => import('../features/admin/pages/EntrenamientosPage'))
 const ArmarRutinaPage = lazy(() => import('../features/admin/pages/ArmarRutinaPage'))
 const FinanzasPage = lazy(() => import('../features/finance/FinanzasPage'))
 const ExerciseBankPage = lazy(() => import('../features/exercises/pages/ExerciseBankPage'))
 const NuevoEjercicioPage = lazy(() => import('../features/exercises/pages/NuevoEjercicioPage'))
+const LegalPage = lazy(() => import('../features/legal/LegalPage'))
 const VistaAlumnoPage = lazy(() => import('../features/admin/pages/VistaAlumnoPage'))
 const ClientLayout = lazy(() => import('../features/client/components/ClientLayout'))
 const ClientDashboard = lazy(() => import('../features/client/pages/ClientDashboard'))
@@ -33,6 +35,14 @@ const router = createBrowserRouter([
     element: <ResetPasswordPage />,
   },
   {
+    path: '/privacidad',
+    element: <LegalPage doc="privacidad" />,
+  },
+  {
+    path: '/terminos',
+    element: <LegalPage doc="terminos" />,
+  },
+  {
     path: '/t/:slug',
     element: <TrainerAccessPage />,
   },
@@ -48,6 +58,7 @@ const router = createBrowserRouter([
       { path: 'dashboard',                            element: <DashboardPage /> },
       { path: 'clientes',                             element: <ClientesPage /> },
       { path: 'clientes/nuevo',                       element: <NuevoClientePage /> },
+      { path: 'clientes/:id',                         element: <ProgresoAlumnoPage /> },
       { path: 'clientes/:id/editar',                  element: <NuevoClientePage /> },
       { path: 'entrenamientos',                       element: <EntrenamientosPage /> },
       { path: 'entrenamientos/rutinas/nueva',         element: <ArmarRutinaPage /> },

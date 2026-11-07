@@ -6,6 +6,7 @@ import type { RoutineBlockWithExercises, RoutineRow } from '../../workouts/hooks
 import { useAuth } from '../../auth'
 import type { SessionExercise } from '../api/client.api'
 import { useStudentArea } from './useStudentArea'
+import { dayKey } from '../../../utils/dates'
 
 export type ClientRow = Tables<'clients'>
 export type WorkoutSessionRow = Tables<'workout_sessions'>
@@ -61,7 +62,7 @@ export function toPreviewSession(
     routine_id: routine.id,
     trainer_id: routine.trainer_id,
     nombre: routine.nombre,
-    fecha: new Date().toLocaleDateString('en-CA'),
+    fecha: dayKey(new Date()),
     status: 'in-progress',
     notes: null,
     created_at: routine.created_at,
@@ -205,7 +206,7 @@ export function useStartWorkoutSession() {
     mutationFn: async (routineId: string): Promise<string> => {
       const { data, error } = await supabase.rpc('start_workout_session', {
         p_routine_id: routineId,
-        p_fecha: new Date().toLocaleDateString('en-CA'), // device's local YYYY-MM-DD
+        p_fecha: dayKey(new Date()),
       })
 
       if (error) {
@@ -332,15 +333,18 @@ export function usePreviousWeights(clientId: string, sessionId: string, exercise
 }
 
 /**
- * Mutation hook to mark a session as completed.
+ * Mutation hook to mark a session as completed, with the effort (1 to 10)
+ * and a comment for the trainer, both optional.
  */
 export function useCompleteWorkoutSession(sessionId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (): Promise<void> => {
+    mutationFn: async ({ esfuerzo, comentario }: { esfuerzo?: number; comentario?: string } = {}): Promise<void> => {
       const { error } = await supabase.rpc('complete_workout_session', {
         p_session_id: sessionId,
+        p_esfuerzo: esfuerzo,
+        p_comentario: comentario?.trim() || undefined,
       })
 
       if (error) {

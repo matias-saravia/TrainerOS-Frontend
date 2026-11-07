@@ -26,7 +26,9 @@ export default function WorkoutSessionPage() {
   const undoSet = useUndoWorkoutSet(sesionId)
   const completeSession = useCompleteWorkoutSession(sesionId)
   const restTimer = useRestTimer()
-  const [confirmingFinish, setConfirmingFinish] = useState(false)
+  const [finishing, setFinishing] = useState(false)
+  const [esfuerzo, setEsfuerzo] = useState<number | null>(null)
+  const [comentario, setComentario] = useState('')
 
   const exercises = (session?.session_exercises ?? []).map(toSessionExercise)
   const isFinished = session?.status === 'completed'
@@ -68,12 +70,13 @@ export default function WorkoutSessionPage() {
       navigate(basePath)
       return
     }
-    if (pendingCount > 0 && !confirmingFinish) {
-      setConfirmingFinish(true)
+    // First tap opens the closing panel; the second saves
+    if (!finishing) {
+      setFinishing(true)
       return
     }
     try {
-      await completeSession.mutateAsync()
+      await completeSession.mutateAsync({ esfuerzo: esfuerzo ?? undefined, comentario })
       restTimer.stop()
       navigate(basePath, { state: { finished: session?.nombre } })
     } catch (err) {
@@ -182,24 +185,59 @@ export default function WorkoutSessionPage() {
       </main>
 
       <footer className="ws-footer">
-        {!isFinished && <RestTimer />}
-        {confirmingFinish && (
-          <p className="ws-footer__confirm" role="alert">
-            Te {pendingCount === 1 ? 'falta 1 ejercicio' : `faltan ${pendingCount} ejercicios`}. Si finalizás, la sesión
-            se guarda así.
-          </p>
+        {!isFinished && !finishing && <RestTimer />}
+        {finishing && (
+          <div className="ws-finish">
+            <h2 className="ws-finish__title">Cerrar la sesión</h2>
+            {pendingCount > 0 && (
+              <p className="ws-finish__warn" role="alert">
+                Te {pendingCount === 1 ? 'falta 1 ejercicio' : `faltan ${pendingCount} ejercicios`}. Si finalizás, la
+                sesión se guarda así.
+              </p>
+            )}
+            <fieldset className="ws-finish__effort">
+              <legend>¿Cuánto te costó? Es opcional</legend>
+              <div className="ws-finish__scale">
+                {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
+                  <button
+                    key={n}
+                    type="button"
+                    aria-pressed={esfuerzo === n}
+                    aria-label={`Esfuerzo ${n} de 10`}
+                    onClick={() => setEsfuerzo(esfuerzo === n ? null : n)}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <p className="ws-finish__ends" aria-hidden="true">
+                <span>Muy fácil</span>
+                <span>Al máximo</span>
+              </p>
+            </fieldset>
+            <label className="ws-finish__field">
+              Comentario para tu entrenador, si querés
+              <textarea
+                rows={2}
+                maxLength={500}
+                value={comentario}
+                onChange={e => setComentario(e.target.value)}
+                placeholder="Ej. me molestó el hombro en el press"
+              />
+            </label>
+          </div>
         )}
         <button
           id="btn-finalizar-sesion"
-          className={`ws-footer__btn${allDone ? ' ws-footer__btn--ready' : ''}`}
+          className={`ws-footer__btn${allDone || finishing ? ' ws-footer__btn--ready' : ''}`}
           onClick={handleFinalize}
           disabled={completeSession.isPending}
         >
           <CheckCheck size={20} strokeWidth={2} />
-          {isFinished || isPreview ? 'Volver al inicio' : confirmingFinish ? 'Finalizar igual' : 'Finalizar sesión'}
+          {isFinished || isPreview ? 'Volver al inicio' : finishing ? 'Guardar y finalizar' : 'Finalizar sesión'}
         </button>
-        {confirmingFinish && (
-          <button type="button" className="ws-footer__cancel" onClick={() => setConfirmingFinish(false)}>
+        {finishing && (
+          <button type="button" className="ws-footer__cancel" onClick={() => setFinishing(false)}>
             Seguir entrenando
           </button>
         )}

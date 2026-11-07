@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dumbbell, Plus, Trash2, Pencil } from 'lucide-react'
-import { useRoutines, useDeleteRoutine, type RoutineRow } from '../../workouts/hooks/useRoutines'
+import { Copy, Dumbbell, Plus, Trash2, Pencil } from 'lucide-react'
+import { useRoutines, useDeleteRoutine, useDuplicateRoutine, type RoutineRow } from '../../workouts/hooks/useRoutines'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
 import EmptyState from '../../../components/EmptyState'
@@ -32,6 +32,7 @@ function RutinasList() {
   const navigate = useNavigate()
   const { data: routines = [], isLoading, error, refetch } = useRoutines()
   const deleteRoutine = useDeleteRoutine()
+  const duplicateRoutine = useDuplicateRoutine()
   const [routineToDelete, setRoutineToDelete] = useState<RoutineRow | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
@@ -44,6 +45,18 @@ function RutinasList() {
       console.error('Error al eliminar rutina:', err)
       setRoutineToDelete(null)
       setDeleteError('No pudimos eliminar la rutina. Revisá tu conexión e intentá de nuevo.')
+    }
+  }
+
+  // The copy opens right away: duplicating is almost always to change something
+  const handleDuplicate = async (routine: RoutineRow) => {
+    setDeleteError(null)
+    try {
+      const newId = await duplicateRoutine.mutateAsync(routine.id)
+      navigate(`/admin/entrenamientos/rutinas/${newId}/editar`)
+    } catch (err) {
+      console.error('Error al duplicar rutina:', err)
+      setDeleteError(`No pudimos duplicar ${routine.nombre}. Revisá tu conexión e intentá de nuevo.`)
     }
   }
 
@@ -84,6 +97,15 @@ function RutinasList() {
                     onClick={() => navigate(`/admin/entrenamientos/rutinas/${r.id}/editar`)}
                   >
                     <Pencil size={16} strokeWidth={1.5} />
+                  </button>
+                  <button
+                    className="icon-action-btn"
+                    title={`Duplicar ${r.nombre}`}
+                    aria-label={`Duplicar ${r.nombre}`}
+                    onClick={() => handleDuplicate(r)}
+                    disabled={duplicateRoutine.isPending}
+                  >
+                    <Copy size={16} strokeWidth={1.5} />
                   </button>
                   <button
                     className="icon-action-btn icon-action-btn--danger"

@@ -1,6 +1,6 @@
 -- Attempt limit tests. Run with: npx supabase test db
 BEGIN;
-SELECT plan(6);
+SELECT plan(7);
 
 SELECT ok(public.register_access_attempt('t:a', 2, 900), 'first attempt is allowed');
 SELECT ok(public.register_access_attempt('t:a', 2, 900), 'attempt at the limit is allowed');
@@ -16,6 +16,8 @@ SELECT throws_ok(
   '42501', NULL, 'the public API cannot call it'
 );
 RESET ROLE;
+
+SELECT is((SELECT count(*)::int FROM cron.job WHERE jobname = 'purge-access-attempts'), 1, 'old access attempts are purged every hour');
 
 SELECT * FROM finish();
 ROLLBACK;

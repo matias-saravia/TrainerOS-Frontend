@@ -1,4 +1,5 @@
 import type { Tables } from '../../lib/supabase'
+import { dayKey } from '../../utils/dates'
 
 export type Movement = Tables<'finance_movements'>
 export type MovementType = 'entrada' | 'salida'
@@ -87,7 +88,7 @@ const centsMoney = money(2)
 export const formatMoney = (amount: number) =>
   (Number.isInteger(amount) ? wholeMoney : centsMoney).format(amount)
 
-export const today = () => new Date().toLocaleDateString('en-CA') // device's local YYYY-MM-DD
+export const today = () => dayKey(new Date())
 
 /** Parses "2026-11" from the URL, falling back to the current month. */
 export function parsePeriod(value: string | null): { year: number; month: number } {

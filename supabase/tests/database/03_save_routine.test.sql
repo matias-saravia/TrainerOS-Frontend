@@ -1,6 +1,6 @@
 -- Atomic routine save tests. Run with: npx supabase test db
 BEGIN;
-SELECT plan(7);
+SELECT plan(12);
 
 INSERT INTO auth.users (id, email, email_confirmed_at, raw_user_meta_data) VALUES
   ('a0000000-0000-0000-0000-000000000001', 'ana@test.com', NOW(), '{"role":"trainer","nombre":"Ana","apellido":"Paz"}'),
@@ -37,6 +37,13 @@ SELECT throws_ok(
   format($$SELECT public.save_routine(%L, 'Roto', NULL, '[{"label":"A","type":"single","exercises":[{"exercise_id":"e0000000-0000-0000-0000-00000000000b","sets":1,"reps":"1"}]}]')$$, (SELECT id FROM saved)),
   '42501', NULL, 'cannot use an exercise of another trainer');
 SELECT is((SELECT nombre FROM public.routines WHERE id = (SELECT id FROM saved)), 'Empuje B', 'a failed save changes nothing');
+
+-- The day: NULL keeps it, an empty text clears it
+SELECT lives_ok(format($$SELECT public.save_routine(%L, 'Empuje B', NULL, '[]', ' Lunes y jueves ')$$, (SELECT id FROM saved)), 'a routine saves its days');
+SELECT lives_ok(format($$SELECT public.save_routine(%L, 'Empuje B', NULL, '[]')$$, (SELECT id FROM saved)), 'a save without the day');
+SELECT is((SELECT dia FROM public.routines WHERE id = (SELECT id FROM saved)), 'Lunes y jueves', 'saving without the day keeps it');
+SELECT lives_ok(format($$SELECT public.save_routine(%L, 'Empuje B', NULL, '[]', '')$$, (SELECT id FROM saved)), 'a save with no days');
+SELECT is((SELECT dia FROM public.routines WHERE id = (SELECT id FROM saved)), NULL, 'an empty day clears it');
 
 SELECT set_config('request.jwt.claims', '{"sub":"b0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 SELECT throws_ok(
