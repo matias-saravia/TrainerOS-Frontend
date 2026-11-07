@@ -11,20 +11,8 @@ import {
 import { useStudentArea } from '../hooks/useStudentArea'
 import { useAuth } from '../../auth'
 import ErrorState from '../../../components/ErrorState'
+import { dayKey, fromKey, plainText } from '../../../utils/dates'
 import './ClientDashboard.css'
-
-function normalizeDay(text: string): string {
-  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-}
-
-/** Local YYYY-MM-DD, the same format sessions are stored with */
-function dayKey(date: Date): string {
-  return date.toLocaleDateString('en-CA')
-}
-
-function fromKey(key: string): Date {
-  return new Date(`${key}T12:00:00`)
-}
 
 function describeDay(key: string): string {
   const today = new Date()
@@ -122,7 +110,7 @@ export default function ClientDashboard() {
 
   const today = new Date()
   const todayKey = dayKey(today)
-  const todayName = normalizeDay(today.toLocaleDateString('es-AR', { weekday: 'long' }))
+  const todayName = plainText(today.toLocaleDateString('es-AR', { weekday: 'long' }))
 
   const routines = assignedRoutines.filter(ar => ar.routines)
   // Only today's open session is resumed: starting the routine closes an older one
@@ -133,7 +121,7 @@ export default function ClientDashboard() {
 
   // What to train now: the one left halfway, then today's, then the one done longest ago
   const openRoutine = routines.find(ar => openSessionFor(ar.routine_id))
-  const todaysRoutine = routines.find(ar => normalizeDay(ar.routines?.dia ?? '').includes(todayName))
+  const todaysRoutine = routines.find(ar => plainText(ar.routines?.dia ?? '').includes(todayName))
   const oldestRoutine = [...routines].sort(
     (a, b) => (lastDoneFor(a.routine_id)?.fecha ?? '').localeCompare(lastDoneFor(b.routine_id)?.fecha ?? '')
   )[0]

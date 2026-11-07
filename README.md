@@ -23,7 +23,7 @@ npm install
 npx supabase start
 ```
 
-`supabase start` muestra la URL y la clave pública. Copiá `.env.example` a `.env.local` y completalas. Después, en dos terminales:
+`supabase start` muestra la URL y la clave pública. Copiá `.env.example` a `.env.local` y completalas. Con la base local, poné también `VITE_GOOGLE_SIGN_IN=false`: Google solo está configurado en el proyecto compartido. Después, en dos terminales:
 
 ```bash
 npx supabase functions serve --env-file supabase/.env.local

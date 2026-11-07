@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   Mail,
@@ -53,11 +53,22 @@ export default function LoginPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [serverError, setServerError] = useState<string | null>(null)
+  const locState = location.state as { from?: { pathname?: string }; oauthError?: boolean } | null
+  const redirectPath = locState?.from?.pathname ?? '/'
+
+  const [serverError, setServerError] = useState<string | null>(
+    locState?.oauthError ? 'No pudiste entrar con Google. Si cancelaste, probá de nuevo, o entrá con tu correo.' : null
+  )
   const [successNotice, setSuccessNotice] = useState<string | null>(null)
 
-  const locState = location.state as { from?: { pathname?: string } } | null
-  const redirectPath = locState?.from?.pathname ?? '/'
+  // Coming back from Google with the Back button restores this page as it was left: unlock it
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setSubmitting(false)
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
 
   // ── Validation logic ────────────────────────────────────────────────
   const validate = (data: FormFields, currentMode: AuthMode): FormErrors => {

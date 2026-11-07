@@ -75,8 +75,8 @@ function Privacy() {
         <h3>Datos técnicos</h3>
         <ul>
           <li>
-            Para frenar intentos de entrar con correos ajenos, guardamos por un día el correo y la dirección IP de
-            cada intento de acceso de alumnos.
+            Para frenar intentos de entrar con correos ajenos, guardamos el correo y la dirección IP de cada intento
+            de acceso de alumnos. Se borran solos después de un día.
           </li>
           <li>
             Tu sesión queda guardada en tu navegador para que no tengas que volver a entrar. No usamos cookies de

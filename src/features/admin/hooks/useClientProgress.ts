@@ -29,24 +29,35 @@ export function useClientSessions(clientId: string) {
   })
 }
 
+// Supabase returns at most 1000 rows per request
+const PAGE_SIZE = 1000
+
 /**
  * Hook to fetch every weight a student logged, with the exercise name.
+ * Reads page by page, so a long history never loses its latest entries.
  */
 export function useClientWeights(clientId: string) {
   return useQuery({
     queryKey: [...clientKeys.detail(clientId), 'weights'],
     queryFn: async (): Promise<ProgressWeight[]> => {
-      const { data, error } = await supabase
-        .from('weight_entries')
-        .select('fecha, kg, exercise_id, exercises(nombre)')
-        .eq('client_id', clientId)
-        .order('fecha', { ascending: true })
+      const all: ProgressWeight[] = []
 
-      if (error) {
-        throw error
+      for (let from = 0; ; from += PAGE_SIZE) {
+        const { data, error } = await supabase
+          .from('weight_entries')
+          .select('fecha, kg, exercise_id, exercises(nombre)')
+          .eq('client_id', clientId)
+          .order('fecha', { ascending: true })
+          .order('id', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1)
+
+        if (error) {
+          throw error
+        }
+
+        all.push(...((data as unknown as ProgressWeight[]) ?? []))
+        if (!data || data.length < PAGE_SIZE) return all
       }
-
-      return (data as unknown as ProgressWeight[]) ?? []
     },
     enabled: Boolean(clientId),
   })

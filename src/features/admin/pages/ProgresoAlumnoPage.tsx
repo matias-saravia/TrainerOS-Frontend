@@ -2,15 +2,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Dumbbell, Eye, Pencil } from 'lucide-react'
 import { useClient } from '../hooks/useClients'
 import { useClientSessions, useClientWeights } from '../hooks/useClientProgress'
-import {
-  dayKey,
-  daysBetween,
-  exerciseLoads,
-  exercisesDone,
-  fromKey,
-  trained,
-  weeklyCounts,
-} from '../progress'
+import { daysBetween, exerciseLoads, exercisesDone, trained, weeklyCounts } from '../progress'
+import { dayKey, fromKey } from '../../../utils/dates'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
 import EmptyState from '../../../components/EmptyState'

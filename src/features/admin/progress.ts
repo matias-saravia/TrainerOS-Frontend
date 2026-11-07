@@ -1,5 +1,6 @@
 // What a trainer reads on a student's progress page, worked out from the
 // sessions and the weights the student logged. Dates are local YYYY-MM-DD.
+import { dayKey, fromKey } from '../../utils/dates'
 
 export interface ProgressSession {
   id: string
@@ -32,14 +33,6 @@ export interface ExerciseLoad {
   best: number
   lastFecha: string
   days: number
-}
-
-export function dayKey(date: Date): string {
-  return date.toLocaleDateString('en-CA')
-}
-
-export function fromKey(key: string): Date {
-  return new Date(`${key}T12:00:00`)
 }
 
 function mondayOf(date: Date): Date {

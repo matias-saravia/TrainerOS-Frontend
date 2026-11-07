@@ -9,16 +9,15 @@ import ErrorState from '../../../components/ErrorState'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import { makeId } from '../../../features/workouts/api/workouts.api'
 import type { Tables } from '../../../lib/supabase'
+import { plainText } from '../../../utils/dates'
 import './ArmarRutinaPage.css'
 
 const WEEK_DAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
 
-const plain = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
-
 /** Reads "Lunes y jueves" back into day indexes, Monday first. */
 function parseDays(dia: string | null): number[] {
-  const text = plain(dia ?? '')
-  return WEEK_DAYS.flatMap((day, i) => (text.includes(plain(day)) ? [i] : []))
+  const text = plainText(dia ?? '')
+  return WEEK_DAYS.flatMap((day, i) => (text.includes(plainText(day)) ? [i] : []))
 }
 
 /** Writes day indexes as the student reads them: "Lunes, miércoles y viernes". */
