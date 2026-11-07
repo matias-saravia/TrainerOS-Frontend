@@ -1,6 +1,7 @@
 import { Link, Outlet } from 'react-router-dom'
 import { Eye } from 'lucide-react'
 import { useStudentArea } from '../hooks/useStudentArea'
+import { RestTimerProvider } from './RestTimer'
 import './ClientLayout.css'
 
 export default function ClientLayout() {
@@ -16,7 +17,9 @@ export default function ClientLayout() {
           <Link to="/admin/dashboard">Volver al panel</Link>
         </div>
       )}
-      <Outlet />
+      <RestTimerProvider>
+        <Outlet />
+      </RestTimerProvider>
     </div>
   )
 }

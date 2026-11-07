@@ -1,6 +1,6 @@
 -- Client access and workout session tests. Run with: npx supabase test db
 BEGIN;
-SELECT plan(17);
+SELECT plan(31);
 
 INSERT INTO auth.users (id, email, email_confirmed_at, raw_user_meta_data) VALUES
   ('a0000000-0000-0000-0000-000000000001', 'ana@test.com', NOW(), '{"role":"trainer","nombre":"Ana","apellido":"Paz"}'),
@@ -62,10 +62,33 @@ SELECT is((public.log_workout_set((SELECT id FROM se), 55)).peso_registrado, 55.
 SELECT is((public.log_workout_set((SELECT id FROM se), 60)).sets_completados, 2, 'extra sets do not go past the plan');
 SELECT is((SELECT count(*)::int FROM public.weight_entries WHERE fecha = '2026-01-15'), 2, 'history has one entry per counted set, on the session date');
 
-SELECT lives_ok(format($$SELECT public.complete_workout_session(%L)$$, (SELECT id FROM started)), 'session can be finished');
+-- ─── Undo ─────────────────────────────────────────────────────────────
+SELECT is((public.undo_workout_set((SELECT id FROM se))).sets_completados, 1, 'undo takes back the last set');
+SELECT is((SELECT count(*)::int FROM public.weight_entries), 1, 'undo removes that set''s weight from the history');
+SELECT is((public.log_workout_set((SELECT id FROM se))).sets_completados, 2, 'a set without weight is counted');
+SELECT is((SELECT count(*)::int FROM public.weight_entries), 1, 'a set without weight leaves no history entry');
+SELECT is((public.undo_workout_set((SELECT id FROM se))).sets_completados, 1, 'a set without weight can be undone');
+SELECT is((SELECT count(*)::int FROM public.weight_entries), 1, 'undoing a set without weight keeps the earlier weight');
+
+SELECT lives_ok(format($$SELECT public.complete_workout_session(%L, 8::smallint, '  Me costó el press  ')$$, (SELECT id FROM started)), 'session can be finished');
+SELECT is((SELECT esfuerzo::int || '|' || notes FROM public.workout_sessions WHERE id = (SELECT id FROM started)), '8|Me costó el press', 'effort and comment are saved');
+SELECT throws_ok(format($$SELECT public.complete_workout_session(%L, 11::smallint)$$, (SELECT id FROM started)), '23514', NULL, 'effort goes from 1 to 10');
 SELECT throws_ok(
   format($$SELECT public.log_workout_set(%L, 70)$$, (SELECT id FROM se)),
   '42501', NULL, 'a finished session no longer accepts sets');
+SELECT throws_ok(
+  format($$SELECT public.undo_workout_set(%L)$$, (SELECT id FROM se)),
+  '42501', NULL, 'a finished session cannot be changed');
+
+-- ─── A session left open does not carry over to another day ──────────
+CREATE TEMP TABLE day1 AS SELECT public.start_workout_session('a2000000-0000-0000-0000-000000000001', '2026-01-17') AS id;
+CREATE TEMP TABLE day2 AS SELECT public.start_workout_session('a2000000-0000-0000-0000-000000000001', '2026-01-18') AS id;
+SELECT isnt((SELECT id FROM day2), (SELECT id FROM day1), 'a new day starts a new session');
+SELECT is((SELECT count(*)::int FROM public.workout_sessions WHERE id = (SELECT id FROM day1)), 0, 'an earlier open session with no sets is removed');
+SELECT lives_ok(format($$SELECT public.log_workout_set(%L, 40)$$, (SELECT id FROM public.session_exercises WHERE session_id = (SELECT id FROM day2))), 'a set is logged on the new session');
+CREATE TEMP TABLE day3 AS SELECT public.start_workout_session('a2000000-0000-0000-0000-000000000001', '2026-01-19') AS id;
+SELECT is((SELECT status::text FROM public.workout_sessions WHERE id = (SELECT id FROM day2)), 'completed', 'an earlier open session with sets is closed as it was left');
+SELECT is(public.start_workout_session('a2000000-0000-0000-0000-000000000001', '2026-01-19'), (SELECT id FROM day3), 'the same day still resumes the open session');
 RESET ROLE;
 
 SELECT * FROM finish();

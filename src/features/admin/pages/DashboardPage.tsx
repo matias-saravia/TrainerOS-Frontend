@@ -180,7 +180,7 @@ export default function DashboardPage() {
                       key={c.id}
                       data-clickable
                       className={c.status === 'pendiente' ? 'marker' : undefined}
-                      onClick={() => navigate(`/admin/clientes/${c.id}/editar`)}
+                      onClick={() => navigate(`/admin/clientes/${c.id}`)}
                     >
                       <td className="hoja__lead">{c.semana_actual}<small>/{c.total_semanas}</small></td>
                       <td className="hoja__name">{c.nombre} {c.apellido}</td>

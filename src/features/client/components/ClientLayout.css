@@ -1,4 +1,4 @@
-.client-layout { display: flex; flex-direction: column; width: 100%; max-width: 100vw; min-height: 100dvh; overflow-x: hidden; background: var(--color-deep-navy); color: #fff; }
+.client-layout { display: flex; flex-direction: column; width: 100%; max-width: 100vw; min-height: 100dvh; overflow-x: clip; background: var(--color-deep-navy); color: #fff; }
 
 .client-layout__preview { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 10px 16px; background: var(--color-marker); color: var(--color-deep-navy); font-size: 14px; font-weight: 700; }
 .client-layout__preview a { color: inherit; text-decoration: underline; }

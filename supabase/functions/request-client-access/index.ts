@@ -5,19 +5,19 @@
 // prove it owns the mailbox, or one trainer could sign in as someone else's user.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.112.4'
 
-const APP_URL = Deno.env.get('APP_URL') ?? ''
+// One address, or several separated by commas. The first is the main one.
+const APP_URLS = (Deno.env.get('APP_URL') ?? '')
+  .split(',')
+  .map(url => url.trim().replace(/\/$/, ''))
+  .filter(Boolean)
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': APP_URL,
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
+function corsHeaders(appUrl: string) {
+  return {
+    'Access-Control-Allow-Origin': appUrl,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    Vary: 'Origin',
+  }
 }
 
 const WINDOW_SECONDS = 15 * 60
@@ -35,7 +35,7 @@ async function isWithinLimit(admin: SupabaseClient, key: string, limit: number) 
   return data === true
 }
 
-async function requestAccess(admin: SupabaseClient, slug: string, email: string) {
+async function requestAccess(admin: SupabaseClient, appUrl: string, slug: string, email: string) {
   const { data: trainer } = await admin
     .from('profiles')
     .select('id')
@@ -81,14 +81,23 @@ async function requestAccess(admin: SupabaseClient, slug: string, email: string)
 
   const { error: otpError } = await admin.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${APP_URL}/t/${slug}` },
+    options: { emailRedirectTo: `${appUrl}/t/${slug}` },
   })
   if (otpError) throw otpError
   return { status: 'email_sent' }
 }
 
 Deno.serve(async req => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  const origin = req.headers.get('origin') ?? ''
+  const appUrl = APP_URLS.includes(origin) ? origin : (APP_URLS[0] ?? '')
+
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders(appUrl), 'Content-Type': 'application/json' },
+    })
+
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(appUrl) })
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405)
 
   let slug: string
@@ -119,7 +128,7 @@ Deno.serve(async req => {
       (!ip || (await isWithinLimit(admin, `ip:${ip}`, MAX_ATTEMPTS_PER_IP)))
     if (!withinLimits) return json({ error: 'rate_limited' }, 429)
 
-    return json(await requestAccess(admin, slug, email))
+    return json(await requestAccess(admin, appUrl, slug, email))
   } catch (err) {
     console.error('Access request failed:', err)
     return json({ error: 'access_failed' }, 500)

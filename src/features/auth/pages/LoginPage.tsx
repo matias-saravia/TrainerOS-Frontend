@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   Mail,
   Lock,
@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react'
-import { requestPasswordReset } from '../api/auth.api'
+import { googleSignInEnabled, requestPasswordReset, signInWithGoogle } from '../api/auth.api'
 import { useAuth } from '../hooks/useAuth'
 import Logo from '../../../components/Logo'
 import './LoginPage.css'
@@ -53,11 +53,22 @@ export default function LoginPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [serverError, setServerError] = useState<string | null>(null)
+  const locState = location.state as { from?: { pathname?: string }; oauthError?: boolean } | null
+  const redirectPath = locState?.from?.pathname ?? '/'
+
+  const [serverError, setServerError] = useState<string | null>(
+    locState?.oauthError ? 'No pudiste entrar con Google. Si cancelaste, probá de nuevo, o entrá con tu correo.' : null
+  )
   const [successNotice, setSuccessNotice] = useState<string | null>(null)
 
-  const locState = location.state as { from?: { pathname?: string } } | null
-  const redirectPath = locState?.from?.pathname ?? '/'
+  // Coming back from Google with the Back button restores this page as it was left: unlock it
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setSubmitting(false)
+    }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [])
 
   // ── Validation logic ────────────────────────────────────────────────
   const validate = (data: FormFields, currentMode: AuthMode): FormErrors => {
@@ -156,6 +167,20 @@ export default function LoginPage() {
     } catch (err) {
       console.error('Password reset error:', err)
       setServerError('No pudimos enviar el correo. Intentá de nuevo en unos minutos.')
+    }
+  }
+
+  const handleGoogle = async () => {
+    setServerError(null)
+    setSuccessNotice(null)
+    setSubmitting(true)
+    try {
+      await signInWithGoogle()
+      // The browser leaves for Google here; it comes back signed in
+    } catch (err) {
+      console.error('Google sign-in error:', err)
+      setServerError('No pudimos conectar con Google. Intentá de nuevo o usá tu correo.')
+      setSubmitting(false)
     }
   }
 
@@ -299,6 +324,16 @@ export default function LoginPage() {
                 <CheckCircle2 size={18} className="auth-alert__icon" />
                 <span>{successNotice}</span>
               </div>
+            )}
+
+            {googleSignInEnabled && (
+              <>
+                <button type="button" className="auth-google-btn" onClick={handleGoogle} disabled={submitting}>
+                  <GoogleMark />
+                  {mode === 'login' ? 'Entrar con Google' : 'Registrarme con Google'}
+                </button>
+                <p className="auth-divider"><span>o con tu correo</span></p>
+              </>
             )}
 
             {/* Form */}
@@ -517,9 +552,25 @@ export default function LoginPage() {
             <div className="auth-footer-prompt">
               ¿Sos alumno? Entrá desde el link que te pasó tu entrenador.
             </div>
+            <p className="auth-legal">
+              Al crear una cuenta aceptás los <Link to="/terminos">Términos y condiciones</Link> y la{' '}
+              <Link to="/privacidad">Política de privacidad</Link>.
+            </p>
           </div>
         </div>
       </>
     </div>
+  )
+}
+
+/** Google's own "G", which its sign-in guidelines ask for on the button */
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
   )
 }

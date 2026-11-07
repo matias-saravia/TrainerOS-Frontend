@@ -64,6 +64,8 @@ test('the payment status chosen in the form reaches the list', async ({ page }) 
   await expect(page.getByRole('row', { name: /Debe Plata/ })).toContainText('Pendiente')
 
   await page.getByRole('row', { name: /Debe Plata/ }).getByRole('cell', { name: 'Debe Plata' }).click()
+  await expect(page.getByRole('heading', { name: 'Debe Plata' })).toBeVisible()
+  await page.getByRole('button', { name: 'Editar a Debe' }).click()
   await expect(page.getByRole('radio', { name: 'Pendiente' })).toBeChecked()
   await page.getByRole('radio', { name: 'Al día' }).check({ force: true })
   await page.getByRole('button', { name: 'Guardar Cambios' }).click()
@@ -194,9 +196,12 @@ test('a trainer invites a student, and their progress is saved', async ({ page }
 
   // ── Finishing the session is visible to the trainer ──
   await page.getByRole('button', { name: 'Finalizar sesión' }).click()
+  await expect(page.getByText('Te falta 1 ejercicio.', { exact: false })).toBeVisible()
+  await page.getByRole('button', { name: 'Esfuerzo 7 de 10' }).click()
+  await page.getByRole('button', { name: 'Guardar y finalizar' }).click()
   await expect(page).toHaveURL(/\/alumno$/)
 
-  expect(await trainer.select('workout_sessions?select=status')).toEqual([{ status: 'completed' }])
+  expect(await trainer.select('workout_sessions?select=status,esfuerzo')).toEqual([{ status: 'completed', esfuerzo: 7 }])
   expect(await trainer.select('weight_entries?select=kg')).toEqual([{ kg: 62.5 }])
 
   // ── Pointing a linked student at someone else's email does not hand over that account ──

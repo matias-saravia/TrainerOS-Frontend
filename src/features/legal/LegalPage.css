@@ -1,0 +1,30 @@
+/* A document to read: one white sheet on paper, at a comfortable measure */
+.legal { min-height: 100dvh; padding: 20px var(--gutter) 56px; background: var(--color-buttercream); color: var(--color-on-surface); }
+.legal a { color: var(--color-midnight-blue); text-underline-offset: 3px; }
+.legal :focus-visible { outline: 2px solid var(--color-midnight-blue); outline-offset: 2px; }
+
+.legal__nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 760px; margin: 0 auto 24px; }
+.legal__nav > a:first-child { display: inline-flex; min-height: 44px; align-items: center; color: var(--color-midnight-blue); text-decoration: none; }
+.legal__nav-link { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; }
+
+.legal__doc { max-width: 760px; margin: 0 auto; padding: 32px 40px 40px; border: 1px solid var(--color-ivory); border-radius: var(--radius-lg); background: var(--color-surface); }
+.legal__doc h1 { padding-bottom: 12px; border-bottom: 2px solid var(--color-midnight-blue); font-family: var(--font-display); font-size: clamp(40px, 6vw, 60px); font-weight: 800; line-height: 0.95; text-transform: uppercase; text-wrap: balance; color: var(--color-midnight-blue); }
+.legal__date { margin-top: 10px; font-size: 14px; color: var(--color-on-surface-var); }
+.legal__lead { max-width: 68ch; margin-top: 20px; font-size: 18px; line-height: 1.5; }
+
+.legal__section { max-width: 68ch; margin-top: 32px; }
+.legal__section h2 { margin-bottom: 10px; font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; text-transform: uppercase; color: var(--color-midnight-blue); }
+.legal__section h3 { margin: 16px 0 6px; font-size: 16px; font-weight: 700; color: var(--color-midnight-blue); }
+.legal__section p, .legal__section li { font-size: 16px; line-height: 1.6; }
+.legal__section p + p, .legal__section ul + p, .legal__section p + ul { margin-top: 10px; }
+.legal__section ul { padding-left: 20px; list-style: disc; }
+.legal__section li + li { margin-top: 6px; }
+.legal__section li::marker { color: var(--color-dusty-blue); }
+
+.legal__foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; max-width: 760px; margin: 20px auto 0; }
+.legal__foot a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; }
+
+@media (max-width: 767px) {
+  .legal__doc { padding: 22px 18px 28px; }
+  .legal__lead { font-size: 17px; }
+}

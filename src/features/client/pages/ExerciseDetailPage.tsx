@@ -1,14 +1,18 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ExternalLink, ArrowLeft, Check, ChevronRight, VideoOff } from 'lucide-react'
+import { ExternalLink, ArrowLeft, Check, ChevronRight, Undo2, VideoOff } from 'lucide-react'
 import {
   toSessionExercise,
   useLogWorkoutSet,
+  useUndoWorkoutSet,
   useWeightHistory,
   useWorkoutSession,
 } from '../hooks/useClientDashboard'
 import { useStudentArea } from '../hooks/useStudentArea'
 import ExerciseHistoryChart from '../components/ExerciseHistoryChart'
+import WeightLogger from '../components/WeightLogger'
+import RestTimer from '../components/RestTimer'
+import { formatClock, useRestTimer } from '../hooks/useRestTimer'
 import { parseVideoUrl } from '../../../utils/video'
 import './ExerciseDetailPage.css'
 
@@ -21,6 +25,7 @@ export default function ExerciseDetailPage() {
 
   const { data: session, isLoading: loadingSession } = useWorkoutSession(sesionId)
   const logSet = useLogWorkoutSet(sesionId)
+  const undoSet = useUndoWorkoutSet(sesionId)
 
   const exerciseList = useMemo(
     () => (session?.session_exercises ?? []).map(toSessionExercise),
@@ -40,40 +45,26 @@ export default function ExerciseDetailPage() {
     }, {})
   ).map(([fecha, kg]) => ({ fecha, kg }))
 
-  // ── Rest Timer ──
-  const [timerSecs, setTimerSecs] = useState(0)
-  const [timerRunning, setTimerRunning] = useState(false)
+  const restTimer = useRestTimer()
   const setsCompleted = exercise?.setsCompletados ?? 0
   const isFinished = session?.status === 'completed'
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const previousKg = [...weightHistory].reverse().find(w => w.session_id !== sesionId)?.kg
 
-  useEffect(() => {
-    if (timerRunning) {
-      intervalRef.current = setInterval(() => setTimerSecs(s => s + 1), 1000)
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [timerRunning])
-
-  const formatTimer = (secs: number) => {
-    const m = Math.floor(secs / 60)
-    const s = secs % 60
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-  }
-
-  const handleSerieComplete = () => {
+  const handleSetComplete = (kg?: number) => {
     if (isPreview || !exercise || setsCompleted >= exercise.series) return
     logSet.mutate(
-      { id: exercise.id },
+      { id: exercise.id, kg },
       {
         onSuccess: () => {
-          setTimerSecs(0)
-          setTimerRunning(true)
-          setTimeout(() => setTimerRunning(false), exercise.descanso * 1000)
+          if (setsCompleted + 1 < exercise.series) restTimer.start(exercise.descanso)
         },
       }
     )
+  }
+
+  const handleUndo = () => {
+    if (isPreview || !exercise) return
+    undoSet.mutate(exercise.id, { onSuccess: () => restTimer.stop() })
   }
 
   const allDone = exercise ? isFinished || setsCompleted >= exercise.series : false
@@ -86,8 +77,7 @@ export default function ExerciseDetailPage() {
 
   const formatRest = (secs: number) => {
     const m = Math.floor(secs / 60)
-    const s = secs % 60
-    return m > 0 ? (s > 0 ? `${m} min ${s}s descanso` : `${m} min descanso`) : `${secs}s descanso`
+    return m > 0 ? `${formatClock(secs)} de descanso` : `${secs}s de descanso`
   }
 
   if (loadingSession) {
@@ -116,9 +106,6 @@ export default function ExerciseDetailPage() {
 
   // Resolve video with robust parser
   const video = parseVideoUrl(exercise.videoUrl ?? '')
-
-  // Sets progress dots
-  const dots = Array.from({ length: exercise.series }, (_, i) => i < setsCompleted)
 
   return (
     <div className="exercise-detail-page">
@@ -188,14 +175,6 @@ export default function ExerciseDetailPage() {
               </div>
             )}
 
-            {/* Timer badge */}
-            <div className={`ed-timer-badge${timerRunning ? ' ed-timer-badge--running' : ''}`} aria-live="polite">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              {formatTimer(timerSecs)}
-            </div>
           </div>
         </div>
 
@@ -218,8 +197,8 @@ export default function ExerciseDetailPage() {
                 className="ed-chip ed-chip--link"
                 title="Abrir video en pestaña nueva"
               >
-                <ExternalLink size={10} strokeWidth={2} />
-                Abrir link
+                <ExternalLink size={14} strokeWidth={2} />
+                Abrir el video afuera
               </a>
             )}
           </div>
@@ -227,22 +206,8 @@ export default function ExerciseDetailPage() {
           {/* Title */}
           <h1 className="ed-exercise-name">{exercise.nombre}</h1>
           <p className="ed-meta">
-            {exercise.series} series × {exercise.reps} reps
-            <span className="ed-meta__dot">·</span>
-            {formatRest(exercise.descanso)}
+            {exercise.series} series de {exercise.reps} reps, {formatRest(exercise.descanso)}
           </p>
-
-          {/* Progress dots */}
-          <div className="ed-sets-progress" aria-label="Progreso de series">
-            {dots.map((done, i) => (
-              <span
-                key={i}
-                className={`ed-set-dot${done ? ' ed-set-dot--done' : ''}`}
-                aria-label={done ? `Serie ${i + 1} completada` : `Serie ${i + 1}`}
-              />
-            ))}
-            <span className="ed-sets-text">{setsCompleted}/{exercise.series}</span>
-          </div>
 
           {/* Trainer Notes */}
           {instrucciones.length > 0 && (
@@ -265,40 +230,57 @@ export default function ExerciseDetailPage() {
 
           {/* Completed / Next Action Button */}
           <div className="ed-action-container">
-            {logSet.isError && (
+            {(logSet.isError || undoSet.isError) && (
               <p role="alert" className="alert ed-alert">
-                No pudimos guardar la serie. Revisá tu conexión e intentá de nuevo.
+                {logSet.isError
+                  ? 'No pudimos guardar la serie. Revisá tu conexión e intentá de nuevo.'
+                  : 'No pudimos deshacer la serie. Revisá tu conexión e intentá de nuevo.'}
               </p>
             )}
             {!allDone ? (
-              <button
-                id="btn-serie-completada"
-                className="ed-footer__btn ed-footer__btn--complete"
-                onClick={handleSerieComplete}
-                disabled={isPreview || logSet.isPending}
-              >
-                <Check size={18} strokeWidth={2.5} />
-                <span>Serie completada</span>
-                <span className="ed-footer__sets-badge">{setsCompleted + 1}/{exercise.series}</span>
-              </button>
+              <>
+                <RestTimer />
+                <div className="ed-logger">
+                  <WeightLogger
+                    key={exercise.id}
+                    targetKg={exercise.pesoObjetivo}
+                    lastKg={exercise.pesoRegistrado}
+                    previousKg={previousKg}
+                    setsTotal={exercise.series}
+                    setsCompleted={setsCompleted}
+                    onSetComplete={handleSetComplete}
+                    onUndo={handleUndo}
+                    disabled={isPreview}
+                    saving={logSet.isPending || undoSet.isPending}
+                  />
+                </div>
+              </>
             ) : (
-              <button
-                id="btn-siguiente-ejercicio"
-                className="ed-footer__btn ed-footer__btn--next"
-                onClick={handleNext}
-              >
-                {nextExercise ? (
-                  <>
-                    <ChevronRight size={18} strokeWidth={2.5} />
-                    <span>Siguiente: {nextExercise.nombre}</span>
-                  </>
-                ) : (
-                  <>
-                    <Check size={18} strokeWidth={2.5} />
-                    <span>Volver a la rutina</span>
-                  </>
+              <>
+                {!isFinished && !isPreview && (
+                  <button type="button" className="ed-undo" onClick={handleUndo} disabled={undoSet.isPending}>
+                    <Undo2 size={16} strokeWidth={2} />
+                    Deshacer serie {setsCompleted}
+                  </button>
                 )}
-              </button>
+                <button
+                  id="btn-siguiente-ejercicio"
+                  className="ed-footer__btn ed-footer__btn--next"
+                  onClick={handleNext}
+                >
+                  {nextExercise ? (
+                    <>
+                      <ChevronRight size={18} strokeWidth={2.5} />
+                      <span>Siguiente: {nextExercise.nombre}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={18} strokeWidth={2.5} />
+                      <span>Volver a la rutina</span>
+                    </>
+                  )}
+                </button>
+              </>
             )}
           </div>
 

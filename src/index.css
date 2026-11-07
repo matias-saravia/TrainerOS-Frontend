@@ -151,6 +151,20 @@ a { text-underline-offset: 3px; }
   text-underline-offset: 3px;
 }
 
+/* Numbers strip: real figures on navy, one per cell */
+.strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 var(--gutter) 16px;
+  border-radius: var(--radius-lg);
+  background: var(--color-midnight-blue);
+  color: #fff;
+}
+.strip__cell { padding: 16px 22px; border-right: 1px solid var(--navy-rule); }
+.strip__cell:last-child { border-right: 0; }
+.strip__value { font-family: var(--font-display); font-size: 64px; font-weight: 800; line-height: 0.95; }
+.strip__label { color: var(--on-navy-2); font-weight: 600; }
+
 /* ─── Tables set like a heat sheet ─────────────────────────────── */
 .hoja { width: 100%; border-collapse: collapse; }
 .hoja th {

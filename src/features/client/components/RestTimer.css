@@ -1,0 +1,15 @@
+/* Sits on top of the page footer: the white sheet empties as the rest runs out */
+.rest-timer { position: relative; display: flex; align-items: center; gap: 4px; min-height: 56px; margin-bottom: 10px; padding: 0 6px 0 16px; border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-deep-navy); overflow: hidden; }
+.rest-timer__fill { position: absolute; inset: 0; background: var(--color-ivory); transform-origin: left; transition: transform 0.25s linear; }
+.rest-timer__text { position: relative; display: flex; flex: 1; align-items: baseline; gap: 10px; font-size: 15px; font-weight: 700; }
+.rest-timer__text strong { font-family: var(--font-display); font-size: 36px; font-weight: 800; line-height: 1; }
+.rest-timer__btn { position: relative; display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 2px; min-width: 48px; height: 44px; padding: 0 8px; border: 0; border-radius: var(--radius-md); background: transparent; color: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+.rest-timer__btn:hover { background: rgba(15, 26, 43, 0.08); }
+
+.rest-timer--done { background: var(--color-marker); }
+.rest-timer--done .rest-timer__fill { display: none; }
+.rest-timer--done .rest-timer__text strong { font-size: 28px; text-transform: uppercase; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rest-timer__fill { transition: none; }
+}

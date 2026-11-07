@@ -53,11 +53,24 @@
 .landing-close { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px; padding: 72px var(--gutter); background: var(--color-deep-navy); color: #fff; }
 .landing-close h2 { max-width: 15ch; font-size: clamp(52px, 7.4vw, 96px); }
 
+/* A next step at the end of each section, so the page never asks only at the edges */
+.landing-inline-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 28px; }
+.landing-inline-cta p { flex: 1 1 280px; max-width: 46ch; font-size: 17px; font-weight: 600; color: var(--color-midnight-blue); }
+.landing-inline-cta__link { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; color: var(--color-midnight-blue); text-underline-offset: 3px; }
+
+.landing-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; padding: 28px var(--gutter) 36px; border-top: 1px solid var(--navy-rule); background: var(--color-deep-navy); color: #fff; }
+.landing-foot p { margin-top: 6px; font-size: 14px; color: var(--on-navy-2); }
+.landing-foot nav { display: flex; flex-wrap: wrap; gap: 4px 24px; }
+.landing-foot a { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 600; color: var(--on-navy-2); text-underline-offset: 3px; }
+.landing-foot a:hover { color: #fff; }
+.landing-foot :focus-visible { outline-color: var(--color-marker); }
+
 @media (max-width: 900px) {
   .landing-hero { gap: 28px; min-height: 0; }
   .landing-hero__body { grid-template-columns: 1fr; gap: 20px; margin-top: 12px; }
   .landing-hero__title { font-size: clamp(56px, 17vw, 96px); }
   .landing-cta { width: 100%; }
+  .landing-inline-cta__link { width: 100%; justify-content: center; }
   .landing-sheet th, .landing-sheet td { padding-inline: 8px; }
   .landing-section { padding-block: 48px; }
   .landing-steps li { grid-template-columns: 48px minmax(0, 1fr); }

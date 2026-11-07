@@ -78,3 +78,12 @@
 @media (max-width: 420px) {
   .auth-form__row { grid-template-columns: 1fr; }
 }
+
+/* Google first: one tap for whoever prefers it, the email form stays right below */
+.auth-google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 50px; border: 1px solid var(--color-ivory); border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-on-surface); font-size: 16px; font-weight: 700; cursor: pointer; }
+.auth-google-btn:hover:not(:disabled) { border-color: var(--color-midnight-blue); }
+.auth-google-btn:disabled { opacity: 0.6; cursor: wait; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 14px; color: var(--color-on-surface-var); }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--color-rule); }
+.auth-legal { margin-top: 12px; font-size: 13px; line-height: 1.5; color: var(--color-on-surface-var); }
+.auth-legal a { color: var(--color-midnight-blue); font-weight: 600; text-underline-offset: 3px; }

@@ -6,6 +6,7 @@ import type { RoutineBlockWithExercises, RoutineRow } from '../../workouts/hooks
 import { useAuth } from '../../auth'
 import type { SessionExercise } from '../api/client.api'
 import { useStudentArea } from './useStudentArea'
+import { dayKey } from '../../../utils/dates'
 
 export type ClientRow = Tables<'clients'>
 export type WorkoutSessionRow = Tables<'workout_sessions'>
@@ -61,7 +62,7 @@ export function toPreviewSession(
     routine_id: routine.id,
     trainer_id: routine.trainer_id,
     nombre: routine.nombre,
-    fecha: new Date().toLocaleDateString('en-CA'),
+    fecha: dayKey(new Date()),
     status: 'in-progress',
     notes: null,
     created_at: routine.created_at,
@@ -205,7 +206,7 @@ export function useStartWorkoutSession() {
     mutationFn: async (routineId: string): Promise<string> => {
       const { data, error } = await supabase.rpc('start_workout_session', {
         p_routine_id: routineId,
-        p_fecha: new Date().toLocaleDateString('en-CA'), // device's local YYYY-MM-DD
+        p_fecha: dayKey(new Date()),
       })
 
       if (error) {
@@ -238,28 +239,123 @@ export function useLogWorkoutSet(sessionId: string) {
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: sessionKeys.detail(sessionId) }),
+        queryClient.invalidateQueries({ queryKey: sessionKeys.lists() }),
         queryClient.invalidateQueries({ queryKey: clientKeys.all }),
       ]),
   })
 }
 
 /**
- * Mutation hook to mark a session as completed.
+ * Mutation hook to take back the last set of an exercise, for a set marked by mistake.
+ */
+export function useUndoWorkoutSet(sessionId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      const { error } = await supabase.rpc('undo_workout_set', { p_session_exercise_id: id })
+
+      if (error) {
+        throw error
+      }
+    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: sessionKeys.detail(sessionId) }),
+        queryClient.invalidateQueries({ queryKey: sessionKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: clientKeys.all }),
+      ]),
+  })
+}
+
+export type RecentSessionRow = Pick<WorkoutSessionRow, 'id' | 'routine_id' | 'nombre' | 'fecha' | 'status'> & {
+  session_exercises: Pick<SessionExerciseRow, 'series' | 'sets_completados'>[]
+}
+
+/**
+ * Hook to fetch the client's latest sessions, newest first, with set counts
+ * to tell how far each one got.
+ */
+export function useRecentSessions(clientId: string) {
+  return useQuery({
+    queryKey: sessionKeys.list(clientId),
+    queryFn: async (): Promise<RecentSessionRow[]> => {
+      const { data, error } = await supabase
+        .from('workout_sessions')
+        .select('id, routine_id, nombre, fecha, status, session_exercises(series, sets_completados)')
+        .eq('client_id', clientId)
+        .order('fecha', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(40)
+
+      if (error) {
+        throw error
+      }
+
+      return (data as unknown as RecentSessionRow[]) ?? []
+    },
+    enabled: Boolean(clientId),
+  })
+}
+
+/**
+ * Hook to fetch the weight last logged for each exercise in a session,
+ * from earlier sessions only. Returns kg by exercise ID.
+ */
+export function usePreviousWeights(clientId: string, sessionId: string, exerciseIds: string[]) {
+  const ids = [...new Set(exerciseIds)].sort()
+
+  return useQuery({
+    queryKey: [...clientKeys.detail(clientId), 'previous-weights', sessionId, ids],
+    queryFn: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase
+        .from('weight_entries')
+        .select('exercise_id, kg, session_id')
+        .eq('client_id', clientId)
+        .in('exercise_id', ids)
+        .order('fecha', { ascending: false })
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        throw error
+      }
+
+      const latest: Record<string, number> = {}
+      for (const entry of data ?? []) {
+        if (entry.session_id !== sessionId && latest[entry.exercise_id] == null) {
+          latest[entry.exercise_id] = Number(entry.kg)
+        }
+      }
+      return latest
+    },
+    enabled: Boolean(clientId && ids.length),
+  })
+}
+
+/**
+ * Mutation hook to mark a session as completed, with the effort (1 to 10)
+ * and a comment for the trainer, both optional.
  */
 export function useCompleteWorkoutSession(sessionId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (): Promise<void> => {
+    mutationFn: async ({ esfuerzo, comentario }: { esfuerzo?: number; comentario?: string } = {}): Promise<void> => {
       const { error } = await supabase.rpc('complete_workout_session', {
         p_session_id: sessionId,
+        p_esfuerzo: esfuerzo,
+        p_comentario: comentario?.trim() || undefined,
       })
 
       if (error) {
         throw error
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: sessionKeys.detail(sessionId) }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: sessionKeys.detail(sessionId) }),
+        queryClient.invalidateQueries({ queryKey: sessionKeys.lists() }),
+      ]),
   })
 }
 
@@ -268,7 +364,11 @@ export type AssignedRoutineRow = {
   client_id: string
   routine_id: string
   assigned_at: string
-  routines: RoutineRow | null
+  routines: (RoutineRow & { routine_blocks: { routine_block_exercises: { count: number }[] }[] }) | null
+}
+
+export function countRoutineExercises(routine: NonNullable<AssignedRoutineRow['routines']>): number {
+  return routine.routine_blocks.reduce((total, block) => total + (block.routine_block_exercises[0]?.count ?? 0), 0)
 }
 
 /**
@@ -281,7 +381,7 @@ export function useClientAssignedRoutines(clientId: string) {
     queryFn: async (): Promise<AssignedRoutineRow[]> => {
       const { data, error } = await supabase
         .from('client_routines')
-        .select('*, routines(*)')
+        .select('*, routines(*, routine_blocks(routine_block_exercises(count)))')
         .eq('client_id', clientId)
         .order('assigned_at', { ascending: false })
 

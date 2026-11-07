@@ -9,7 +9,23 @@ import ErrorState from '../../../components/ErrorState'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import { makeId } from '../../../features/workouts/api/workouts.api'
 import type { Tables } from '../../../lib/supabase'
+import { plainText } from '../../../utils/dates'
 import './ArmarRutinaPage.css'
+
+const WEEK_DAYS = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+
+/** Reads "Lunes y jueves" back into day indexes, Monday first. */
+function parseDays(dia: string | null): number[] {
+  const text = plainText(dia ?? '')
+  return WEEK_DAYS.flatMap((day, i) => (text.includes(plainText(day)) ? [i] : []))
+}
+
+/** Writes day indexes as the student reads them: "Lunes, miércoles y viernes". */
+function formatDays(days: number[]): string {
+  const names = [...days].sort((a, b) => a - b).map(i => WEEK_DAYS[i])
+  const text = names.length > 1 ? `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}` : (names[0] ?? '')
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
 
 export default function ArmarRutinaPage() {
   const navigate = useNavigate()
@@ -18,6 +34,7 @@ export default function ArmarRutinaPage() {
   const [isPickerOpen, setIsPickerOpen] = useState(false) // mobile drawer state
   const [pickerTargetBlockId, setPickerTargetBlockId] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [days, setDays] = useState<number[]>([])
 
   const saveRoutine = useSaveRoutine()
   const { data: existingRoutine, isLoading: loadingRoutine, error: routineError, refetch } = useRoutine(id ?? '')
@@ -39,6 +56,7 @@ export default function ArmarRutinaPage() {
     if (!existingRoutine) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRoutineTitle(existingRoutine.nombre)
+    setDays(parseDays(existingRoutine.dia))
     loadBlocks(
       existingRoutine.blocks.map(block => ({
         id: makeId(),
@@ -100,6 +118,7 @@ export default function ArmarRutinaPage() {
         id,
         nombre: routineTitle.trim(),
         descripcion: `${totalExercises} ejercicios · ${estimatedMinutes} min est.`,
+        dia: formatDays(days),
         blocks: blocks.map(b => ({
           label: b.label,
           type: b.type,
@@ -174,6 +193,25 @@ export default function ArmarRutinaPage() {
           {saveRoutine.isPending ? 'Guardando…' : 'Guardar rutina'}
         </button>
       </header>
+
+      <div className="armar-rutina__days" role="group" aria-label="Días en que se entrena">
+        <span className="armar-rutina__days-label">Se entrena</span>
+        {WEEK_DAYS.map((day, i) => (
+          <button
+            key={day}
+            type="button"
+            className="armar-rutina__day"
+            aria-pressed={days.includes(i)}
+            aria-label={day}
+            onClick={() => setDays(prev => (prev.includes(i) ? prev.filter(d => d !== i) : [...prev, i]))}
+          >
+            {day.charAt(0).toUpperCase()}
+          </button>
+        ))}
+        <span className="armar-rutina__days-text">
+          {days.length > 0 ? formatDays(days) : 'Sin día fijo: tu alumno la elige.'}
+        </span>
+      </div>
 
       {/* Validation banner */}
       {validationError && (

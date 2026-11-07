@@ -1,4 +1,8 @@
 .history-chart { padding-top: 12px; border-top: 2px solid #fff; color: #fff; }
-.history-chart__title { margin-bottom: 8px; font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; text-transform: uppercase; }
-.history-chart__canvas-wrap { max-width: 360px; }
-.history-chart__svg { display: block; overflow: visible; }
+.history-chart__title { margin-bottom: 12px; font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; text-transform: uppercase; }
+.history-chart__bars { display: flex; align-items: flex-end; gap: 10px; height: 150px; list-style: none; }
+.history-chart__day { display: flex; flex: 0 1 52px; flex-direction: column; align-items: stretch; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; text-align: center; }
+.history-chart__kg { font-family: var(--font-display); font-size: 22px; font-weight: 800; line-height: 1; }
+.history-chart__bar { display: block; max-height: 96px; min-height: 8px; background: var(--color-navy-raised); }
+.history-chart__day--last .history-chart__bar { background: #fff; }
+.history-chart__date { font-size: 13px; font-weight: 600; color: var(--on-navy-2); }
