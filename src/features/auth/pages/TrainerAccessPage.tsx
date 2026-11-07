@@ -168,6 +168,10 @@ export default function TrainerAccessPage() {
             )}
           </button>
         </form>
+        <p className="auth-legal">
+          Al entrar aceptás los <Link to="/terminos">Términos y condiciones</Link> y la{' '}
+          <Link to="/privacidad">Política de privacidad</Link>.
+        </p>
       </>
     )
   }

@@ -90,6 +90,13 @@ export default function LandingPage() {
             </li>
           ))}
         </ol>
+        <div className="landing-inline-cta">
+          <p>Te lleva unos minutos: creás la cuenta y ya tenés tu link para pasar.</p>
+          <Link to={SIGN_UP} className="btn-primary landing-cta">
+            Armar mi primera rutina
+            <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+        </div>
       </section>
 
       <section className="landing-section landing-section--sheet" aria-labelledby="landing-features">
@@ -102,6 +109,14 @@ export default function LandingPage() {
             </div>
           ))}
         </dl>
+        <div className="landing-inline-cta">
+          <p>Todo esto es gratis y no te pedimos tarjeta.</p>
+          <Link to={SIGN_UP} className="btn-primary landing-cta">
+            Crear mi cuenta gratis
+            <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+          <Link to="/login" className="landing-inline-cta__link">Ya tengo cuenta</Link>
+        </div>
       </section>
 
       <section id="alumnos" className="landing-student" aria-labelledby="landing-student">
@@ -119,6 +134,18 @@ export default function LandingPage() {
           <ArrowRight size={18} aria-hidden="true" />
         </Link>
       </section>
+
+      <footer className="landing-foot">
+        <div>
+          <Logo />
+          <p>Hecho por Tucoding.</p>
+        </div>
+        <nav aria-label="Información legal y contacto">
+          <Link to="/privacidad">Política de privacidad</Link>
+          <Link to="/terminos">Términos y condiciones</Link>
+          <a href="mailto:tucoding15@gmail.com">Contacto</a>
+        </nav>
+      </footer>
     </div>
   )
 }

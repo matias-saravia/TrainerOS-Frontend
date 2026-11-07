@@ -77,4 +77,13 @@ npx supabase functions serve --env-file supabase/.env.e2e
 7. Configurá un SMTP propio: el correo incluido en Supabase tiene un límite de envío muy bajo.
 8. Publicá el frontend con las variables `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 
+### Entrar con Google (opcional)
+
+Solo para entrenadores: una cuenta nueva de Google queda como entrenador. Los alumnos siguen entrando con el link y su correo.
+
+1. En Google Cloud Console, creá un cliente OAuth de tipo "Aplicación web" y agregá como URI de redirección autorizada `https://<id-del-proyecto>.supabase.co/auth/v1/callback`.
+2. En Supabase, en Authentication → Sign In / Providers → Google, activalo y pegá el Client ID y el Client Secret.
+3. En Authentication → URL Configuration, agregá a Redirect URLs cada dirección de la app (por ejemplo `http://localhost:5173`).
+4. Poné `VITE_GOOGLE_SIGN_IN=true` en el `.env.local` y en las variables del frontend publicado. Sin esto, el botón no aparece.
+
 **Las migraciones y el frontend salen juntos.** Activar RLS corta los links viejos `/alumno/:id`.

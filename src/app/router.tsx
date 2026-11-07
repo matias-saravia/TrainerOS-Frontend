@@ -13,6 +13,7 @@ const ArmarRutinaPage = lazy(() => import('../features/admin/pages/ArmarRutinaPa
 const FinanzasPage = lazy(() => import('../features/finance/FinanzasPage'))
 const ExerciseBankPage = lazy(() => import('../features/exercises/pages/ExerciseBankPage'))
 const NuevoEjercicioPage = lazy(() => import('../features/exercises/pages/NuevoEjercicioPage'))
+const LegalPage = lazy(() => import('../features/legal/LegalPage'))
 const VistaAlumnoPage = lazy(() => import('../features/admin/pages/VistaAlumnoPage'))
 const ClientLayout = lazy(() => import('../features/client/components/ClientLayout'))
 const ClientDashboard = lazy(() => import('../features/client/pages/ClientDashboard'))
@@ -31,6 +32,14 @@ const router = createBrowserRouter([
   {
     path: '/restablecer-contrasena',
     element: <ResetPasswordPage />,
+  },
+  {
+    path: '/privacidad',
+    element: <LegalPage doc="privacidad" />,
+  },
+  {
+    path: '/terminos',
+    element: <LegalPage doc="terminos" />,
   },
   {
     path: '/t/:slug',
