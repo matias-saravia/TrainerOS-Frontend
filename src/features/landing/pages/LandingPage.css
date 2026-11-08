@@ -2,14 +2,18 @@
 .landing :is(h1, h2) { font-family: var(--font-display); font-weight: 800; line-height: 0.92; text-transform: uppercase; text-wrap: balance; }
 
 /* ── Hero: navy field, with the program at the bottom edge ── */
-.landing-hero { display: flex; flex-direction: column; gap: 40px; min-height: 100dvh; padding: 20px var(--gutter) 0; background: var(--color-deep-navy); color: #fff; }
-.landing-hero :focus-visible, .landing-close :focus-visible, .landing-student :focus-visible { outline-color: var(--color-marker); }
+.landing-hero { display: flex; flex-direction: column; gap: 40px; min-height: calc(100dvh - 72px); padding: 24px var(--gutter) 0; background: var(--color-deep-navy); color: #fff; }
+.landing-hero :focus-visible, .landing-close :focus-visible, .landing-student :focus-visible, .landing-nav :focus-visible { outline-color: var(--color-marker); }
 
-.landing-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.landing-nav nav { display: flex; align-items: center; gap: 20px; }
-.landing-nav__link { display: inline-flex; align-items: center; min-height: 44px; color: var(--on-navy-2); font-weight: 600; text-decoration: none; }
-.landing-nav__link:hover { color: #fff; text-decoration: underline; }
-.landing-nav__link--strong { color: #fff; }
+/* Navbar: stays on top while scrolling, so the account actions are always one tap away */
+.landing-nav { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; padding: 0 var(--gutter); border-bottom: 1px solid var(--navy-rule); background: var(--color-deep-navy); color: #fff; }
+.landing-nav__home { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; }
+.landing-nav nav { display: flex; align-items: center; gap: 8px; }
+.landing-nav__link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: var(--radius-md); color: #fff; font-size: 16px; font-weight: 600; text-decoration: none; }
+.landing-nav__link:hover { background: var(--color-midnight-blue); }
+.landing-nav__link--student { color: var(--on-navy-2); }
+.landing-nav__cta { display: inline-flex; align-items: center; gap: 0.28em; min-height: 44px; margin-left: 8px; padding: 0 18px; border: 1px solid #fff; border-radius: var(--radius-md); color: #fff; font-size: 16px; font-weight: 700; text-decoration: none; }
+.landing-nav__cta:hover { background: #fff; color: var(--color-deep-navy); }
 
 .landing-hero__body { display: grid; grid-template-columns: minmax(0, 8fr) minmax(280px, 4fr); align-items: end; gap: 40px; margin-top: auto; }
 .landing-hero__title { font-size: clamp(60px, 9.4vw, 96px); max-width: 18ch; }
@@ -46,7 +50,7 @@
 .landing-features dt { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--color-midnight-blue); }
 .landing-features dd { max-width: 60ch; font-size: 16px; color: var(--color-on-surface-var); }
 
-.landing-student { padding: 56px var(--gutter); background: var(--color-midnight-blue); color: #fff; }
+.landing-student { scroll-margin-top: 72px; padding: 56px var(--gutter); background: var(--color-midnight-blue); color: #fff; }
 .landing-student h2 { max-width: 20ch; font-size: clamp(36px, 4.6vw, 56px); }
 .landing-student p { max-width: 56ch; margin-top: 14px; font-size: 17px; color: var(--on-navy-2); }
 
@@ -66,6 +70,11 @@
 .landing-foot :focus-visible { outline-color: var(--color-marker); }
 
 @media (max-width: 900px) {
+  .landing-nav { min-height: 60px; }
+  .landing-nav .logo__name { font-size: 24px; }
+  .landing-nav__link--student, .landing-nav__cta-extra { display: none; }
+  .landing-nav__link { padding: 0 10px; }
+  .landing-nav__cta { margin-left: 0; padding: 0 14px; }
   .landing-hero { gap: 28px; min-height: 0; }
   .landing-hero__body { grid-template-columns: 1fr; gap: 20px; margin-top: 12px; }
   .landing-hero__title { font-size: clamp(56px, 17vw, 96px); }

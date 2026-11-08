@@ -31,14 +31,20 @@ const features = [
 export default function LandingPage() {
   return (
     <div className="landing">
-      <section className="landing-hero">
-        <header className="landing-nav">
+      <header className="landing-nav">
+        <Link to="/" className="landing-nav__home" aria-label="TrainerOS, inicio">
           <Logo />
-          <nav aria-label="Cuenta">
-            <Link to="/login" className="landing-nav__link">Entrar</Link>
-            <Link to={SIGN_UP} className="landing-nav__link landing-nav__link--strong">Crear cuenta</Link>
-          </nav>
-        </header>
+        </Link>
+        <nav aria-label="Cuenta">
+          <a href="#alumnos" className="landing-nav__link landing-nav__link--student">Soy alumno</a>
+          <Link to="/login" className="landing-nav__link">Entrar</Link>
+          <Link to={SIGN_UP} className="landing-nav__cta">
+            Crear cuenta<span className="landing-nav__cta-extra">gratis</span>
+          </Link>
+        </nav>
+      </header>
+
+      <section className="landing-hero">
 
         <div className="landing-hero__body">
           <h1 className="landing-hero__title"><span>Dejá la planilla.</span> <span>Lo que armás es lo que entrenan.</span></h1>
