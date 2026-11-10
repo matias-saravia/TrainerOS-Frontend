@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../../lib/supabase'
 import { clientKeys } from '../../../lib/queryKeys'
 import type { ProgressSession, ProgressWeight } from '../progress'
 
 /**
  * Hook to fetch a student's sessions, newest first, with how far each one got,
- * the effort and the comment the student left.
+ * the effort, the comment the student left and the trainer's reply.
  */
 export function useClientSessions(clientId: string) {
   return useQuery({
@@ -13,7 +13,7 @@ export function useClientSessions(clientId: string) {
     queryFn: async (): Promise<ProgressSession[]> => {
       const { data, error } = await supabase
         .from('workout_sessions')
-        .select('id, nombre, fecha, status, esfuerzo, notes, session_exercises(series, sets_completados)')
+        .select('id, nombre, fecha, status, esfuerzo, notes, respuesta, session_exercises(series, sets_completados)')
         .eq('client_id', clientId)
         .order('fecha', { ascending: false })
         .order('created_at', { ascending: false })
@@ -60,5 +60,27 @@ export function useClientWeights(clientId: string) {
       }
     },
     enabled: Boolean(clientId),
+  })
+}
+
+/**
+ * Mutation hook to answer the comment a student left on a session.
+ * An empty text removes the reply.
+ */
+export function useReplyToSession(clientId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ sessionId, respuesta }: { sessionId: string; respuesta: string }): Promise<void> => {
+      const { error } = await supabase.rpc('reply_to_session', {
+        p_session_id: sessionId,
+        p_respuesta: respuesta.trim(),
+      })
+
+      if (error) {
+        throw error
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [...clientKeys.detail(clientId), 'sessions'] }),
   })
 }

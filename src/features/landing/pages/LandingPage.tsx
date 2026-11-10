@@ -4,6 +4,7 @@ import Logo from '../../../components/Logo'
 import './LandingPage.css'
 
 const SIGN_UP = '/login?modo=registro'
+const YEAR = new Date().getFullYear()
 
 const sample = [
   { serie: 1, ejercicio: 'Sentadilla', reps: '8', carga: '60 kg' },
@@ -144,7 +145,7 @@ export default function LandingPage() {
       <footer className="landing-foot">
         <div>
           <Logo />
-          <p>Hecho por Tucoding.</p>
+          <p>© {YEAR} Tucoding. Todos los derechos reservados.</p>
         </div>
         <nav aria-label="Información legal y contacto">
           <Link to="/privacidad">Política de privacidad</Link>

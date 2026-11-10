@@ -23,6 +23,7 @@
 
 .legal__foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; max-width: 760px; margin: 20px auto 0; }
 .legal__foot a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; }
+.legal__copy { flex-basis: 100%; font-size: 14px; color: var(--color-on-surface-var); }
 
 @media (max-width: 767px) {
   .legal__doc { padding: 22px 18px 28px; }

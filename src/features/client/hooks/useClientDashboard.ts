@@ -268,7 +268,10 @@ export function useUndoWorkoutSet(sessionId: string) {
   })
 }
 
-export type RecentSessionRow = Pick<WorkoutSessionRow, 'id' | 'routine_id' | 'nombre' | 'fecha' | 'status'> & {
+export type RecentSessionRow = Pick<
+  WorkoutSessionRow,
+  'id' | 'routine_id' | 'nombre' | 'fecha' | 'status' | 'notes' | 'respuesta' | 'respuesta_at'
+> & {
   session_exercises: Pick<SessionExerciseRow, 'series' | 'sets_completados'>[]
 }
 
@@ -282,7 +285,7 @@ export function useRecentSessions(clientId: string) {
     queryFn: async (): Promise<RecentSessionRow[]> => {
       const { data, error } = await supabase
         .from('workout_sessions')
-        .select('id, routine_id, nombre, fecha, status, session_exercises(series, sets_completados)')
+        .select('id, routine_id, nombre, fecha, status, notes, respuesta, respuesta_at, session_exercises(series, sets_completados)')
         .eq('client_id', clientId)
         .order('fecha', { ascending: false })
         .order('created_at', { ascending: false })

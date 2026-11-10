@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Dumbbell, Eye, Pencil } from 'lucide-react'
+import { ArrowLeft, Dumbbell, Eye, MessageSquare, Pencil } from 'lucide-react'
 import { useClient } from '../hooks/useClients'
-import { useClientSessions, useClientWeights } from '../hooks/useClientProgress'
-import { daysBetween, exerciseLoads, exercisesDone, trained, weeklyCounts } from '../progress'
+import { useClientSessions, useClientWeights, useReplyToSession } from '../hooks/useClientProgress'
+import { daysBetween, exerciseLoads, exercisesDone, trained, weeklyCounts, type ProgressSession } from '../progress'
 import { dayKey, fromKey } from '../../../utils/dates'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
 import ErrorState from '../../../components/ErrorState'
@@ -23,6 +24,69 @@ function sinceText(days: number): string {
   if (days === 0) return 'Hoy'
   if (days === 1) return 'Ayer'
   return `Hace ${days} días`
+}
+
+/** The student's comment, and the trainer's reply to it, written in place. */
+function SessionNote({ session, clientId }: { session: ProgressSession; clientId: string }) {
+  const reply = useReplyToSession(clientId)
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState(session.respuesta ?? '')
+
+  if (!session.notes && !session.respuesta) return null
+
+  const save = () =>
+    reply.mutate({ sessionId: session.id, respuesta: text }, { onSuccess: () => setEditing(false) })
+
+  return (
+    <div className="progreso-note">
+      {session.notes && <p className="progreso-note__comment">{session.notes}</p>}
+
+      {editing ? (
+        <div className="progreso-note__form">
+          <label className="sr-only" htmlFor={`respuesta-${session.id}`}>Tu respuesta</label>
+          <textarea
+            id={`respuesta-${session.id}`}
+            rows={2}
+            maxLength={500}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Ej. Bien que avisaste: la próxima bajá a 50 kg."
+            autoFocus
+          />
+          {reply.isError && (
+            <p className="progreso-note__error" role="alert">No pudimos guardar la respuesta. Intentá de nuevo.</p>
+          )}
+          <div className="progreso-note__actions">
+            <button type="button" className="btn-primary" onClick={save} disabled={reply.isPending}>
+              {reply.isPending ? 'Enviando…' : 'Enviar respuesta'}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                setText(session.respuesta ?? '')
+                setEditing(false)
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : session.respuesta ? (
+        <p className="progreso-note__reply">
+          <span>Tu respuesta:</span> {session.respuesta}{' '}
+          <button type="button" className="progreso-note__link" onClick={() => setEditing(true)}>
+            Editar
+          </button>
+        </p>
+      ) : (
+        <button type="button" className="progreso-note__answer" onClick={() => setEditing(true)}>
+          <MessageSquare size={15} strokeWidth={1.75} />
+          Responder
+        </button>
+      )}
+    </div>
+  )
 }
 
 export default function ProgresoAlumnoPage() {
@@ -60,6 +124,7 @@ export default function ProgresoAlumnoPage() {
   const thisWeek = weeks[weeks.length - 1].sessions
   const loads = exerciseLoads(weights)
   const shown = trainedSessions.slice(0, 30)
+  const unanswered = shown.filter(s => s.notes && !s.respuesta).length
 
   return (
     <div className="progreso">
@@ -113,8 +178,14 @@ export default function ProgresoAlumnoPage() {
       <section className="sheet progreso__sheet" aria-labelledby="progreso-sesiones">
         <div className="sheet__head">
           <h2 id="progreso-sesiones" className="sheet__title">Sesiones</h2>
-          {trainedSessions.length > shown.length && (
-            <span className="progreso__count">Últimas {shown.length} de {trainedSessions.length}</span>
+          {unanswered > 0 ? (
+            <span className="progreso__pending">
+              {unanswered === 1 ? '1 comentario sin responder' : `${unanswered} comentarios sin responder`}
+            </span>
+          ) : (
+            trainedSessions.length > shown.length && (
+              <span className="progreso__count">Últimas {shown.length} de {trainedSessions.length}</span>
+            )
           )}
         </div>
         {loadingSessions ? (
@@ -162,7 +233,9 @@ export default function ProgresoAlumnoPage() {
                         <span className="progreso__muted">Sin dato</span>
                       )}
                     </td>
-                    <td className="progreso-sesiones__note">{s.notes ?? ''}</td>
+                    <td className="progreso-sesiones__note">
+                      <SessionNote session={s} clientId={client.id} />
+                    </td>
                   </tr>
                 )
               })}

@@ -252,7 +252,7 @@ export default function LoginPage() {
     <div className="auth-viewport">
       <>
         <aside className="auth-showcase">
-          <Logo />
+          <Link to="/" className="auth-home" aria-label="TrainerOS, ir al inicio"><Logo /></Link>
 
           <div>
             <h1 className="auth-showcase__title">Lo que armás es lo que entrenan.</h1>
@@ -280,7 +280,7 @@ export default function LoginPage() {
         {/* ── RIGHT PANEL: Terminal / Access Card ──────────────────────── */}
         <div className="auth-terminal">
           <div className="auth-card">
-            <span className="auth-card__mobile-logo"><Logo /></span>
+            <Link to="/" className="auth-card__mobile-logo" aria-label="TrainerOS, ir al inicio"><Logo /></Link>
             {/* Segmented Mode Switcher */}
             <div className="auth-switcher">
               <button

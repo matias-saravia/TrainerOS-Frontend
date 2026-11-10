@@ -1,6 +1,6 @@
 -- Client access and workout session tests. Run with: npx supabase test db
 BEGIN;
-SELECT plan(31);
+SELECT plan(36);
 
 INSERT INTO auth.users (id, email, email_confirmed_at, raw_user_meta_data) VALUES
   ('a0000000-0000-0000-0000-000000000001', 'ana@test.com', NOW(), '{"role":"trainer","nombre":"Ana","apellido":"Paz"}'),
@@ -73,6 +73,15 @@ SELECT is((SELECT count(*)::int FROM public.weight_entries), 1, 'undoing a set w
 SELECT lives_ok(format($$SELECT public.complete_workout_session(%L, 8::smallint, '  Me costó el press  ')$$, (SELECT id FROM started)), 'session can be finished');
 SELECT is((SELECT esfuerzo::int || '|' || notes FROM public.workout_sessions WHERE id = (SELECT id FROM started)), '8|Me costó el press', 'effort and comment are saved');
 SELECT throws_ok(format($$SELECT public.complete_workout_session(%L, 11::smallint)$$, (SELECT id FROM started)), '23514', NULL, 'effort goes from 1 to 10');
+
+-- ─── The trainer answers the comment ──────────────────────────────────
+SELECT throws_ok(format($$SELECT public.reply_to_session(%L, 'Hola')$$, (SELECT id FROM started)), '42501', NULL, 'a student cannot write the reply');
+SELECT set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
+SELECT lives_ok(format($$SELECT public.reply_to_session(%L, '  Bajá a 50 kg la próxima  ')$$, (SELECT id FROM started)), 'the trainer replies');
+SELECT is((SELECT respuesta FROM public.workout_sessions WHERE id = (SELECT id FROM started)), 'Bajá a 50 kg la próxima', 'the reply is saved trimmed');
+SELECT lives_ok(format($$SELECT public.reply_to_session(%L, '')$$, (SELECT id FROM started)), 'an empty reply');
+SELECT is((SELECT respuesta_at FROM public.workout_sessions WHERE id = (SELECT id FROM started)), NULL, 'an empty reply removes it');
+SELECT set_config('request.jwt.claims', '{"sub":"a0000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
 SELECT throws_ok(
   format($$SELECT public.log_workout_set(%L, 70)$$, (SELECT id FROM se)),
   '42501', NULL, 'a finished session no longer accepts sets');
