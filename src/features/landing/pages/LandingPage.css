@@ -38,15 +38,14 @@
 .landing-section__title { max-width: 16ch; margin-bottom: 32px; font-size: clamp(44px, 6vw, 72px); color: var(--color-midnight-blue); }
 .landing-section--sheet { background: var(--color-surface); }
 
-.landing-steps { list-style: none; border-top: 2px solid var(--color-midnight-blue); }
-.landing-steps li { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--color-ivory); }
+.landing-steps { list-style: none; }
+.landing-steps li { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: baseline; padding: 18px 0; }
 .landing-steps__number { font-family: var(--font-display); font-size: 44px; font-weight: 800; line-height: 1; color: var(--color-midnight-blue); }
 .landing-steps div { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 8px 24px; align-items: baseline; }
 .landing-steps h3 { font-size: 20px; font-weight: 700; color: var(--color-midnight-blue); }
 .landing-steps p { max-width: 60ch; font-size: 16px; color: var(--color-on-surface-var); }
 
-.landing-features { border-top: 2px solid var(--color-midnight-blue); }
-.landing-features > div { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 8px 24px; padding: 16px 0; border-bottom: 1px solid var(--color-rule); }
+.landing-features > div { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 8px 24px; padding: 16px 0; }
 .landing-features dt { display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; color: var(--color-midnight-blue); }
 .landing-features dd { max-width: 60ch; font-size: 16px; color: var(--color-on-surface-var); }
 
@@ -56,6 +55,11 @@
 
 .landing-close { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px; padding: 72px var(--gutter); background: var(--color-deep-navy); color: #fff; }
 .landing-close h2 { max-width: 15ch; font-size: clamp(52px, 7.4vw, 96px); }
+
+/* Ruled lists: the rules are backgrounds, so they can be drawn in from the left */
+.landing-rows { --rule-top: var(--color-midnight-blue); --rule-row: var(--color-ivory); background: linear-gradient(var(--rule-top), var(--rule-top)) no-repeat left top / 100% 2px; }
+.landing-rows > * { background: linear-gradient(var(--rule-row), var(--rule-row)) no-repeat left bottom / 100% 1px; }
+.landing-features { --rule-row: var(--color-rule); }
 
 /* A next step at the end of each section, so the page never asks only at the edges */
 .landing-inline-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 28px; }
@@ -84,4 +88,51 @@
   .landing-section { padding-block: 48px; }
   .landing-steps li { grid-template-columns: 48px minmax(0, 1fr); }
   .landing-steps div, .landing-features > div { grid-template-columns: 1fr; }
+}
+
+/* ── Motion ──
+   The page is filled in like a session sheet: the hero program is written row by
+   row and the marker lands on the current set; further down, each list is ruled
+   and written as it scrolls in, and the feature ticks are marked. Every state
+   below starts from content that is already in place. */
+@keyframes landing-rise { from { clip-path: inset(0 0 100% 0); transform: translateY(100%); } }
+@keyframes landing-ink { from { clip-path: inset(0 100% 0 0); } }
+@keyframes landing-rule { from { background-size: 0 2px; } }
+@keyframes landing-rule-row { from { background-size: 0 1px; } }
+@keyframes landing-fade { from { opacity: 0; } }
+@keyframes landing-tick { from { stroke-dashoffset: 24; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing { --ease-out: cubic-bezier(0.16, 1, 0.3, 1); }
+
+  /* Hero, on arrival: title lines rise from their baseline, then the program is written */
+  .landing-hero__title span { animation: landing-rise 0.7s var(--ease-out) backwards; }
+  .landing-hero__title span + span { animation-delay: 0.12s; }
+  .landing-hero__offer { animation: landing-fade 0.5s ease-out 0.45s backwards; }
+  .landing-sheet { background: linear-gradient(#fff, #fff) no-repeat left top / 100% 2px; border-top: 0; padding-top: 2px; animation: landing-rule 0.6s var(--ease-out) 0.3s backwards; }
+  .landing-sheet figcaption, .landing-sheet th { animation: landing-fade 0.4s ease-out 0.55s backwards; }
+  .landing-sheet td { animation: landing-ink 0.45s var(--ease-out) calc(0.65s + var(--i) * 0.11s) backwards; }
+  .landing-sheet tr.marker { animation: marker-sweep 0.5s var(--ease-out) calc(0.75s + var(--i) * 0.11s) backwards; }
+
+  /* Lists, as they scroll in: the top rule first, then each row's line and its text */
+  @supports (animation-timeline: view()) {
+    .landing-rows { animation: landing-rule linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; }
+    .landing-rows > * { view-timeline: --landing-row block; animation: landing-rule-row var(--ease-out) both; animation-timeline: --landing-row; animation-range: entry 10% cover 30%; }
+    .landing-rows > * > * { animation: landing-ink var(--ease-out) both; animation-timeline: --landing-row; animation-range: entry 20% cover 35%; }
+    .landing-features dt svg { stroke-dasharray: 24; animation: landing-tick var(--ease-out) both; animation-timeline: --landing-row; animation-range: entry 40% cover 40%; }
+  }
+
+  /* Same sequence where scroll timelines are missing, started once per list */
+  .landing--io .landing-rows,
+  .landing--io .landing-rows > *,
+  .landing--io .landing-rows > * > *,
+  .landing--io .landing-features dt svg { animation-play-state: paused; }
+  .landing--io .landing-rows { animation: landing-rule 0.6s var(--ease-out) both paused; }
+  .landing--io .landing-rows > * { animation: landing-rule-row 0.6s var(--ease-out) calc(0.15s + var(--i) * 0.09s) both paused; }
+  .landing--io .landing-rows > * > * { animation: landing-ink 0.5s var(--ease-out) calc(0.25s + var(--i) * 0.09s) both paused; }
+  .landing--io .landing-features dt svg { stroke-dasharray: 24; animation: landing-tick 0.4s var(--ease-out) calc(0.5s + var(--i) * 0.09s) both paused; }
+  .landing--io .landing-rows.is-in,
+  .landing--io .landing-rows.is-in > *,
+  .landing--io .landing-rows.is-in > * > *,
+  .landing--io .landing-rows.is-in dt svg { animation-play-state: running; }
 }
