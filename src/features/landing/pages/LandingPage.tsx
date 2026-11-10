@@ -1,3 +1,4 @@
+import { useEffect, useRef, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check } from 'lucide-react'
 import Logo from '../../../components/Logo'
@@ -29,9 +30,43 @@ const features = [
   ['Tus datos, separados', 'Cada entrenador ve solo a sus alumnos. Lo controla la base de datos, no un botón.'],
 ]
 
+/** Index for staggering rows when the scroll-driven path is not available */
+const order = (i: number) => ({ '--i': i }) as CSSProperties
+
+/**
+ * Rows are ruled and written as they scroll in. Browsers with scroll-driven
+ * animations do it in CSS; the rest get the same keyframes, started once a row
+ * enters the screen. Content stays visible if none of this runs.
+ */
+function useRowsOnScroll() {
+  const root = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = root.current
+    if (!el || CSS.supports('animation-timeline: view()')) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return
+
+    el.classList.add('landing--io')
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(entry => {
+        if (!entry.isIntersecting) return
+        entry.target.classList.add('is-in')
+        observer.unobserve(entry.target)
+      }),
+      { rootMargin: '0px 0px -12% 0px' },
+    )
+    el.querySelectorAll('.landing-rows').forEach(rows => observer.observe(rows))
+    return () => observer.disconnect()
+  }, [])
+
+  return root
+}
+
 export default function LandingPage() {
+  const root = useRowsOnScroll()
+
   return (
-    <div className="landing">
+    <div className="landing" ref={root}>
       <header className="landing-nav">
         <Link to="/" className="landing-nav__home" aria-label="TrainerOS, inicio">
           <Logo />
@@ -71,8 +106,8 @@ export default function LandingPage() {
               <tr><th>Serie</th><th>Ejercicio</th><th>Reps</th><th>Carga</th></tr>
             </thead>
             <tbody>
-              {sample.map(row => (
-                <tr key={row.serie} className={row.now ? 'marker' : undefined}>
+              {sample.map((row, i) => (
+                <tr key={row.serie} className={row.now ? 'marker' : undefined} style={order(i)}>
                   <td>{row.serie}</td>
                   <td>{row.ejercicio}</td>
                   <td>{row.reps}</td>
@@ -86,9 +121,9 @@ export default function LandingPage() {
 
       <section className="landing-section" aria-labelledby="landing-how">
         <h2 id="landing-how" className="landing-section__title">Tu primer alumno entrena hoy</h2>
-        <ol className="landing-steps">
+        <ol className="landing-steps landing-rows">
           {steps.map((step, i) => (
-            <li key={step.title}>
+            <li key={step.title} style={order(i)}>
               <span className="landing-steps__number" aria-hidden="true">{i + 1}</span>
               <div>
                 <h3>{step.title}</h3>
@@ -108,9 +143,9 @@ export default function LandingPage() {
 
       <section className="landing-section landing-section--sheet" aria-labelledby="landing-features">
         <h2 id="landing-features" className="landing-section__title">Lo que trae, sin vueltas</h2>
-        <dl className="landing-features">
-          {features.map(([name, text]) => (
-            <div key={name}>
+        <dl className="landing-features landing-rows">
+          {features.map(([name, text], i) => (
+            <div key={name} style={order(i)}>
               <dt><Check size={18} strokeWidth={2} aria-hidden="true" />{name}</dt>
               <dd>{text}</dd>
             </div>
