@@ -57,7 +57,6 @@
 .fin-table__amount { font-family: var(--font-display); font-size: 24px; font-weight: 800; line-height: 1; }
 .fin-table__tools { width: 96px; padding-block: 4px !important; }
 .fin-voided .hoja__name, .fin-voided .fin-table__amount { color: var(--color-dusty-blue); text-decoration: line-through; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Modal */
 .fin-modal-overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 26, 43, 0.55); }

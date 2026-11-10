@@ -8,6 +8,7 @@ const session = (fecha: string, status: string, setsDone = 0): ProgressSession =
   status,
   esfuerzo: null,
   notes: null,
+  respuesta: null,
   session_exercises: [{ series: 3, sets_completados: setsDone }],
 })
 

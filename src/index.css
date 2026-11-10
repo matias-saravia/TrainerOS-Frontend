@@ -105,6 +105,9 @@ a { text-underline-offset: 3px; }
   text-wrap: balance;
 }
 
+/* Read by screen readers, not shown */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
 /* ─── Page frame ───────────────────────────────────────────────── */
 .page-header {
   display: flex;

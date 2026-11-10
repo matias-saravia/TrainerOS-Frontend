@@ -570,6 +570,8 @@ export type Database = {
           id: string
           nombre: string
           notes: string | null
+          respuesta: string | null
+          respuesta_at: string | null
           routine_id: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["session_status"]
@@ -584,6 +586,8 @@ export type Database = {
           id?: string
           nombre: string
           notes?: string | null
+          respuesta?: string | null
+          respuesta_at?: string | null
           routine_id?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["session_status"]
@@ -598,6 +602,8 @@ export type Database = {
           id?: string
           nombre?: string
           notes?: string | null
+          respuesta?: string | null
+          respuesta_at?: string | null
           routine_id?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["session_status"]
@@ -676,6 +682,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      reply_to_session: {
+        Args: { p_respuesta: string; p_session_id: string }
+        Returns: undefined
       }
       register_access_attempt: {
         Args: { p_key: string; p_limit: number; p_window_seconds: number }

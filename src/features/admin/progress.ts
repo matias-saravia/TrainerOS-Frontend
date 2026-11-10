@@ -9,6 +9,8 @@ export interface ProgressSession {
   status: string
   esfuerzo: number | null
   notes: string | null
+  /** The trainer's answer to the comment */
+  respuesta: string | null
   session_exercises: { series: number; sets_completados: number }[]
 }
 

@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Check, ChevronRight, LogOut, X } from 'lucide-react'
+import { Check, ChevronRight, LogOut, MessageSquare, X } from 'lucide-react'
 import {
   countRoutineExercises,
   useClientAssignedRoutines,
@@ -34,6 +35,18 @@ function hasProgress(session: RecentSessionRow) {
 
 const WEEK_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
+// A reply stays on the home for a week, until the student closes it
+const REPLY_DAYS = 7
+const SEEN_REPLY_KEY = 'traineros:reply-seen'
+
+function readSeenReply(): string | null {
+  try {
+    return localStorage.getItem(SEEN_REPLY_KEY)
+  } catch {
+    return null
+  }
+}
+
 export default function ClientDashboard() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -44,6 +57,7 @@ export default function ClientDashboard() {
   const { data: assignedRoutines = [], isLoading: loadingRoutines } = useClientAssignedRoutines(dbClient?.id ?? '')
   const { data: sessions = [] } = useRecentSessions(dbClient?.id ?? '')
   const startSession = useStartWorkoutSession()
+  const [seenReply, setSeenReply] = useState(readSeenReply)
 
   const isLoading = loadingClient || loadingRoutines
   const finishedName = (location.state as { finished?: string } | null)?.finished
@@ -151,6 +165,22 @@ export default function ClientDashboard() {
   const trainedThisWeek = week.filter(d => d.trained).length
   const history = sessions.filter(hasProgress).slice(0, 6)
 
+  const replyCutoff = today.getTime() - REPLY_DAYS * 86_400_000
+  const newReply = sessions
+    .filter(s => s.respuesta && s.respuesta_at && new Date(s.respuesta_at).getTime() > replyCutoff)
+    .sort((a, b) => (b.respuesta_at ?? '').localeCompare(a.respuesta_at ?? ''))[0]
+  const showReply = newReply && newReply.respuesta_at !== seenReply
+
+  const closeReply = () => {
+    const seen = newReply?.respuesta_at ?? null
+    setSeenReply(seen)
+    try {
+      if (seen) localStorage.setItem(SEEN_REPLY_KEY, seen)
+    } catch {
+      // Without storage it shows again next time: harmless
+    }
+  }
+
   return (
     <div className="client-dashboard">
       <header className="cd-header">
@@ -186,6 +216,22 @@ export default function ClientDashboard() {
             <X size={18} strokeWidth={2.5} />
           </button>
         </div>
+      )}
+
+      {showReply && (
+        <section className="cd-reply" aria-labelledby="cd-reply-title">
+          <MessageSquare size={20} strokeWidth={2} aria-hidden="true" />
+          <div className="cd-reply__body">
+            <h2 id="cd-reply-title" className="cd-reply__title">
+              Tu entrenador te respondió sobre {newReply.nombre} del {describeDay(newReply.fecha)}
+            </h2>
+            {newReply.notes && <p className="cd-reply__comment">Vos: {newReply.notes}</p>}
+            <p className="cd-reply__text">{newReply.respuesta}</p>
+          </div>
+          <button type="button" className="cd-saved__close" onClick={closeReply} aria-label="Cerrar respuesta">
+            <X size={18} strokeWidth={2.5} />
+          </button>
+        </section>
       )}
 
       {startSession.isError && (
@@ -340,6 +386,12 @@ export default function ClientDashboard() {
                         ? 'Completa'
                         : `${done} de ${total} ejercicios`}
                   </span>
+                  {(s.notes || s.respuesta) && (
+                    <div className="cd-history__talk">
+                      {s.notes && <p>Vos: {s.notes}</p>}
+                      {s.respuesta && <p className="cd-history__answer">Tu entrenador: {s.respuesta}</p>}
+                    </div>
+                  )}
                 </li>
               )
             })}

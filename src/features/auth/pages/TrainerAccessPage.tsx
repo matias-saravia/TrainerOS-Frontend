@@ -179,7 +179,7 @@ export default function TrainerAccessPage() {
   return (
     <div className="auth-viewport auth-viewport--single">
       <div className="auth-terminal">
-        <div className="auth-card"><span className="auth-card__mobile-logo"><Logo /></span>{content}</div>
+        <div className="auth-card"><Link to="/" className="auth-card__mobile-logo" aria-label="TrainerOS, ir al inicio"><Logo /></Link>{content}</div>
       </div>
     </div>
   )

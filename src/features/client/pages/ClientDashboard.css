@@ -16,6 +16,14 @@
 .cd-saved strong { color: #fff; }
 .cd-saved__close { display: flex; flex: none; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; background: none; color: var(--on-navy-2); cursor: pointer; }
 
+/* The trainer's reply: the student reads it before anything else */
+.cd-reply { display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; padding: 12px 6px 14px 14px; border: 1px solid #fff; border-radius: var(--radius-lg); }
+.cd-reply > svg { flex: none; margin-top: 2px; }
+.cd-reply__body { flex: 1; min-width: 0; }
+.cd-reply__title { font-size: 16px; font-weight: 700; line-height: 1.3; }
+.cd-reply__comment { margin-top: 6px; font-size: 14px; color: var(--on-navy-2); overflow-wrap: anywhere; }
+.cd-reply__text { margin-top: 6px; font-size: 17px; line-height: 1.4; overflow-wrap: anywhere; }
+
 /* What to train now: the only white sheet on the page */
 .cd-today { margin-top: 24px; }
 .cd-today__sheet { margin-top: 10px; padding: 18px 18px 18px; border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-on-surface); }
@@ -71,6 +79,8 @@
 .cd-history__name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cd-history__state { font-size: 14px; font-weight: 600; color: var(--on-navy-2); text-align: right; }
 .cd-history__state--open { color: #fff; }
+.cd-history__talk { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--on-navy-2); overflow-wrap: anywhere; }
+.cd-history__answer { padding-left: 10px; border-left: 2px solid var(--on-navy-2); color: #fff; }
 
 .cd-message { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 48px 0; color: var(--on-navy-2); }
 .cd-message__title { font-family: var(--font-display); font-size: 40px; font-weight: 800; line-height: 1; text-transform: uppercase; color: #fff; }
