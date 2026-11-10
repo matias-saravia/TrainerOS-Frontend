@@ -4,7 +4,8 @@ import Logo from '../../components/Logo'
 import './LegalPage.css'
 
 const CONTACT = 'tucoding15@gmail.com'
-const UPDATED = '7 de noviembre de 2026'
+const UPDATED = '10 de noviembre de 2026'
+const YEAR = new Date().getFullYear()
 
 type LegalDoc = 'privacidad' | 'terminos'
 
@@ -243,6 +244,14 @@ function Terms() {
         </p>
       </Section>
 
+      <Section title="Propiedad de TrainerOS">
+        <p>
+          El código, el diseño, el nombre y el logo de TrainerOS son de Tucoding y están protegidos por la Ley 11.723 de
+          Propiedad Intelectual. Podés usar la aplicación para tu trabajo, pero no copiarla, revenderla ni usar su
+          nombre o su logo sin nuestro permiso.
+        </p>
+      </Section>
+
       <Section title="Precio y disponibilidad">
         <p>
           TrainerOS es gratis. Si algún día eso cambia, lo avisaremos con al menos 30 días de anticipación y nunca
@@ -310,6 +319,7 @@ export default function LegalPage({ doc }: { doc: LegalDoc }) {
       <footer className="legal__foot">
         <Link to={`/${other}`}>{TITLES[other]}</Link>
         <Link to="/">Volver al inicio</Link>
+        <p className="legal__copy">© {YEAR} Tucoding. Todos los derechos reservados.</p>
       </footer>
     </div>
   )
