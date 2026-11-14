@@ -1,8 +1,12 @@
-// Lets a student in with just their email, if the trainer behind the slug loaded it.
-// Whoever knows the email and the link gets in: that is the chosen trade-off, so
-// the token is only handed out for accounts that belong to this trainer alone.
-// Any other account (a trainer's, or a student shared with another trainer) must
-// prove it owns the mailbox, or one trainer could sign in as someone else's user.
+// Student access through the trainer's link. Step one takes the email and says
+// what comes next: create a password (first visit), type it (it exists), or check
+// the inbox. Step two creates the password on the first visit.
+//
+// Whoever knows the email and the link can create the first password: that is the
+// chosen trade-off, so it is only allowed for accounts that belong to this trainer
+// alone, and the trainer can clear it from the panel. Any other account (a
+// trainer's, or a student shared with another trainer) proves itself with its
+// own password or with the email link.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.112.4'
 
 // One address, or several separated by commas. The first is the main one.
@@ -35,14 +39,25 @@ async function isWithinLimit(admin: SupabaseClient, key: string, limit: number) 
   return data === true
 }
 
-async function requestAccess(admin: SupabaseClient, appUrl: string, slug: string, email: string) {
+const MIN_PASSWORD = 8
+// bcrypt ignores anything past 72 bytes
+const MAX_PASSWORD = 72
+
+type Eligibility =
+  | { kind: 'not_found' }
+  | { kind: 'own'; userId: string }
+  | { kind: 'shared' }
+
+// Decides whether this email is a student of this trainer alone (its first
+// password can be created here) or an account that has to prove itself.
+async function eligibility(admin: SupabaseClient, slug: string, email: string): Promise<Eligibility> {
   const { data: trainer } = await admin
     .from('profiles')
     .select('id')
     .eq('slug', slug)
     .eq('role', 'trainer')
     .maybeSingle()
-  if (!trainer) return { status: 'not_found' }
+  if (!trainer) return { kind: 'not_found' }
 
   const { data: client } = await admin
     .from('clients')
@@ -50,7 +65,7 @@ async function requestAccess(admin: SupabaseClient, appUrl: string, slug: string
     .eq('trainer_id', trainer.id)
     .eq('email', email)
     .maybeSingle()
-  if (!client) return { status: 'not_found' }
+  if (!client) return { kind: 'not_found' }
 
   const { count: otherTrainers, error: countError } = await admin
     .from('clients')
@@ -58,26 +73,44 @@ async function requestAccess(admin: SupabaseClient, appUrl: string, slug: string
     .neq('trainer_id', trainer.id)
     .or(client.user_id ? `user_id.eq.${client.user_id},email.eq."${email}"` : `email.eq."${email}"`)
   if (countError) throw countError
+  if (otherTrainers !== 0) return { kind: 'shared' }
 
-  // Allowed: the account already linked to this client, or a brand new one.
-  // If creating fails because the email exists, it is someone else's account.
-  let canEnterDirectly = otherTrainers === 0
-  if (canEnterDirectly && client.user_id) {
+  if (client.user_id) {
     // The email of a linked client can be edited: it must still be that account's
     const { data: linked, error: linkedError } = await admin.auth.admin.getUserById(client.user_id)
     if (linkedError) throw linkedError
-    canEnterDirectly = linked.user.email?.toLowerCase() === email
-  } else if (canEnterDirectly) {
-    const { error: createError } = await admin.auth.admin.createUser({ email, email_confirm: true })
-    if (createError && createError.code !== 'email_exists') throw createError
-    canEnterDirectly = !createError
+    return linked.user.email?.toLowerCase() === email ? { kind: 'own', userId: client.user_id } : { kind: 'shared' }
   }
 
-  if (canEnterDirectly) {
-    const { data: link, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
-    if (error) throw error
-    return { status: 'ok', token_hash: link.properties.hashed_token }
+  // A brand new account is linked right away, so the password step finds it.
+  // If the email already exists, it is someone else's account.
+  const { data: created, error: createError } = await admin.auth.admin.createUser({ email, email_confirm: true })
+  if (createError) {
+    if (createError.code === 'email_exists') return { kind: 'shared' }
+    throw createError
   }
+  const { error: linkError } = await admin
+    .from('clients')
+    .update({ user_id: created.user.id })
+    .eq('id', client.id)
+    .is('user_id', null)
+  if (linkError) throw linkError
+  return { kind: 'own', userId: created.user.id }
+}
+
+async function hasPassword(admin: SupabaseClient, email: string) {
+  const { data, error } = await admin.rpc('client_access_password_state', { p_email: email })
+  if (error) throw error
+  return Boolean(data?.[0]?.has_password)
+}
+
+// Step one: what the student sees after typing the email
+async function checkEmail(admin: SupabaseClient, appUrl: string, slug: string, email: string) {
+  const access = await eligibility(admin, slug, email)
+  if (access.kind === 'not_found') return { status: 'not_found' }
+
+  if (await hasPassword(admin, email)) return { status: 'password' }
+  if (access.kind === 'own') return { status: 'create_password' }
 
   const { error: otpError } = await admin.auth.signInWithOtp({
     email,
@@ -85,6 +118,19 @@ async function requestAccess(admin: SupabaseClient, appUrl: string, slug: string
   })
   if (otpError) throw otpError
   return { status: 'email_sent' }
+}
+
+// Step two, first visit only: saves the password the student chose
+async function createPassword(admin: SupabaseClient, slug: string, email: string, password: string) {
+  const access = await eligibility(admin, slug, email)
+  if (access.kind === 'not_found') return { status: 'not_found' }
+  if (access.kind !== 'own') return { error: 'not_allowed' }
+  // Someone created it in the meantime: it has to be typed, not replaced
+  if (await hasPassword(admin, email)) return { status: 'password' }
+
+  const { error } = await admin.auth.admin.updateUserById(access.userId, { password })
+  if (error) throw error
+  return { status: 'ok' }
 }
 
 Deno.serve(async req => {
@@ -102,12 +148,21 @@ Deno.serve(async req => {
 
   let slug: string
   let email: string
+  let action: string
+  let password: string
   try {
     const body = await req.json()
     slug = String(body.slug ?? '').trim().toLowerCase()
     email = String(body.email ?? '').trim().toLowerCase()
+    action = String(body.action ?? 'check')
+    password = typeof body.password === 'string' ? body.password : ''
   } catch {
     return json({ error: 'invalid_body' }, 400)
+  }
+
+  if (action !== 'check' && action !== 'create_password') return json({ error: 'invalid_input' }, 400)
+  if (action === 'create_password' && (password.length < MIN_PASSWORD || new TextEncoder().encode(password).length > MAX_PASSWORD)) {
+    return json({ error: 'invalid_password' }, 400)
   }
 
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || !/^[^\s@"]+@[^\s@"]+\.[^\s@"]+$/.test(email)) {
@@ -128,7 +183,11 @@ Deno.serve(async req => {
       (!ip || (await isWithinLimit(admin, `ip:${ip}`, MAX_ATTEMPTS_PER_IP)))
     if (!withinLimits) return json({ error: 'rate_limited' }, 429)
 
-    return json(await requestAccess(admin, appUrl, slug, email))
+    if (action === 'create_password') {
+      const result = await createPassword(admin, slug, email, password)
+      return json(result, 'error' in result ? 403 : 200)
+    }
+    return json(await checkEmail(admin, appUrl, slug, email))
   } catch (err) {
     console.error('Access request failed:', err)
     return json({ error: 'access_failed' }, 500)

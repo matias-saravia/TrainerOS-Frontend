@@ -86,3 +86,7 @@
   .progreso-weeks { padding-inline: 12px; gap: 4px; }
   .progreso-weeks__label { font-size: 12px; }
 }
+
+/* Password reset: a confirmation in place, under the header */
+.progreso-reset { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; }
+.progreso-reset p { max-width: 70ch; }

@@ -1,4 +1,4 @@
-import { supabase } from '../../../lib/supabase'
+import { setRememberSession, supabase } from '../../../lib/supabase'
 import type { Tables } from '../../../lib/supabase'
 
 export type ProfileRow = Tables<'profiles'>
@@ -16,6 +16,8 @@ export interface SignUpCredentials {
 }
 
 export async function signInWithEmail({ email, password }: SignInCredentials) {
+  // The trainer login has no "Recordarme": it always keeps the session
+  setRememberSession(true)
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.trim().toLowerCase(),
     password,
@@ -56,6 +58,7 @@ export const googleSignInEnabled = import.meta.env.VITE_GOOGLE_SIGN_IN === 'true
  * on_auth_user_created trigger); an existing account with that email is linked.
  */
 export async function signInWithGoogle() {
+  setRememberSession(true)
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin },
@@ -69,24 +72,50 @@ export async function getTrainerPublic(slug: string) {
   return data?.[0] ?? null
 }
 
-/** Signs the student in when the email allows it; otherwise says what happened instead. */
-export async function requestClientAccess(
-  slug: string,
-  email: string,
-): Promise<'ok' | 'email_sent' | 'not_found' | 'rate_limited'> {
+export type ClientAccessStatus = 'create_password' | 'password' | 'email_sent' | 'not_found' | 'rate_limited'
+
+const isRateLimited = (error: unknown) => (error as { context?: Response }).context?.status === 429
+
+/** Step one of the student access: says what comes after the email. */
+export async function requestClientAccess(slug: string, email: string): Promise<ClientAccessStatus> {
   const { data, error } = await supabase.functions.invoke('request-client-access', {
     body: { slug, email: email.trim().toLowerCase() },
   })
   if (error) {
-    if ((error as { context?: Response }).context?.status === 429) return 'rate_limited'
+    if (isRateLimited(error)) return 'rate_limited'
     throw error
   }
-
-  if (data.status === 'ok') {
-    const { error: otpError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: 'magiclink' })
-    if (otpError) throw otpError
-  }
   return data.status
+}
+
+/** Signs a student in with their password, keeping the session only if asked to. */
+export async function signInClient(email: string, password: string, remember: boolean) {
+  setRememberSession(remember)
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+  if (error) throw error
+}
+
+/**
+ * First visit: saves the password the student chose and signs them in.
+ * Returns 'password' if someone created it in the meantime, so it has to be typed.
+ */
+export async function createClientPassword(
+  slug: string,
+  email: string,
+  password: string,
+  remember: boolean,
+): Promise<'ok' | 'password' | 'not_found' | 'rate_limited'> {
+  const { data, error } = await supabase.functions.invoke('request-client-access', {
+    body: { slug, email: email.trim().toLowerCase(), action: 'create_password', password },
+  })
+  if (error) {
+    if (isRateLimited(error)) return 'rate_limited'
+    throw error
+  }
+  if (data.status !== 'ok') return data.status
+
+  await signInClient(email, password, remember)
+  return 'ok'
 }
 
 export async function claimClientAccess(slug: string): Promise<string> {

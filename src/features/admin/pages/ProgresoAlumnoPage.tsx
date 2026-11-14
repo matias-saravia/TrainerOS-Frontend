@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Dumbbell, Eye, MessageSquare, Pencil } from 'lucide-react'
+import { ArrowLeft, Dumbbell, Eye, KeyRound, MessageSquare, Pencil } from 'lucide-react'
 import { useClient } from '../hooks/useClients'
-import { useClientSessions, useClientWeights, useReplyToSession } from '../hooks/useClientProgress'
+import { useClientSessions, useClientWeights, useReplyToSession, useResetClientPassword } from '../hooks/useClientProgress'
 import { daysBetween, exerciseLoads, exercisesDone, trained, weeklyCounts, type ProgressSession } from '../progress'
 import { dayKey, fromKey } from '../../../utils/dates'
 import LoadingSkeleton from '../../../components/LoadingSkeleton'
@@ -24,6 +24,50 @@ function sinceText(days: number): string {
   if (days === 0) return 'Hoy'
   if (days === 1) return 'Ayer'
   return `Hace ${days} días`
+}
+
+/**
+ * Lets the trainer clear a student's password after a confirmation, so the
+ * student creates a new one on the next visit.
+ */
+function PasswordReset({ clientId, nombre, onClose }: { clientId: string; nombre: string; onClose: () => void }) {
+  const reset = useResetClientPassword()
+  const shared = reset.error?.message.includes('shared_account')
+
+  return (
+    <section className="sheet progreso__sheet progreso-reset" aria-label="Restablecer contraseña">
+      {reset.isSuccess ? (
+        <p role="status">
+          Listo. La próxima vez que {nombre} entre con su correo va a crear una contraseña nueva. Si tenía la sesión
+          abierta en otro dispositivo, se cerró.
+        </p>
+      ) : (
+        <p>
+          ¿Restablecer la contraseña de {nombre}? La actual deja de funcionar y la próxima vez que entre con su correo
+          crea una nueva.
+        </p>
+      )}
+      {reset.isError && (
+        <p className="progreso-note__error" role="alert">
+          {shared
+            ? `${nombre} también entrena con otro entrenador o usa una cuenta de entrenador, así que su contraseña no se puede restablecer desde acá.`
+            : 'No pudimos restablecerla. Intentá de nuevo en unos minutos.'}
+        </p>
+      )}
+      <div className="progreso-note__actions">
+        {reset.isSuccess ? (
+          <button className="btn-secondary" onClick={onClose}>Cerrar</button>
+        ) : (
+          <>
+            <button className="btn-primary" onClick={() => reset.mutate(clientId)} disabled={reset.isPending}>
+              {reset.isPending ? 'Restableciendo...' : 'Restablecer contraseña'}
+            </button>
+            <button className="btn-secondary" onClick={onClose} disabled={reset.isPending}>Cancelar</button>
+          </>
+        )}
+      </div>
+    </section>
+  )
 }
 
 /** The student's comment, and the trainer's reply to it, written in place. */
@@ -92,6 +136,7 @@ function SessionNote({ session, clientId }: { session: ProgressSession; clientId
 export default function ProgresoAlumnoPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
+  const [resetting, setResetting] = useState(false)
 
   const { data: client, isLoading: loadingClient, error: clientError, refetch } = useClient(id)
   const { data: sessions = [], isLoading: loadingSessions } = useClientSessions(id)
@@ -138,6 +183,12 @@ export default function ProgresoAlumnoPage() {
           {client.objetivo && <p className="page-header__sub">{client.objetivo}</p>}
         </div>
         <div className="progreso__actions">
+          {client.user_id && (
+            <button className="btn-secondary" onClick={() => setResetting(true)} aria-expanded={resetting}>
+              <KeyRound size={16} strokeWidth={1.75} />
+              Restablecer contraseña
+            </button>
+          )}
           <button className="btn-secondary" onClick={() => navigate(`/vista-alumno/${client.id}`)}>
             <Eye size={16} strokeWidth={1.75} />
             Ver como alumno
@@ -152,6 +203,10 @@ export default function ProgresoAlumnoPage() {
           </button>
         </div>
       </header>
+
+      {resetting && (
+        <PasswordReset clientId={client.id} nombre={client.nombre} onClose={() => setResetting(false)} />
+      )}
 
       <section className="strip progreso__strip" aria-label="Resumen">
         <div className={`strip__cell${isQuiet ? ' progreso__strip-alert' : ''}`}>
