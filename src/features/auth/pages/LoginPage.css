@@ -90,3 +90,16 @@
 .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--color-rule); }
 .auth-legal { margin-top: 12px; font-size: 13px; line-height: 1.5; color: var(--color-on-surface-var); }
 .auth-legal a { color: var(--color-midnight-blue); font-weight: 600; text-underline-offset: 3px; }
+
+/* Student access: the email being used, with a way back to change it */
+.auth-access-email { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 12px; padding: 2px 14px; border: 1px solid var(--color-rule); border-radius: var(--radius-md); background: var(--color-surface-low); }
+.auth-access-email span { min-width: 0; overflow-wrap: anywhere; font-weight: 600; color: var(--color-midnight-blue); }
+.auth-access-email .auth-text-btn { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; }
+.auth-access-forgot { padding: 10px 14px; border-radius: var(--radius-md); background: var(--color-surface-low); font-size: 14px; color: var(--color-on-surface); }
+.auth-field-hint { font-size: 13px; color: var(--color-on-surface-var); }
+.auth-label-group .auth-text-btn { min-height: 44px; }
+.auth-password-toggle { align-items: center; justify-content: center; min-width: 44px; min-height: 44px; }
+.auth-remember { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; padding-top: 4px; cursor: pointer; }
+.auth-remember input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--color-midnight-blue); cursor: pointer; }
+.auth-remember span { display: flex; flex-direction: column; gap: 2px; font-size: 15px; font-weight: 600; color: var(--color-midnight-blue); }
+.auth-remember small { font-size: 13px; font-weight: 400; color: var(--color-on-surface-var); }

@@ -4,7 +4,7 @@ import Logo from '../../components/Logo'
 import './LegalPage.css'
 
 const CONTACT = 'tucoding15@gmail.com'
-const UPDATED = '10 de noviembre de 2026'
+const UPDATED = '14 de noviembre de 2026'
 const YEAR = new Date().getFullYear()
 
 type LegalDoc = 'privacidad' | 'terminos'
@@ -200,8 +200,9 @@ function Terms() {
           <li>Para tener una cuenta de entrenador tenés que ser mayor de 18 años y usar datos reales.</li>
           <li>Cuidá tu contraseña. Lo que se haga con tu cuenta es tu responsabilidad.</li>
           <li>
-            Los alumnos entran sin contraseña, con el link de su entrenador y el correo que él cargó. Cualquiera que
-            conozca los dos puede entrar a esa cuenta de alumno.
+            Los alumnos entran con el link de su entrenador, el correo que él cargó y una contraseña que crean la
+            primera vez. Hasta que el alumno la crea, cualquiera que conozca el link y el correo podría crearla en su
+            lugar; si pasa, el entrenador la restablece desde su panel y el alumno crea una nueva.
           </li>
         </ul>
       </Section>

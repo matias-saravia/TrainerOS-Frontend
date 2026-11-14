@@ -9,7 +9,7 @@ web
 ## Users
 
 - **Entrenador personal:** arma rutinas y ejercicios, carga a sus alumnos y sigue su progreso, sobre todo desde el escritorio, entre clases.
-- **Alumno:** entrena desde el celular, en el gimnasio, con una mano ocupada y entre series. Entra sin contraseña, con el link de su entrenador y un correo.
+- **Alumno:** entrena desde el celular, en el gimnasio, con una mano ocupada y entre series. Entra con el link de su entrenador, su correo y una contraseña que crea la primera vez.
 
 Ambos pesan por igual.
 

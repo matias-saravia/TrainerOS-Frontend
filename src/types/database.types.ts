@@ -639,6 +639,10 @@ export type Database = {
     }
     Functions: {
       claim_client_access: { Args: { p_slug: string }; Returns: string }
+      client_access_password_state: {
+        Args: { p_email: string }
+        Returns: { has_password: boolean; user_id: string }[]
+      }
       complete_workout_session: {
         Args: { p_comentario?: string; p_esfuerzo?: number; p_session_id: string }
         Returns: undefined
@@ -683,6 +687,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reset_client_password: { Args: { p_client_id: string }; Returns: undefined }
       reply_to_session: {
         Args: { p_respuesta: string; p_session_id: string }
         Returns: undefined

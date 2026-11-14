@@ -84,3 +84,19 @@ export function useReplyToSession(clientId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [...clientKeys.detail(clientId), 'sessions'] }),
   })
 }
+
+/**
+ * Mutation hook to clear a student's password, so the student creates a new one
+ * the next time they enter. It also closes the sessions they have open.
+ */
+export function useResetClientPassword() {
+  return useMutation({
+    mutationFn: async (clientId: string): Promise<void> => {
+      const { error } = await supabase.rpc('reset_client_password', { p_client_id: clientId })
+
+      if (error) {
+        throw error
+      }
+    },
+  })
+}

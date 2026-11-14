@@ -18,7 +18,7 @@ const steps = [
   { title: 'Armá la rutina', text: 'Bloques, series, repeticiones y descanso, con tus propios ejercicios y videos.' },
   { title: 'Cargá a tu alumno', text: 'Nombre y correo. Le asignás las rutinas que le tocan.' },
   { title: 'Pasale tu link', text: 'Tenés una página de acceso propia, con tu nombre. Es la misma para todos tus alumnos.' },
-  { title: 'Pone su correo y entrena', text: 'Sin contraseña y sin instalar nada. Cae directo en sus rutinas y registra cada serie.' },
+  { title: 'Pone su correo y entrena', text: 'La primera vez crea su contraseña. Sin instalar nada: cae directo en sus rutinas y registra cada serie.' },
 ]
 
 const features = [
@@ -164,8 +164,8 @@ export default function LandingPage() {
       <section id="alumnos" className="landing-student" aria-labelledby="landing-student">
         <h2 id="landing-student">¿Te entrena alguien que usa TrainerOS?</h2>
         <p>
-          Pedile a tu entrenador su link. Lo abrís, ponés el correo que le diste y ves tus rutinas.
-          No necesitás crear una cuenta.
+          Pedile a tu entrenador su link. Lo abrís, ponés el correo que le diste y la primera vez creás tu
+          contraseña. No hace falta registrarte ni instalar nada.
         </p>
       </section>
 
